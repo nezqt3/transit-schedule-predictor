@@ -32,12 +32,12 @@ Schemas
 NDTP Server
 -----------
 
-.. automodule:: app.ntdp.server
+.. automodule:: app.ndtp.server
    :members:
 
 
 NDTP Parser
 -----------
 
-.. automodule:: app.ntdp.parser
+.. automodule:: app.ndtp.parser
    :members:
