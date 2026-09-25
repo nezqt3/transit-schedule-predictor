@@ -1,0 +1,106 @@
+{
+  "n_features": 66,
+  "p_very_late": {
+    "train_pos_rate": 0.134,
+    "test_pos_rate": 0.156,
+    "fold_auc": {
+      "fold1": 0.702,
+      "fold2": 0.722,
+      "fold3": 0.837,
+      "fold4": 0.839
+    },
+    "oof_auc_folds1plus": 0.775,
+    "test_auc": 0.875,
+    "test_deciles": {
+      "(-0.000705, 0.0069]": {
+        "n": 71,
+        "mean_p": 0.003,
+        "pos_rate": 0.0,
+        "mean_target": -24.7
+      },
+      "(0.0069, 0.0196]": {
+        "n": 70,
+        "mean_p": 0.012,
+        "pos_rate": 0.043,
+        "mean_target": -9.7
+      },
+      "(0.0196, 0.0529]": {
+        "n": 71,
+        "mean_p": 0.034,
+        "pos_rate": 0.056,
+        "mean_target": 41.0
+      },
+      "(0.0529, 0.142]": {
+        "n": 70,
+        "mean_p": 0.084,
+        "pos_rate": 0.186,
+        "mean_target": 97.7
+      },
+      "(0.142, 0.939]": {
+        "n": 71,
+        "mean_p": 0.376,
+        "pos_rate": 0.493,
+        "mean_target": 173.7
+      }
+    }
+  },
+  "p_early": {
+    "train_pos_rate": 0.153,
+    "test_pos_rate": 0.139,
+    "fold_auc": {
+      "fold1": 0.67,
+      "fold2": 0.779,
+      "fold3": 0.754,
+      "fold4": 0.9
+    },
+    "oof_auc_folds1plus": 0.723,
+    "test_auc": 0.874,
+    "test_deciles": {
+      "(-0.00072, 0.0122]": {
+        "n": 71,
+        "mean_p": 0.005,
+        "pos_rate": 0.014,
+        "mean_target": 125.6
+      },
+      "(0.0122, 0.0373]": {
+        "n": 70,
+        "mean_p": 0.023,
+        "pos_rate": 0.043,
+        "mean_target": 89.2
+      },
+      "(0.0373, 0.0756]": {
+        "n": 71,
+        "mean_p": 0.056,
+        "pos_rate": 0.028,
+        "mean_target": 69.0
+      },
+      "(0.0756, 0.199]": {
+        "n": 70,
+        "mean_p": 0.119,
+        "pos_rate": 0.114,
+        "mean_target": 49.1
+      },
+      "(0.199, 0.89]": {
+        "n": 71,
+        "mean_p": 0.451,
+        "pos_rate": 0.493,
+        "mean_target": -54.2
+      }
+    }
+  },
+  "stacking": {
+    "plain_tail_mae": 81.91,
+    "stack_tail_mae": 81.57,
+    "plain_test_mae": 76.59,
+    "stack_test_mae": 77.83,
+    "stack_vs_plain_test_paired": {
+      "delta_mae": 1.24,
+      "t_stat": 1.84
+    },
+    "mae_on_test_very_late": {
+      "plain": 189.46,
+      "stack": 191.31,
+      "n": 55
+    }
+  }
+}

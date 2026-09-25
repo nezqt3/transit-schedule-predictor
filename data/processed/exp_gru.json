@@ -1,0 +1,36 @@
+{
+  "gru_tail_mae": 79.71,
+  "catboost_tail_mae": 79.72,
+  "gru_test_mae": 85.01,
+  "catboost_test_mae": 83.73,
+  "blend_alpha_by_tail": 0.5,
+  "blend_tail_mae": 78.83,
+  "blend_test_mae_one_shot": 83.51,
+  "blend_vs_catboost_paired": {
+    "delta_mae": -0.22,
+    "t_stat": -0.21
+  },
+  "gru_vs_catboost_paired": {
+    "delta_mae": 1.29,
+    "t_stat": 0.64
+  },
+  "alpha_curve_tail": {
+    "0.0": 79.72,
+    "0.05": 79.56,
+    "0.1": 79.41,
+    "0.15": 79.28,
+    "0.2": 79.16,
+    "0.25": 79.06,
+    "0.3": 78.99,
+    "0.35": 78.94,
+    "0.4": 78.89,
+    "0.45": 78.86,
+    "0.5": 78.83
+  },
+  "focus_very_late_dev_normal": {
+    "n": 14,
+    "gru_mae": 283.88,
+    "catboost_mae": 275.48,
+    "blend_mae": 279.68
+  }
+}

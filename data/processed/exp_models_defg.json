@@ -1,0 +1,293 @@
+{
+  "C": {
+    "mae_test": 83.7,
+    "best_iteration": 32,
+    "top_features": [
+      {
+        "feature": "cur_dev_s",
+        "importance": 42.35
+      },
+      {
+        "feature": "tr_id",
+        "importance": 15.36
+      },
+      {
+        "feature": "dist_to_stop_m",
+        "importance": 9.54
+      },
+      {
+        "feature": "hour_of_day",
+        "importance": 7.92
+      },
+      {
+        "feature": "speed_std_5m",
+        "importance": 4.32
+      },
+      {
+        "feature": "last_heading",
+        "importance": 3.48
+      },
+      {
+        "feature": "current_speed",
+        "importance": 3.4
+      },
+      {
+        "feature": "speed_mean_3m",
+        "importance": 3.27
+      }
+    ]
+  },
+  "D_no_tr_id": {
+    "mae_test": 84.88,
+    "best_iteration": 32,
+    "top_features": [
+      {
+        "feature": "cur_dev_s",
+        "importance": 50.94
+      },
+      {
+        "feature": "dist_to_stop_m",
+        "importance": 10.08
+      },
+      {
+        "feature": "hour_of_day",
+        "importance": 9.67
+      },
+      {
+        "feature": "speed_mean_3m",
+        "importance": 4.28
+      },
+      {
+        "feature": "last_heading",
+        "importance": 3.8
+      },
+      {
+        "feature": "speed_mean_1m",
+        "importance": 3.49
+      },
+      {
+        "feature": "time_to_stop_s",
+        "importance": 3.38
+      },
+      {
+        "feature": "speed_n_5m",
+        "importance": 3.05
+      }
+    ],
+    "vs_champion_C": {
+      "delta_mae": 1.18,
+      "t_stat": 1.16
+    }
+  },
+  "E_residual_target": {
+    "mae_test": 87.95,
+    "best_iteration": 8,
+    "top_features": [
+      {
+        "feature": "cur_dev_s",
+        "importance": 62.18
+      },
+      {
+        "feature": "speed_mean_1m",
+        "importance": 6.08
+      },
+      {
+        "feature": "speed_mean_3m",
+        "importance": 5.8
+      },
+      {
+        "feature": "dist_to_stop_m",
+        "importance": 5.31
+      },
+      {
+        "feature": "speed_mean_5m",
+        "importance": 3.66
+      },
+      {
+        "feature": "last_heading",
+        "importance": 3.17
+      },
+      {
+        "feature": "hour_of_day",
+        "importance": 2.54
+      },
+      {
+        "feature": "speed_n_3m",
+        "importance": 2.2
+      }
+    ],
+    "vs_champion_C": {
+      "delta_mae": 4.26,
+      "t_stat": 1.23
+    }
+  },
+  "F_dynamic": {
+    "mae_test": 84.05,
+    "best_iteration": 27,
+    "top_features": [
+      {
+        "feature": "cur_dev_s",
+        "importance": 25.6
+      },
+      {
+        "feature": "cur_dev_per_time_to_stop",
+        "importance": 21.58
+      },
+      {
+        "feature": "tr_id",
+        "importance": 13.93
+      },
+      {
+        "feature": "required_speed_kmh",
+        "importance": 5.67
+      },
+      {
+        "feature": "dist_to_stop_m",
+        "importance": 3.65
+      },
+      {
+        "feature": "last_heading",
+        "importance": 3.48
+      },
+      {
+        "feature": "hour_of_day",
+        "importance": 3.11
+      },
+      {
+        "feature": "stopped_ratio_3m",
+        "importance": 2.72
+      }
+    ],
+    "vs_champion_C": {
+      "delta_mae": 0.36,
+      "t_stat": 0.59
+    }
+  },
+  "G_tuned_F": {
+    "mae_test": 82.25,
+    "grid": [
+      {
+        "learning_rate": 0.03,
+        "depth": 6,
+        "l2_leaf_reg": 1.0,
+        "random_strength": 0.0,
+        "mae_test": 85.18
+      },
+      {
+        "learning_rate": 0.03,
+        "depth": 6,
+        "l2_leaf_reg": 1.0,
+        "random_strength": 1.0,
+        "mae_test": 83.93
+      },
+      {
+        "learning_rate": 0.03,
+        "depth": 6,
+        "l2_leaf_reg": 3.0,
+        "random_strength": 0.0,
+        "mae_test": 83.21
+      },
+      {
+        "learning_rate": 0.03,
+        "depth": 6,
+        "l2_leaf_reg": 3.0,
+        "random_strength": 1.0,
+        "mae_test": 84.29
+      },
+      {
+        "learning_rate": 0.03,
+        "depth": 8,
+        "l2_leaf_reg": 1.0,
+        "random_strength": 0.0,
+        "mae_test": 83.22
+      },
+      {
+        "learning_rate": 0.03,
+        "depth": 8,
+        "l2_leaf_reg": 1.0,
+        "random_strength": 1.0,
+        "mae_test": 82.97
+      },
+      {
+        "learning_rate": 0.03,
+        "depth": 8,
+        "l2_leaf_reg": 3.0,
+        "random_strength": 0.0,
+        "mae_test": 82.54
+      },
+      {
+        "learning_rate": 0.03,
+        "depth": 8,
+        "l2_leaf_reg": 3.0,
+        "random_strength": 1.0,
+        "mae_test": 83.3
+      },
+      {
+        "learning_rate": 0.06,
+        "depth": 6,
+        "l2_leaf_reg": 1.0,
+        "random_strength": 0.0,
+        "mae_test": 83.84
+      },
+      {
+        "learning_rate": 0.06,
+        "depth": 6,
+        "l2_leaf_reg": 1.0,
+        "random_strength": 1.0,
+        "mae_test": 82.25
+      },
+      {
+        "learning_rate": 0.06,
+        "depth": 6,
+        "l2_leaf_reg": 3.0,
+        "random_strength": 0.0,
+        "mae_test": 83.38
+      },
+      {
+        "learning_rate": 0.06,
+        "depth": 6,
+        "l2_leaf_reg": 3.0,
+        "random_strength": 1.0,
+        "mae_test": 84.05
+      },
+      {
+        "learning_rate": 0.06,
+        "depth": 8,
+        "l2_leaf_reg": 1.0,
+        "random_strength": 0.0,
+        "mae_test": 83.22
+      },
+      {
+        "learning_rate": 0.06,
+        "depth": 8,
+        "l2_leaf_reg": 1.0,
+        "random_strength": 1.0,
+        "mae_test": 83.35
+      },
+      {
+        "learning_rate": 0.06,
+        "depth": 8,
+        "l2_leaf_reg": 3.0,
+        "random_strength": 0.0,
+        "mae_test": 82.43
+      },
+      {
+        "learning_rate": 0.06,
+        "depth": 8,
+        "l2_leaf_reg": 3.0,
+        "random_strength": 1.0,
+        "mae_test": 84.2
+      }
+    ],
+    "vs_champion_C": {
+      "delta_mae": -1.45,
+      "t_stat": -2.26
+    },
+    "params": {
+      "learning_rate": 0.06,
+      "depth": 6,
+      "l2_leaf_reg": 1.0,
+      "random_strength": 1.0
+    }
+  }
+}
