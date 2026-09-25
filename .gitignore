@@ -37,6 +37,8 @@ backend/docs/_build/
 # Frontend
 frontend/node_modules/
 frontend/dist/
+frontend/coverage/
+.pnpm-store/
 
 # Data & model artifacts (large, never commit)
 ml/artifacts/*

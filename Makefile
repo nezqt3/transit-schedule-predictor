@@ -1,4 +1,6 @@
-.PHONY: up down build logs test docs features train submit run-online
+.PHONY: up down build logs test docs features train submit run-online \
+	fe-install fe-dev fe-build fe-check fe-preview fe-clean \
+	up-frontend up-frontend-dev
 
 up:
 	docker compose up -d
@@ -39,3 +41,35 @@ preprocessing:
 
 docs:
 	cd backend && sphinx-build -b html docs docs/_build/html
+
+
+# --- frontend: локально (pnpm) ---
+
+fe-install:
+	cd frontend && pnpm install --frozen-lockfile
+
+fe-dev:
+	cd frontend && pnpm dev
+
+fe-build:
+	cd frontend && pnpm build
+
+fe-check:
+	cd frontend && pnpm typecheck
+
+fe-preview:
+	cd frontend && pnpm preview --port 4173
+
+fe-clean:
+	rm -rf frontend/dist frontend/node_modules/.vite
+
+# --- frontend: в docker ---
+
+up-frontend:
+	docker compose up -d --build frontend
+
+up-frontend-dev:
+	docker compose --profile dev up -d --build frontend-dev
+
+logs-frontend:
+	docker compose logs -f frontend

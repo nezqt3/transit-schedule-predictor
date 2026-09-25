@@ -59,5 +59,42 @@ services:
       ml:
         condition: service_started
 
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api/v1}
+        VITE_APP_NAME: ${VITE_APP_NAME:-Диспетчерская · прогноз задержек}
+        VITE_POLL_INTERVAL_MS: ${VITE_POLL_INTERVAL_MS:-3000}
+    environment:
+      BACKEND_UPSTREAM: backend:8000
+      LISTEN_PORT: 8080
+    ports:
+      - "${FRONTEND_PORT:-8080}:8080"
+    depends_on:
+      backend:
+        condition: service_started
+
+  # pnpm dev + HMR: docker compose --profile dev up frontend-dev
+  frontend-dev:
+    profiles: ["dev"]
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    environment:
+      BACKEND_PROXY_TARGET: http://backend:8000
+      CI: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "${FRONTEND_DEV_PORT:-5173}:5173"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.ts:/app/vite.config.ts
+      - ./frontend/public:/app/public
+    depends_on:
+      backend:
+        condition: service_started
+
 volumes:
   postgres_data:

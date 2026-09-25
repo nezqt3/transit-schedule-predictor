@@ -1,0 +1,14 @@
+node_modules
+dist
+dist-ssr
+coverage
+.env
+.env.*
+*.local
+README.md
+Dockerfile
+Dockerfile.dev
+.dockerignore
+.git
+.gitignore
+nginx.conf

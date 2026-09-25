@@ -68,6 +68,7 @@
 data/                         Датасеты train/test/validate и sample submission
 emulator/                     NDTP-эмулятор и спецификация протокола
 backend/                      API, TCP/NDTP parser, telemetry и ML client
+frontend/                     Диспетчерский дашборд (Vite + React), см. frontend/README.md
 ml/
   src/dataset.py              загрузка и проверка данных
   src/features.py             генерация признаков
@@ -91,6 +92,7 @@ scripts/                      вспомогательные команды
 | данные | CSV, временные ряды, признаки расписания и телеметрии |
 | транспортный протокол | NDTP поверх TCP, REST для управления эмулятором |
 | контейнеризация | Docker, Docker Compose |
+| диспетчерская | React 19, TypeScript, Vite, TanStack Query, zustand, nginx |
 | эксперименты | Jupyter Notebook, Kaggle Notebook, Kaggle Dataset |
 | контроль версий | Git |
 
@@ -105,6 +107,18 @@ scripts/                      вспомогательные команды
 ```
 
 Конфигурация эмулятора передаётся через `emulator/config.json`. Backend подключается к TCP-порту NDTP и принимает телеметрию от бортовых устройств.
+
+### Frontend
+
+```bash
+cd frontend
+pnpm install --frozen-lockfile
+pnpm dev                  # http://localhost:5173, прокси на backend :8000
+```
+
+Прод-сборка в Docker: `make up-frontend` (nginx на :8080), разработка в контейнере —
+`make up-frontend-dev`. Структура папок, env-переменные и что уже подключено — в
+[`frontend/README.md`](frontend/README.md).
 
 ### ML
 
