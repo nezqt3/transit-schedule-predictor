@@ -21,5 +21,8 @@ lint:
 format:
 	cd backend && ruff format .
 
+preprocessing:
+	cd scripts && python -m scripts.prepare_dataset
+
 docs:
 	cd backend && sphinx-build -b html docs docs/_build/html
