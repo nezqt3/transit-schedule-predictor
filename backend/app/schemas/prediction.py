@@ -14,6 +14,13 @@ class PredictionRequest(BaseModel):
         description="Момент построения прогноза T",
     )
 
+    unit_id: int | None = Field(None, description="NDTP terminal ID, if different from tr_id")
+
+    target_stop_id: int = Field(..., description="ID целевой остановки")
+    target_time_begin: datetime = Field(..., description="Плановое время прибытия")
+    stop_lat: float = Field(..., description="Широта целевой остановки")
+    stop_lon: float = Field(..., description="Долгота целевой остановки")
+
     lat: float = Field(
         ...,
         description="Широта транспортного средства",

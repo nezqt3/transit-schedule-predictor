@@ -1,0 +1,25 @@
+{
+  "folds": [
+    {
+      "n": 664,
+      "mae": 82.73419957717252
+    },
+    {
+      "n": 668,
+      "mae": 73.48364296938705
+    },
+    {
+      "n": 651,
+      "mae": 62.842099813350316
+    },
+    {
+      "n": 902,
+      "mae": 83.84287021641498
+    }
+  ],
+  "cv_mae": 76.45028004731039,
+  "test_mae": 58.603345521191955,
+  "test_blend_mae": 63.726295700645366,
+  "pure_submission": "C:\\Users\\user\\Documents\\Coding\\transit-schedule-predictor\\data\\submissions\\lightgbm_plan_submission.csv",
+  "submission": "C:\\Users\\user\\Documents\\Coding\\transit-schedule-predictor\\data\\submissions\\lightgbm_plan_torch42_submission.csv"
+}

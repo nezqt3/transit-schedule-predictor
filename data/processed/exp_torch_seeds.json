@@ -1,0 +1,15 @@
+{
+  "seeds": [
+    42,
+    1337,
+    2026
+  ],
+  "epochs": 28,
+  "torch_weight": 0.42,
+  "tail_single_mae": 100.2300551042972,
+  "tail_ensemble_mae": 101.31360159297405,
+  "test_single_mae": 75.56463344596114,
+  "test_ensemble_mae": 73.7453767658662,
+  "test_blend_mae": 71.19827082697076,
+  "submission": "C:\\Users\\user\\Documents\\Coding\\transit-schedule-predictor\\data\\submissions\\torch3seed_catboost42_submission.csv"
+}

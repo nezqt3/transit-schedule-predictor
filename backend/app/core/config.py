@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     ndtp_host: str = "0.0.0.0"
     ndtp_port: int = 9201
 
+    runtime_schedule_path: str = "data/raw/validate/schedule_plan.csv"
+    runtime_traffic_path: str = "data/raw/validate/traffic.csv"
+
     postgres_host: str = "postgres"
     postgres_port: int = 5432
     postgres_db: str = "transport"

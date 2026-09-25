@@ -42,6 +42,8 @@ frontend/dist/
 ml/artifacts/*
 !ml/artifacts/.gitkeep
 !ml/artifacts/README.md
+data/processed/*_features.parquet
+data/submissions/submission.csv
 
 # Emulator archives
 emulator/*.tar

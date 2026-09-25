@@ -29,6 +29,20 @@ Backend отвечает за:
 
 Backend **не обучает ML-модели**. Обучение выполняется отдельно. Backend работает только с готовым ML inference service.
 
+## Рабочий путь прогноза
+
+NDTP-пакеты поступают на TCP `:9201`. `TelemetryService` хранит до 150 последних
+точек на терминал; Backend передаёт нормализованное окно в ML-сервис. После
+`make features`, `make train` и `docker compose up --build` доступен
+`GET /api/v1/predict` с `tr_id`, `T`, `cur_dev_s`, `target_stop_id`.
+Координаты и плановое время остановки берутся из
+`RUNTIME_SCHEDULE_PATH`, соответствие `tr_id → unit_id` — из
+`RUNTIME_TRAFFIC_PATH`. Compose монтирует `data/raw/validate` только для чтения.
+Для собственного потока можно передать `unit_id`, `target_time_begin`,
+`stop_lat`, `stop_lon` в query: эти три поля остановки указываются вместе.
+`POST /api/v1/predictions` принимает текущую точку и метаданные остановки явно.
+Оба маршрута проверяют горизонт `(T+10 минут, T+15 минут]`.
+
 ---
 
 # 1. Модули Backend

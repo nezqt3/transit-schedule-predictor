@@ -1,0 +1,70 @@
+{
+  "folds": [
+    {
+      "cutoff": "2026-01-06 09:30:00",
+      "rows": 664,
+      "catboost_mae": 87.98527657590225,
+      "torch_direct_mae": 90.21840833868576,
+      "torch_direct_epochs": 22,
+      "torch_residual_mae": 91.63894685494476,
+      "torch_residual_epochs": 19
+    },
+    {
+      "cutoff": "2026-01-06 12:20:00",
+      "rows": 668,
+      "catboost_mae": 73.12917731137034,
+      "torch_direct_mae": 92.57953627831813,
+      "torch_direct_epochs": 35,
+      "torch_residual_mae": 88.83969261735926,
+      "torch_residual_epochs": 20
+    },
+    {
+      "cutoff": "2026-01-06 15:00:00",
+      "rows": 651,
+      "catboost_mae": 67.82765811329897,
+      "torch_direct_mae": 72.79000096123389,
+      "torch_direct_epochs": 8,
+      "torch_residual_mae": 73.80926825833318,
+      "torch_residual_epochs": 5
+    },
+    {
+      "cutoff": "2026-01-06 17:40:00",
+      "rows": 902,
+      "catboost_mae": 94.29139637808765,
+      "torch_direct_mae": 100.75542091018261,
+      "torch_direct_epochs": 35,
+      "torch_residual_mae": 99.23030791878287,
+      "torch_residual_epochs": 33
+    }
+  ],
+  "catboost_cv_mae": 81.96851267077544,
+  "torch_direct_cv_mae": 90.12680542722768,
+  "torch_residual_cv_mae": 89.3409867448861,
+  "selected_mode": "direct",
+  "torch_weight": 0.0,
+  "selected_cv_mae": 81.96851267077544,
+  "weight_curves_cv": {
+    "direct": {
+      "0.0": 81.96851267077544,
+      "0.05": 82.04908227779633,
+      "0.1": 82.17432440678849,
+      "0.15": 82.34964639175655,
+      "0.2": 82.56833152745908,
+      "0.3": 83.1090751653524,
+      "0.4": 83.78300681010231
+    },
+    "residual": {
+      "0.0": 81.96851267077544,
+      "0.05": 82.07214942703139,
+      "0.1": 82.20937751619124,
+      "0.15": 82.37728119220068,
+      "0.2": 82.5764934614171,
+      "0.3": 83.08553839642799,
+      "0.4": 83.70550989954022
+    }
+  },
+  "catboost_test_mae": 72.02654481726626,
+  "torch_test_mae": 75.56463344596114,
+  "blend_test_mae": 72.02654481726626,
+  "final_epochs": 28
+}
