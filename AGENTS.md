@@ -70,7 +70,7 @@ Expected repository structure:
 │   ├── app/
 │   │   ├── api/
 │   │   ├── core/
-│   │   ├── ntdp/
+│   │   ├── ndtp/
 │   │   ├── repositories/
 │   │   ├── schemas/
 │   │   ├── services/
@@ -490,7 +490,7 @@ Backend should expose a TCP server, for example:
 NDTP responsibilities must stay inside:
 
 ```text
-backend/app/ntdp/
+backend/app/ndtp/
 ```
 
 Recommended separation:

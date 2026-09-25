@@ -44,7 +44,7 @@ backend/app/
 │   ├── incidents.py
 │   └── routes.py
 │
-├── ntdp/
+├── ndtp/
 │   ├── server.py
 │   ├── parser.py
 │   └── schemas.py
@@ -71,7 +71,7 @@ backend/app/
 └── main.py
 ```
 
-## `ntdp`
+## `ndtp`
 
 Отвечает исключительно за получение и декодирование NDTP.
 
@@ -80,9 +80,9 @@ NDTP packet
      ↓
 TCP :9201
      ↓
-ntdp/server.py
+ndtp/server.py
      ↓
-ntdp/parser.py
+ndtp/parser.py
      ↓
 TelemetryEvent
 ```
