@@ -1,0 +1,95 @@
+{
+  "C_single": {
+    "mae_test": 83.7,
+    "top_features": [
+      {
+        "feature": "cur_dev_s",
+        "importance": 42.35
+      },
+      {
+        "feature": "tr_id",
+        "importance": 15.36
+      },
+      {
+        "feature": "dist_to_stop_m",
+        "importance": 9.54
+      },
+      {
+        "feature": "hour_of_day",
+        "importance": 7.92
+      },
+      {
+        "feature": "speed_std_5m",
+        "importance": 4.32
+      }
+    ]
+  },
+  "H_segment": {
+    "mae_test": 83.53,
+    "vs_C_single": {
+      "delta_mae": -0.17,
+      "t_stat": -0.3
+    },
+    "top_features": [
+      {
+        "feature": "cur_dev_s",
+        "importance": 45.91
+      },
+      {
+        "feature": "tr_id",
+        "importance": 12.13
+      },
+      {
+        "feature": "hour_of_day",
+        "importance": 7.58
+      },
+      {
+        "feature": "dist_to_stop_m",
+        "importance": 7.34
+      },
+      {
+        "feature": "last_heading",
+        "importance": 4.2
+      },
+      {
+        "feature": "historical_segment_speed",
+        "importance": 2.42
+      }
+    ]
+  },
+  "HF_segment_plus_dynamic": {
+    "mae_test": 83.99,
+    "vs_C_single": {
+      "delta_mae": 0.3,
+      "t_stat": 0.46
+    }
+  },
+  "I_C_ensemble_mean": {
+    "mae_test": 84.42,
+    "vs_C_single": {
+      "delta_mae": 0.73,
+      "t_stat": 1.61
+    }
+  },
+  "I_C_ensemble_median": {
+    "mae_test": 84.34,
+    "vs_C_single": {
+      "delta_mae": 0.65,
+      "t_stat": 1.38
+    }
+  },
+  "I_H_ensemble_mean": {
+    "mae_test": 83.76,
+    "vs_C_single": {
+      "delta_mae": 0.07,
+      "t_stat": 0.16
+    }
+  },
+  "I_H_ensemble_median": {
+    "mae_test": 83.87,
+    "vs_C_single": {
+      "delta_mae": 0.18,
+      "t_stat": 0.4
+    }
+  }
+}

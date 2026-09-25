@@ -1,0 +1,114 @@
+{
+  "train_traffic": {
+    "rows_in": 287849,
+    "packet_id_mixed_strings": 181904,
+    "dropped_exact_duplicates": 0,
+    "dropped_retransmit_duplicates": 8473,
+    "fixed_event_after_receive_clock_skew": 10123,
+    "nulled_gps_time_outside_window": 140489,
+    "nulled_out_of_bbox_coordinates": 4306,
+    "rows_missing_location": 20805,
+    "location_flag_conflicts": 22039,
+    "nulled_speed_out_of_range": 69,
+    "wrapped_heading_360": 3,
+    "nulled_altitude_out_of_range": 49913,
+    "device_event_id_dropped_as_constant": 1,
+    "rows_out": 279376,
+    "missing_after": {
+      "lat": 0.074,
+      "lon": 0.074,
+      "speed": 0.059,
+      "gps_time": 0.562
+    },
+    "archive_rows_after_clean": 176358,
+    "tr_id_count": 56,
+    "event_time_min": "2026-01-05 23:46:15.880133799",
+    "event_time_max": "2026-01-07 00:25:58.268893882"
+  },
+  "test_traffic": {
+    "rows_in": 105945,
+    "packet_id_mixed_strings": 0,
+    "dropped_exact_duplicates": 0,
+    "dropped_retransmit_duplicates": 2927,
+    "fixed_event_after_receive_clock_skew": 6419,
+    "nulled_gps_time_outside_window": 0,
+    "nulled_out_of_bbox_coordinates": 2208,
+    "rows_missing_location": 8755,
+    "location_flag_conflicts": 7735,
+    "nulled_speed_out_of_range": 57,
+    "wrapped_heading_360": 1,
+    "nulled_altitude_out_of_range": 20653,
+    "device_event_id_dropped_as_constant": 1,
+    "rows_out": 103018,
+    "missing_after": {
+      "lat": 0.085,
+      "lon": 0.085,
+      "speed": 0.064,
+      "gps_time": 0.064
+    },
+    "archive_rows_after_clean": 0,
+    "tr_id_count": 30,
+    "event_time_min": "2026-01-06 00:00:02",
+    "event_time_max": "2026-01-06 23:59:59"
+  },
+  "train_schedule": {
+    "rows_in": 16674,
+    "dropped_duplicate_action_items": 0,
+    "unparsed_geom": 0,
+    "schedule_dev_s_gt_30min": 0,
+    "missing_building_address": 2925,
+    "rows_out": 16674
+  },
+  "test_schedule": {
+    "rows_in": 5558,
+    "dropped_duplicate_action_items": 0,
+    "unparsed_geom": 0,
+    "schedule_dev_s_gt_30min": 0,
+    "missing_building_address": 975,
+    "rows_out": 5558
+  },
+  "validate_schedule_plan": {
+    "rows_in": 5558,
+    "dropped_duplicate_action_items": 0,
+    "unparsed_geom": 0,
+    "missing_building_address": 975,
+    "rows_out": 5558
+  },
+  "labels_train": {
+    "rows_in": 4434,
+    "dropped_duplicate_samples": 0,
+    "dropped_missing_target": 0,
+    "horizon_violations": 0,
+    "target_delay_min": -372.0,
+    "target_delay_max": 672.0,
+    "target": {
+      "mean": 48.89,
+      "median": 24.0,
+      "std": 131.22
+    },
+    "rows_out": 4434
+  },
+  "labels_test": {
+    "rows_in": 353,
+    "dropped_duplicate_samples": 0,
+    "dropped_missing_target": 0,
+    "horizon_violations": 0,
+    "target_delay_min": -276.0,
+    "target_delay_max": 578.0,
+    "target": {
+      "mean": 55.65,
+      "median": 26.0,
+      "std": 135.46
+    },
+    "rows_out": 353
+  },
+  "validate_points": {
+    "rows_in": 151,
+    "dropped_duplicate_samples": 0,
+    "rows_out": 151
+  },
+  "notes": {
+    "validate_traffic_equals_test_traffic": true,
+    "gps_time_asymmetry": "Расхождение gps_time > 120 с существует только в архивных пакетах train (packet_id вида '<base>_<seq>', 181 904 строк, часы устройства переписаны при выгрузке, максимум ±2042 с). В live-пакетах gps_time совпадает с event_time посекундно, а в test архивных пакетов нет — поэтому в test зануление gps_time не срабатывает ни разу."
+  }
+}

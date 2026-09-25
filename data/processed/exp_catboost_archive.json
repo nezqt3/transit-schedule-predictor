@@ -1,0 +1,96 @@
+{
+  "baseline_cur_dev_s": 93.36,
+  "A_archive_plus_live": {
+    "mae_test": 85.5,
+    "mae_train_tail": 80.96,
+    "best_iteration": 24,
+    "top_features": [
+      {
+        "feature": "cur_dev_s",
+        "importance": 46.802
+      },
+      {
+        "feature": "tr_id",
+        "importance": 15.029
+      },
+      {
+        "feature": "dist_to_stop_m",
+        "importance": 7.071
+      },
+      {
+        "feature": "hour_of_day",
+        "importance": 5.984
+      },
+      {
+        "feature": "last_heading",
+        "importance": 5.778
+      },
+      {
+        "feature": "speed_std_5m",
+        "importance": 3.606
+      }
+    ]
+  },
+  "B_live_only": {
+    "mae_test": 84.74,
+    "mae_train_tail": 81.26,
+    "best_iteration": 26,
+    "top_features": [
+      {
+        "feature": "cur_dev_s",
+        "importance": 49.154
+      },
+      {
+        "feature": "tr_id",
+        "importance": 20.644
+      },
+      {
+        "feature": "hour_of_day",
+        "importance": 14.579
+      },
+      {
+        "feature": "speed_mean_1m",
+        "importance": 3.849
+      },
+      {
+        "feature": "time_to_stop_s",
+        "importance": 3.024
+      },
+      {
+        "feature": "dist_to_stop_m",
+        "importance": 1.413
+      }
+    ]
+  },
+  "C_plus_is_archive": {
+    "mae_test": 83.7,
+    "mae_train_tail": 81.04,
+    "best_iteration": 32,
+    "top_features": [
+      {
+        "feature": "cur_dev_s",
+        "importance": 42.347
+      },
+      {
+        "feature": "tr_id",
+        "importance": 15.36
+      },
+      {
+        "feature": "dist_to_stop_m",
+        "importance": 9.537
+      },
+      {
+        "feature": "hour_of_day",
+        "importance": 7.916
+      },
+      {
+        "feature": "speed_std_5m",
+        "importance": 4.322
+      },
+      {
+        "feature": "last_heading",
+        "importance": 3.475
+      }
+    ]
+  }
+}

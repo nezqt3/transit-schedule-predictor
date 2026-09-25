@@ -1,0 +1,485 @@
+{
+  "C": {
+    "oof_tail_mae": 81.04,
+    "test_mae": 83.7
+  },
+  "G": {
+    "oof_tail_mae": 79.53,
+    "test_mae": 82.25
+  },
+  "H": {
+    "oof_tail_mae": 79.8,
+    "test_mae": 83.53
+  },
+  "J": {
+    "oof_tail_mae": 78.43,
+    "test_mae": 83.39
+  },
+  "blend_GHC": {
+    "weights_G_H_C": [
+      0.6,
+      0.4,
+      0.0
+    ],
+    "oof_tail_mae": 79.38,
+    "test_mae_one_shot": 82.69,
+    "vs_G_test_paired": {
+      "delta_mae": 0.44,
+      "t_stat": 1.76
+    }
+  },
+  "error_analysis_G": {
+    "buckets": {
+      "by_target_class": {
+        "early<-60": {
+          "n": 50,
+          "mae": 121.1,
+          "share_of_total_err": 0.208
+        },
+        "ontime-60..60": {
+          "n": 154,
+          "mae": 42.6,
+          "share_of_total_err": 0.226
+        },
+        "late60..180": {
+          "n": 94,
+          "mae": 58.6,
+          "share_of_total_err": 0.19
+        },
+        "very_late>180": {
+          "n": 55,
+          "mae": 198.2,
+          "share_of_total_err": 0.376
+        }
+      },
+      "by_horizon": {
+        "10-11m": {
+          "n": 225,
+          "mae": 75.5,
+          "share_of_total_err": 0.585
+        },
+        "11-12m": {
+          "n": 88,
+          "mae": 92.6,
+          "share_of_total_err": 0.281
+        },
+        "12-13m": {
+          "n": 20,
+          "mae": 103.0,
+          "share_of_total_err": 0.071
+        },
+        "13-14m": {
+          "n": 10,
+          "mae": 55.1,
+          "share_of_total_err": 0.019
+        },
+        "14-15m": {
+          "n": 10,
+          "mae": 128.1,
+          "share_of_total_err": 0.044
+        }
+      },
+      "by_cur_dev": {
+        "early<-60": {
+          "n": 42,
+          "mae": 91.8,
+          "share_of_total_err": 0.133
+        },
+        "ontime-60..60": {
+          "n": 159,
+          "mae": 68.9,
+          "share_of_total_err": 0.378
+        },
+        "late60..180": {
+          "n": 93,
+          "mae": 79.6,
+          "share_of_total_err": 0.255
+        },
+        "very_late>180": {
+          "n": 59,
+          "mae": 115.5,
+          "share_of_total_err": 0.235
+        }
+      },
+      "by_distance": {
+        "<1km": {
+          "n": 82,
+          "mae": 76.6,
+          "share_of_total_err": 0.216
+        },
+        "1-3km": {
+          "n": 164,
+          "mae": 84.7,
+          "share_of_total_err": 0.478
+        },
+        "3-5km": {
+          "n": 51,
+          "mae": 94.1,
+          "share_of_total_err": 0.165
+        },
+        ">5km": {
+          "n": 22,
+          "mae": 59.4,
+          "share_of_total_err": 0.045
+        }
+      }
+    },
+    "worst_20": {
+      "sum_abs_error_share": 0.213,
+      "signed_error_mean": -227.7,
+      "top_tr_ids": {
+        "122048": 7,
+        "122658": 3,
+        "131672": 3,
+        "132430": 2,
+        "134040": 2
+      },
+      "no_telemetry_5m": 0,
+      "cur_dev_mean": 169.2,
+      "target_mean": 293.2,
+      "dist_km_mean": 2.01,
+      "rows": [
+        {
+          "sample_id": "122048_1767683400",
+          "tr_id": "122048",
+          "target_delay_s": 578.0,
+          "pred": 45.15,
+          "signed_error": -532.85,
+          "abs_error": 532.85,
+          "cur_dev_s": 59.0,
+          "time_to_stop_s": 720.0,
+          "dist_to_stop_m": 1067.96,
+          "packets_5m": 22,
+          "gap_since_last_pkt_s": 9.0,
+          "stopped_ratio_5m": 0.91,
+          "speed_mean_1m": 1.0,
+          "segment_speed_mean_5m": 10.1,
+          "hour_of_day": 7.17
+        },
+        {
+          "sample_id": "122048_1767682800",
+          "tr_id": "122048",
+          "target_delay_s": 542.0,
+          "pred": 19.2,
+          "signed_error": -522.8,
+          "abs_error": 522.8,
+          "cur_dev_s": 59.0,
+          "time_to_stop_s": 900.0,
+          "dist_to_stop_m": 269.36,
+          "packets_5m": 22,
+          "gap_since_last_pkt_s": 15.0,
+          "stopped_ratio_5m": 0.05,
+          "speed_mean_1m": 7.6,
+          "segment_speed_mean_5m": 10.43,
+          "hour_of_day": 7.0
+        },
+        {
+          "sample_id": "122048_1767683100",
+          "tr_id": "122048",
+          "target_delay_s": 542.0,
+          "pred": 47.02,
+          "signed_error": -494.98,
+          "abs_error": 494.98,
+          "cur_dev_s": 59.0,
+          "time_to_stop_s": 720.0,
+          "dist_to_stop_m": 141.17,
+          "packets_5m": 24,
+          "gap_since_last_pkt_s": 9.0,
+          "stopped_ratio_5m": 0.62,
+          "speed_mean_1m": 0.8,
+          "segment_speed_mean_5m": 1.32,
+          "hour_of_day": 7.08
+        },
+        {
+          "sample_id": "122048_1767683700",
+          "tr_id": "122048",
+          "target_delay_s": 446.0,
+          "pred": 105.39,
+          "signed_error": -340.61,
+          "abs_error": 340.61,
+          "cur_dev_s": 542.0,
+          "time_to_stop_s": 720.0,
+          "dist_to_stop_m": 1561.36,
+          "packets_5m": 21,
+          "gap_since_last_pkt_s": 3.0,
+          "stopped_ratio_5m": 0.71,
+          "speed_mean_1m": 1.0,
+          "segment_speed_mean_5m": 1.29,
+          "hour_of_day": 7.25
+        },
+        {
+          "sample_id": "122658_1767696600",
+          "tr_id": "122658",
+          "target_delay_s": 376.0,
+          "pred": 50.65,
+          "signed_error": -325.35,
+          "abs_error": 325.35,
+          "cur_dev_s": 57.0,
+          "time_to_stop_s": 660.0,
+          "dist_to_stop_m": 3096.39,
+          "packets_5m": 32,
+          "gap_since_last_pkt_s": 0.0,
+          "stopped_ratio_5m": 0.63,
+          "speed_mean_1m": 10.0,
+          "segment_speed_mean_5m": 10.0,
+          "hour_of_day": 10.83
+        },
+        {
+          "sample_id": "131672_1767669000",
+          "tr_id": "131672",
+          "target_delay_s": 408.0,
+          "pred": 91.0,
+          "signed_error": -317.0,
+          "abs_error": 317.0,
+          "cur_dev_s": 241.0,
+          "time_to_stop_s": 660.0,
+          "dist_to_stop_m": 1092.99,
+          "packets_5m": 29,
+          "gap_since_last_pkt_s": 3.0,
+          "stopped_ratio_5m": 0.0,
+          "speed_mean_1m": 25.0,
+          "segment_speed_mean_5m": 35.0,
+          "hour_of_day": 3.17
+        },
+        {
+          "sample_id": "131672_1767668700",
+          "tr_id": "131672",
+          "target_delay_s": 407.0,
+          "pred": 95.64,
+          "signed_error": -311.36,
+          "abs_error": 311.36,
+          "cur_dev_s": 317.0,
+          "time_to_stop_s": 780.0,
+          "dist_to_stop_m": 1917.55,
+          "packets_5m": 29,
+          "gap_since_last_pkt_s": 1.0,
+          "stopped_ratio_5m": 0.36,
+          "speed_mean_1m": 18.5,
+          "segment_speed_mean_5m": 14.0,
+          "hour_of_day": 3.08
+        },
+        {
+          "sample_id": "122048_1767709500",
+          "tr_id": "122048",
+          "target_delay_s": -276.0,
+          "pred": 16.16,
+          "signed_error": 292.16,
+          "abs_error": 292.16,
+          "cur_dev_s": 0.0,
+          "time_to_stop_s": 780.0,
+          "dist_to_stop_m": 40.03,
+          "packets_5m": 26,
+          "gap_since_last_pkt_s": 7.0,
+          "stopped_ratio_5m": 0.4,
+          "speed_mean_1m": 12.6,
+          "segment_speed_mean_5m": 17.11,
+          "hour_of_day": 14.42
+        },
+        {
+          "sample_id": "132430_1767701100",
+          "tr_id": "132430",
+          "target_delay_s": -262.0,
+          "pred": 13.38,
+          "signed_error": 275.38,
+          "abs_error": 275.38,
+          "cur_dev_s": -91.0,
+          "time_to_stop_s": 720.0,
+          "dist_to_stop_m": 3422.46,
+          "packets_5m": 63,
+          "gap_since_last_pkt_s": 9.0,
+          "stopped_ratio_5m": 0.41,
+          "speed_mean_1m": 0.0,
+          "segment_speed_mean_5m": 8.15,
+          "hour_of_day": 12.08
+        },
+        {
+          "sample_id": "122048_1767684000",
+          "tr_id": "122048",
+          "target_delay_s": 415.0,
+          "pred": 141.89,
+          "signed_error": -273.11,
+          "abs_error": 273.11,
+          "cur_dev_s": 599.0,
+          "time_to_stop_s": 720.0,
+          "dist_to_stop_m": 2517.08,
+          "packets_5m": 25,
+          "gap_since_last_pkt_s": 9.0,
+          "stopped_ratio_5m": 0.71,
+          "speed_mean_1m": 1.5,
+          "segment_speed_mean_5m": 0.88,
+          "hour_of_day": 7.33
+        },
+        {
+          "sample_id": "131672_1767667800",
+          "tr_id": "131672",
+          "target_delay_s": 312.0,
+          "pred": 39.01,
+          "signed_error": -272.99,
+          "abs_error": 272.99,
+          "cur_dev_s": 79.0,
+          "time_to_stop_s": 720.0,
+          "dist_to_stop_m": 2257.13,
+          "packets_5m": 20,
+          "gap_since_last_pkt_s": 11.0,
+          "stopped_ratio_5m": 1.0,
+          "speed_mean_1m": 0.0,
+          "segment_speed_mean_5m": 0.0,
+          "hour_of_day": 2.83
+        },
+        {
+          "sample_id": "122048_1767684300",
+          "tr_id": "122048",
+          "target_delay_s": 408.0,
+          "pred": 137.89,
+          "signed_error": -270.11,
+          "abs_error": 270.11,
+          "cur_dev_s": 559.0,
+          "time_to_stop_s": 720.0,
+          "dist_to_stop_m": 4216.91,
+          "packets_5m": 22,
+          "gap_since_last_pkt_s": 7.0,
+          "stopped_ratio_5m": 0.95,
+          "speed_mean_1m": 1.4,
+          "segment_speed_mean_5m": 0.36,
+          "hour_of_day": 7.42
+        },
+        {
+          "sample_id": "122658_1767696300",
+          "tr_id": "122658",
+          "target_delay_s": 271.0,
+          "pred": 3.41,
+          "signed_error": -267.59,
+          "abs_error": 267.59,
+          "cur_dev_s": -34.0,
+          "time_to_stop_s": 720.0,
+          "dist_to_stop_m": 2196.42,
+          "packets_5m": 44,
+          "gap_since_last_pkt_s": 2.0,
+          "stopped_ratio_5m": 0.68,
+          "speed_mean_1m": 0.71,
+          "segment_speed_mean_5m": 0.98,
+          "hour_of_day": 10.75
+        },
+        {
+          "sample_id": "135081_1767725700",
+          "tr_id": "135081",
+          "target_delay_s": 313.0,
+          "pred": 59.9,
+          "signed_error": -253.1,
+          "abs_error": 253.1,
+          "cur_dev_s": 188.0,
+          "time_to_stop_s": 660.0,
+          "dist_to_stop_m": 1317.66,
+          "packets_5m": 32,
+          "gap_since_last_pkt_s": 8.0,
+          "stopped_ratio_5m": 0.44,
+          "speed_mean_1m": 3.0,
+          "segment_speed_mean_5m": 12.33,
+          "hour_of_day": 18.92
+        },
+        {
+          "sample_id": "132430_1767701400",
+          "tr_id": "132430",
+          "target_delay_s": -258.0,
+          "pred": -7.24,
+          "signed_error": 250.76,
+          "abs_error": 250.76,
+          "cur_dev_s": -51.0,
+          "time_to_stop_s": 660.0,
+          "dist_to_stop_m": 2406.25,
+          "packets_5m": 78,
+          "gap_since_last_pkt_s": 9.0,
+          "stopped_ratio_5m": 0.12,
+          "speed_mean_1m": 27.5,
+          "segment_speed_mean_5m": 10.67,
+          "hour_of_day": 12.17
+        },
+        {
+          "sample_id": "134040_1767674100",
+          "tr_id": "134040",
+          "target_delay_s": 369.0,
+          "pred": 120.96,
+          "signed_error": -248.04,
+          "abs_error": 248.04,
+          "cur_dev_s": 179.0,
+          "time_to_stop_s": 660.0,
+          "dist_to_stop_m": 2519.4,
+          "packets_5m": 37,
+          "gap_since_last_pkt_s": 14.0,
+          "stopped_ratio_5m": 0.29,
+          "speed_mean_1m": 6.83,
+          "segment_speed_mean_5m": 7.64,
+          "hour_of_day": 4.58
+        },
+        {
+          "sample_id": "122658_1767697200",
+          "tr_id": "122658",
+          "target_delay_s": 352.0,
+          "pred": 105.37,
+          "signed_error": -246.63,
+          "abs_error": 246.63,
+          "cur_dev_s": 247.0,
+          "time_to_stop_s": 660.0,
+          "dist_to_stop_m": 4755.26,
+          "packets_5m": 16,
+          "gap_since_last_pkt_s": 7.0,
+          "stopped_ratio_5m": 0.13,
+          "speed_mean_1m": 38.25,
+          "segment_speed_mean_5m": 35.67,
+          "hour_of_day": 11.0
+        },
+        {
+          "sample_id": "133957_1767706500",
+          "tr_id": "133957",
+          "target_delay_s": 296.0,
+          "pred": 58.53,
+          "signed_error": -237.47,
+          "abs_error": 237.47,
+          "cur_dev_s": 97.0,
+          "time_to_stop_s": 660.0,
+          "dist_to_stop_m": 1076.37,
+          "packets_5m": 29,
+          "gap_since_last_pkt_s": 1.0,
+          "stopped_ratio_5m": 0.59,
+          "speed_mean_1m": 2.83,
+          "segment_speed_mean_5m": 3.0,
+          "hour_of_day": 13.58
+        },
+        {
+          "sample_id": "134040_1767673800",
+          "tr_id": "134040",
+          "target_delay_s": 332.0,
+          "pred": 100.56,
+          "signed_error": -231.44,
+          "abs_error": 231.44,
+          "cur_dev_s": 116.0,
+          "time_to_stop_s": 660.0,
+          "dist_to_stop_m": 2330.54,
+          "packets_5m": 26,
+          "gap_since_last_pkt_s": 12.0,
+          "stopped_ratio_5m": 0.75,
+          "speed_mean_1m": 5.62,
+          "segment_speed_mean_5m": 1.88,
+          "hour_of_day": 4.5
+        },
+        {
+          "sample_id": "133957_1767706800",
+          "tr_id": "133957",
+          "target_delay_s": 294.0,
+          "pred": 67.01,
+          "signed_error": -226.99,
+          "abs_error": 226.99,
+          "cur_dev_s": 161.0,
+          "time_to_stop_s": 660.0,
+          "dist_to_stop_m": NaN,
+          "packets_5m": 40,
+          "gap_since_last_pkt_s": 0.0,
+          "stopped_ratio_5m": 0.22,
+          "speed_mean_1m": 19.0,
+          "segment_speed_mean_5m": NaN,
+          "hour_of_day": 13.67
+        }
+      ]
+    }
+  }
+}
