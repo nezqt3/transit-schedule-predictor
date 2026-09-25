@@ -29,14 +29,14 @@ CELL_TERMO16 = 16
 _CELL_STRUCTS: dict[int, str] = {
     # timestamp, longitude, latitude, extra_dop, bat_voltage,
     # speed_avg, speed_max, course, track, altitude, nsat, pdop
-    CELL_NAV00: "<IIIHBBBHHBBB",
+    CELL_NAV00: "<IIIBBHHHHHBB",
     # an_in0..3, di_in, di_out, di0..3_counter, odometer, csq, gprs_state,
     # accel_energy, ext_volt
-    CELL_INT_SENSOR02: "<HHHHBBHHHHIBBb",
+    CELL_INT_SENSOR02: "<HHHHBBHHHHIBBBb",
     CELL_USI08: "<BHHB",
     # sec_flag_status, all_time_engine, all_track, all_fuel_consum,
     # fuel_level, speed_turn_engine, t_engine, speed, pressure_axis(5), flag_alarm
-    CELL_CAN10: "<IIIIHHhB5HB",
+    CELL_CAN10: "<IIIIHHhB5HI",
     CELL_TERMO16: "<Ii",
 }
 
@@ -240,21 +240,21 @@ def decode_cell(cell_type: int, payload: bytes) -> object | None:
             timestamp, longitude, latitude, extra_dop, bat_voltage,
             speed_avg, speed_max, course, track, altitude, nsat, _pdop,
         ) = values
-        south = bool(extra_dop & 0x20)
-        west = bool(extra_dop & 0x40)
+        north = bool(extra_dop & 0x20)
+        east = bool(extra_dop & 0x40)
         valid = bool(extra_dop & 0x80)
         if nsat == NAV_SATELLITES_WITH_ALTITUDE:
             altitude = 0
         return Nav00(
             timestamp=timestamp,
-            latitude=-latitude / 1e7 if south else latitude / 1e7,
-            longitude=-longitude / 1e7 if west else longitude / 1e7,
+            latitude=latitude / 1e7 if north else -latitude / 1e7,
+            longitude=longitude / 1e7 if east else -longitude / 1e7,
             coordinates_valid=valid,
             alert=bool(extra_dop & 0x02),
             sos=bool(extra_dop & 0x04),
             battery_voltage_mv=bat_voltage * 20,
-            speed_avg=speed_avg / 10,
-            speed_max=speed_max / 10,
+            speed_avg=float(speed_avg),
+            speed_max=float(speed_max),
             course=course,
             track_m=track,
             altitude_m=altitude,
@@ -398,16 +398,16 @@ def build_nav00_payload(
     speed_avg: float = 0.0,
     course: int = 0,
 ) -> bytes:
-    extra_dop = 0x80  # координаты валидны, N/E
+    extra_dop = 0xE0  # координаты валидны, N/E
     return struct.pack(
-        "<IIIHBBBHHBBB",
+        "<IIIBBHHHHHBB",
         timestamp,
         int(abs(longitude) * 1e7),
         int(abs(latitude) * 1e7),
         extra_dop,
         250,
-        int(speed_avg * 10),
-        int(speed_avg * 10),
+        int(round(speed_avg)),
+        int(round(speed_avg)),
         course,
         0,
         150,

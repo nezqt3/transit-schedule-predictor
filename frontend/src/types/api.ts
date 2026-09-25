@@ -32,6 +32,11 @@ export type TelemetryEvent = {
   can: CanData | null
 }
 
+export type TelemetryStreamMessage =
+  | { type: 'vehicle_snapshot'; data: TelemetryEvent[] }
+  | { type: 'vehicle_update'; data: TelemetryEvent }
+  | { type: 'heartbeat' }
+
 /** Зеркалирует backend/app/schemas/prediction.py. */
 
 export type PredictionRequest = {
@@ -46,6 +51,17 @@ export type PredictionRequest = {
 export type PredictionResponse = {
   tr_id: number
   prediction: number
+  model_version: string
+}
+
+export type StoredPrediction = {
+  tr_id: number
+  unit_id: number
+  prediction_time: string
+  target_stop_id: number
+  target_time: string
+  current_delay_s: number
+  predicted_delay_s: number
   model_version: string
 }
 

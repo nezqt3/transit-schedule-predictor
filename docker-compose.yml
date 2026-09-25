@@ -21,11 +21,14 @@ services:
       ML_SERVICE_HOST: 0.0.0.0
       ML_SERVICE_PORT: 8001
       ARTIFACTS_DIR: /app/artifacts
-      MODEL_NAME: ${MODEL_NAME:-catboost}
+      MODEL_NAME: ${MODEL_NAME:-lightgbm_plan}
       MODEL_VERSION: ${MODEL_VERSION:-1.0}
+      SCHEDULE_PLAN_PATH: /app/runtime_data/schedule_plan.csv
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
       - "8001:8001"
+    volumes:
+      - ./data/raw/validate:/app/runtime_data:ro
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
       interval: 10s
@@ -42,6 +45,9 @@ services:
       NDTP_PORT: 9201
       RUNTIME_SCHEDULE_PATH: /app/runtime_data/schedule_plan.csv
       RUNTIME_TRAFFIC_PATH: /app/runtime_data/traffic.csv
+      REPLAY_SCHEDULE_PATH: /app/replay_data/schedule.csv
+      REPLAY_TRAFFIC_PATH: /app/replay_data/traffic.csv
+      REPLAY_LABELS_PATH: /app/replay_labels.csv
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: ${POSTGRES_DB:-transport}
@@ -53,6 +59,8 @@ services:
       - "9201:9201"
     volumes:
       - ./data/raw/validate:/app/runtime_data:ro
+      - ./data/raw/test:/app/replay_data:ro
+      - ./data/raw/labels/labels_test.csv:/app/replay_labels.csv:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -62,9 +70,10 @@ services:
   frontend:
     build:
       context: ./frontend
+      network: host
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api/v1}
-        VITE_APP_NAME: ${VITE_APP_NAME:-Диспетчерская · прогноз задержек}
+        VITE_APP_NAME: ${VITE_APP_NAME:-Сигнальная сетка}
         VITE_POLL_INTERVAL_MS: ${VITE_POLL_INTERVAL_MS:-3000}
     environment:
       BACKEND_UPSTREAM: backend:8000

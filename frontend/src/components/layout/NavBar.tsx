@@ -1,4 +1,4 @@
-import { Bus, Gauge } from 'lucide-react'
+import { List, Map, Play } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
 import { env } from '@/config/env'
@@ -6,15 +6,15 @@ import { BackendStatus } from '@/features/health/BackendStatus'
 import { cn } from '@/lib/cn'
 
 const links = [
-  { to: '/', label: 'Обзор', icon: Gauge, end: true },
-  { to: '/vehicles', label: 'Телеметрия', icon: Bus, end: false },
+  { to: '/', label: 'Карта', icon: Map, end: true },
+  { to: '/vehicles', label: 'Таблица', icon: List, end: false },
+  { to: '/replay', label: 'Январь', icon: Play, end: false },
 ]
 
 export function NavBar() {
   return (
     <header className="topbar">
       <div className="topbar__brand">
-        <span className="topbar__dot" aria-hidden />
         {env.appName}
       </div>
 
@@ -33,6 +33,7 @@ export function NavBar() {
       </nav>
 
       <BackendStatus />
+      <span className="topbar__date">{new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
     </header>
   )
 }

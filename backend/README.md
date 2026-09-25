@@ -42,6 +42,9 @@ NDTP-пакеты поступают на TCP `:9201`. `TelemetryService` хра
 `stop_lat`, `stop_lon` в query: эти три поля остановки указываются вместе.
 `POST /api/v1/predictions` принимает текущую точку и метаданные остановки явно.
 Оба маршрута проверяют горизонт `(T+10 минут, T+15 минут]`.
+Успешные прогнозы доступны через `GET /api/v1/predictions` и
+`GET /api/v1/predictions/{tr_id}/latest`. Телеметрия идёт во фронт через
+`WS /api/v1/ws`; REST остаётся резервным источником.
 
 ---
 
@@ -639,3 +642,19 @@ ML-модель ничего не должна знать про NDTP, WebSocket
 Frontend ничего не должен знать про NDTP или CatBoost.
 
 Backend связывает эти части между собой.
+
+## Историческое воспроизведение CSV
+
+Отдельный от NDTP источник доступен через `/api/v1/replay`:
+
+```text
+GET  /api/v1/replay/vehicles
+GET  /api/v1/replay/vehicles/{tr_id}
+POST /api/v1/replay/predict/{sample_id}
+```
+
+Источник: `test/traffic.csv`, плановые поля `test/schedule.csv` и
+`labels_test.csv`. В ML отправляются только строки телеметрии с
+`event_time <= T` и `receive_time <= T`; `time_fact_begin` не читается.
+`target_delay_s` нужен только интерфейсу для сравнения после исторического
+времени прибытия. Конфигурация путей — `REPLAY_*_PATH`.

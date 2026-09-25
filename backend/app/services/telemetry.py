@@ -5,6 +5,7 @@
 нормализованный TelemetryEvent.
 """
 
+import asyncio
 from collections import OrderedDict, deque
 from datetime import timedelta
 from threading import RLock
@@ -21,6 +22,7 @@ class TelemetryService:
         self._max_units = max_units
         self._max_points = max_points
         self._lock = RLock()
+        self._subscribers: set[asyncio.Queue[TelemetryEvent]] = set()
 
     def record(self, event: TelemetryEvent) -> None:
         """Сохранить последнее событие устройства."""
@@ -36,6 +38,10 @@ class TelemetryService:
             if len(self._latest) > self._max_units:
                 evicted, _ = self._latest.popitem(last=False)
                 self._history.pop(evicted, None)
+            for queue in self._subscribers:
+                if queue.full():
+                    queue.get_nowait()
+                queue.put_nowait(event)
 
     async def handle_event(self, event: TelemetryEvent) -> None:
         """Callback для NDTP-сервера."""
@@ -57,3 +63,14 @@ class TelemetryService:
     def count(self) -> int:
         with self._lock:
             return len(self._latest)
+
+    def subscribe(self) -> asyncio.Queue[TelemetryEvent]:
+        """Subscribe to bounded live updates without blocking the NDTP receiver."""
+        queue: asyncio.Queue[TelemetryEvent] = asyncio.Queue(maxsize=100)
+        with self._lock:
+            self._subscribers.add(queue)
+        return queue
+
+    def unsubscribe(self, queue: asyncio.Queue[TelemetryEvent]) -> None:
+        with self._lock:
+            self._subscribers.discard(queue)
