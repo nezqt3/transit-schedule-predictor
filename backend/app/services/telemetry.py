@@ -5,7 +5,9 @@
 нормализованный TelemetryEvent.
 """
 
-from collections import OrderedDict
+from collections import OrderedDict, deque
+from datetime import timedelta
+from threading import RLock
 
 from app.ndtp.schemas import TelemetryEvent
 
@@ -13,26 +15,45 @@ from app.ndtp.schemas import TelemetryEvent
 class TelemetryService:
     """In-memory реестр последних телеметрия-событий по каждому устройству."""
 
-    def __init__(self, max_units: int = 500) -> None:
+    def __init__(self, max_units: int = 500, max_points: int = 150) -> None:
         self._latest: OrderedDict[int, TelemetryEvent] = OrderedDict()
+        self._history: OrderedDict[int, deque[TelemetryEvent]] = OrderedDict()
         self._max_units = max_units
+        self._max_points = max_points
+        self._lock = RLock()
 
     def record(self, event: TelemetryEvent) -> None:
         """Сохранить последнее событие устройства."""
-        self._latest.pop(event.unit_id, None)
-        self._latest[event.unit_id] = event
-        if len(self._latest) > self._max_units:
-            self._latest.popitem(last=False)
+        with self._lock:
+            self._latest.pop(event.unit_id, None)
+            self._latest[event.unit_id] = event
+            points = self._history.pop(event.unit_id, deque(maxlen=self._max_points))
+            points.append(event)
+            cutoff = event.event_time - timedelta(minutes=20)
+            while points and points[0].event_time < cutoff:
+                points.popleft()
+            self._history[event.unit_id] = points
+            if len(self._latest) > self._max_units:
+                evicted, _ = self._latest.popitem(last=False)
+                self._history.pop(evicted, None)
 
     async def handle_event(self, event: TelemetryEvent) -> None:
         """Callback для NDTP-сервера."""
         self.record(event)
 
     def get_latest(self, unit_id: int) -> TelemetryEvent | None:
-        return self._latest.get(unit_id)
+        with self._lock:
+            return self._latest.get(unit_id)
+
+    def get_recent(self, unit_id: int) -> list[TelemetryEvent]:
+        """Snapshot at most 150 packets for one device."""
+        with self._lock:
+            return list(self._history.get(unit_id, ()))
 
     def list_latest(self) -> list[TelemetryEvent]:
-        return list(self._latest.values())
+        with self._lock:
+            return list(self._latest.values())
 
     def count(self) -> int:
-        return len(self._latest)
+        with self._lock:
+            return len(self._latest)

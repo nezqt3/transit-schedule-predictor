@@ -1,4 +1,4 @@
-.PHONY: up down build logs test docs
+.PHONY: up down build logs test docs features train submit run-online
 
 up:
 	docker compose up -d
@@ -13,7 +13,20 @@ logs:
 	docker compose logs -f
 
 test:
-	cd backend && pytest
+	cd backend && python -m pytest
+	cd ml && python -m pytest
+
+features:
+	cd ml && python -m src.offline.dataset_builder --split all
+
+train:
+	cd ml && python -m src.offline.train
+
+submit:
+	cd ml && python -m src.offline.predict_submission
+
+run-online:
+	docker compose up --build ml backend
 
 lint:
 	cd backend && ruff check .

@@ -1,0 +1,33 @@
+{
+  "folds": [
+    {
+      "n": 664,
+      "mae": 82.71485470643967
+    },
+    {
+      "n": 668,
+      "mae": 71.48514817432799
+    },
+    {
+      "n": 651,
+      "mae": 64.79295482648286
+    },
+    {
+      "n": 902,
+      "mae": 85.55886540506697
+    }
+  ],
+  "plan_cv_mae": 76.95981029217947,
+  "plan_cb_test_mae": 66.05289652657879,
+  "baseline_cb_test_mae": 72.02654481726626,
+  "candidates": {
+    "plan_full": {
+      "test_mae": 68.21423560206436,
+      "file": "C:\\Users\\user\\Documents\\Coding\\transit-schedule-predictor\\data\\submissions\\plan_full_torch42_submission.csv"
+    },
+    "plan_half": {
+      "test_mae": 69.81133312284791,
+      "file": "C:\\Users\\user\\Documents\\Coding\\transit-schedule-predictor\\data\\submissions\\plan_half_torch42_submission.csv"
+    }
+  }
+}

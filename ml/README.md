@@ -6,9 +6,10 @@
 
 | Каталог | Назначение |
 | --- | --- |
-| `src/dataset.py` | чтение и проверка CSV из `data/raw` |
-| `src/features.py` | бизнес- и временные признаки |
-| `src/preprocessing.py` | единый fit/transform-пайплайн, без утечки target |
+| `src/offline/dataset_builder.py` | чтение CSV и временное соединение точек с телеметрией |
+| `src/features.py` | единое ядро признаков для offline и online |
+| `src/offline/` | сборка Parquet, обучение residual CatBoost, сабмит |
+| `src/preprocessing.py` | очистка исходных таблиц для исследовательских экспериментов |
 | `src/models/` | отдельные реализации CatBoost, PyTorch и ансамбля |
 | `src/training/` | воспроизводимые точки запуска обучения |
 | `src/inference/` | загрузка артефактов и предсказание |
@@ -21,22 +22,64 @@
 Из корня репозитория:
 
 ```bash
-cd ml
-python -m venv .venv && source .venv/bin/activate
-pip install -e .
-python -m src.training.train_catboost --data-dir ../data --output-dir artifacts
-python -m src.training.train_torch --data-dir ../data --output-dir artifacts
-uvicorn service.main:app --reload --port 8001
+python -m pip install -r ml/requirements.txt
+make features
+make train
+make submit
+docker compose up --build
 ```
+
+Без `make` используйте из каталога `ml`: `python -m src.offline.dataset_builder
+--split all`, затем `python -m src.offline.train` и
+`python -m src.offline.predict_submission`. На Windows команды также можно
+запускать напрямую в PowerShell. Для локального API:
+`cd ml && python -m uvicorn service.main:app --port 8001`.
+
+Обучение создаёт `ml/artifacts/catboost_residual_mae.cbm` и метаданные `.json`.
+Они не входят в Git: перед `docker compose up --build` нужен обученный артефакт.
+Если его нет, ML-сервис явно завершится с ошибкой. Метрика test сохраняется в
+метаданных; для нормированного score организаторов передайте опубликованное
+`MAE_TARGET` через переменную окружения или `--mae-target`. Без него поле score
+остаётся `null`, чтобы не выдумывать константу.
 
 Проверка сервиса:
 
 ```bash
 curl http://localhost:8001/health
-curl -X POST http://localhost:8001/predict -H 'Content-Type: application/json' -d '{"tr_id":"122048","T":"2026-01-06 02:10:00","cur_dev_s":0,"speed":0,"lat":55.75,"lon":37.61}'
+curl -X POST http://localhost:8001/predict -H 'Content-Type: application/json' -d '{"tr_id":122048,"T":"2026-01-06T02:10:00","cur_dev_s":0,"target_stop_id":53699018679,"target_time_begin":"2026-01-06T02:22:00","stop_lat":55.61389253,"stop_lon":37.74851317,"telemetry":[]}'
 ```
 
-Для разработки зависимости ML можно установить отдельно: `pip install -e '.[dev,models]'`.
+PyTorch для отдельных последовательных экспериментов ставится отдельно:
+`python -m pip install -e './ml[models]'` из корня проекта. Runtime Docker
+использует CatBoost на CPU.
+
+Текущий конкурсный CatBoost-ансамбль и экспериментальный PyTorch blend на
+обработанных CSV воспроизводятся из корня проекта так:
+
+```bash
+python scripts/exp_simple_target_mode.py --write-candidate
+python scripts/exp_torch_blend.py
+python scripts/exp_torch_blend.py --export-experimental-weight 0.05
+```
+
+Последняя команда создаёт `data/submissions/catboost_torch_5pct_experimental_submission.csv`.
+PyTorch-модель и параметры нормализации сохраняются в `ml/artifacts/torch_tabular.pt`.
+Вес PyTorch подбирается на временных срезах train; если лучший вес равен нулю,
+обычный запуск не создаёт новый сабмит. Экспериментальный CSV с явно заданным
+весом полезен для отдельной проверки, но не заменяет модель с лучшей локальной
+валидацией автоматически.
+
+Для сравнения новых моделей по отдельности:
+
+```bash
+python scripts/exp_plan_routes.py
+python scripts/exp_torch_seeds.py
+python scripts/exp_lightgbm_plan.py
+```
+
+Признаки планового маршрута строятся только из `tr_id`, `tt_action_item_id`,
+`time_begin` и `geom` расписания. Поля фактического прибытия и отклонения
+(`time_fact_begin`, `dev_s`) в этих экспериментах не читаются.
 
 ## Данные и схема
 
@@ -50,13 +93,19 @@ data/raw/test/traffic.csv
 data/raw/test/schedule.csv
 ```
 
-`labels_train.csv` — единственный источник target. Признаки должны строиться только из доступного на момент `T` контекста. Это особенно важно для `target_delay_s`: его нельзя передавать в `features.py` при inference.
+Метки train и test используются отдельно. Для каждого `(tr_id, T)` окно
+телеметрии равно `[T−15 минут, T]`; используются только пакеты с
+`location_valid=True`, `event_time<=T` и, если есть, `receive_time<=T`.
+Модель учится на `target_delay_s−cur_dev_s`, а сервис возвращает сумму
+`cur_dev_s+predicted_delta`. `submission.csv` имеет две колонки
+`sample_id;prediction`, UTF-8 и ограничение прогнозов `[-300, 700]`.
 
 ## Обучение и артефакты
 
-Оба train-скрипта сохраняют модель, конфигурацию признаков и метрики в `ml/artifacts/`. Имена файлов фиксированы и подходят для загрузки сервисом. Папка оставлена в Git через `.gitkeep`; реальные веса следует хранить в Kaggle Dataset, object storage или Git LFS, а не в обычном Git.
+Команда `make train` сохраняет модель, список признаков и метрики в `ml/artifacts/`.
 
-Рекомендуемый порядок: `01_eda.ipynb` (качество данных и временной split), `02_catboost.ipynb` (табличный baseline), `03_pytorch.ipynb` (нейросетевая модель), затем оба train-скрипта, проверка `metrics.json` и запуск FastAPI.
+Исследовательские notebooks и старые эксперименты остаются отдельно от
+канонического контура `src/offline/`.
 
 ## Kaggle: эксперименты и хранение результата
 
@@ -83,7 +132,10 @@ kaggle datasets download -d <owner>/<dataset-slug> -p ml/artifacts --unzip
 
 ## Контракт сервиса
 
-`POST /predict` принимает JSON с контекстом рейса и возвращает `delay_seconds`, `delay_class` и `model_version`. `GET /health` используется Docker healthcheck. Если артефакт отсутствует, сервис отвечает понятной ошибкой конфигурации, а не использует случайные веса.
+`POST /predict` принимает `tr_id`, `T`, `cur_dev_s`, идентификатор и
+координаты целевой остановки, её плановое время и список нормализованных
+точек NDTP. Ответ: `prediction` в секундах, `model` и `model_version`.
+`GET /health` используется Docker healthcheck.
 
 ## Принципы воспроизводимости
 

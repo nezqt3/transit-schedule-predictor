@@ -11,6 +11,8 @@ stops (tt_action_item_id -> stop_lat/stop_lon).
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import numpy as np
 import pandas as pd
 
@@ -470,3 +472,139 @@ def make_stops_lookup(*schedule_frames: pd.DataFrame) -> pd.DataFrame:
         ["tt_action_item_id", "stop_lat", "stop_lon"]
     ].drop_duplicates("tt_action_item_id")
     return stops.set_index("tt_action_item_id")
+
+
+# This compact feature contract is shared by the offline builder and the
+# real-time inference service. Existing experimental build_features remains
+# available for the notebooks and comparison runs.
+POINT_FEATURE_COLUMNS = [
+    "cur_dev_s", "dist_to_target_m", "time_to_target_plan_s",
+    "required_speed_kmh", "speed_last_kmh", "speed_mean_1m",
+    "speed_mean_3m", "speed_mean_5m", "speed_p90_5m",
+    "speed_std_5m", "idle_ratio_5m", "speed_to_required_ratio",
+    "speed_mean_to_required_ratio", "hour_of_day", "day_of_week",
+    "hour_sin", "hour_cos", "last_lat", "last_lon", "last_heading",
+    "telemetry_age_s", "points_5m", "points_15m",
+]
+
+
+def extract_features_for_point(
+    telemetry_df_or_points: pd.DataFrame | list[dict],
+    target_stop_info: dict,
+    cur_dev_s: float,
+    T: str | pd.Timestamp,
+) -> dict[str, float]:
+    """Extract a causal, 15-minute telemetry window for one prediction point.
+
+    Args:
+        telemetry_df_or_points: One vehicle's telemetry, with event_time and
+            location_valid. If receive_time exists, it must also be at or before T.
+        target_stop_info: stop_lat, stop_lon, and target_time_begin.
+        cur_dev_s: Current schedule deviation in seconds.
+        T: Prediction timestamp.
+
+    Returns:
+        A fixed numeric feature mapping suitable for training and inference.
+    """
+    t = pd.Timestamp(T)
+    target_time = pd.Timestamp(target_stop_info["target_time_begin"])
+    if t.tzinfo is not None:
+        t = t.tz_convert("UTC").tz_localize(None)
+    if target_time.tzinfo is not None:
+        target_time = target_time.tz_convert("UTC").tz_localize(None)
+    horizon_s = float((target_time - t).total_seconds())
+    hour = t.hour + t.minute / 60 + t.second / 3600
+    out = {name: float("nan") for name in POINT_FEATURE_COLUMNS}
+    out.update(
+        cur_dev_s=float(cur_dev_s),
+        time_to_target_plan_s=horizon_s,
+        hour_of_day=hour,
+        day_of_week=float(t.dayofweek),
+        hour_sin=float(np.sin(2 * np.pi * hour / 24)),
+        hour_cos=float(np.cos(2 * np.pi * hour / 24)),
+        points_5m=0.0,
+        points_15m=0.0,
+    )
+
+    if isinstance(telemetry_df_or_points, pd.DataFrame):
+        columns = set(telemetry_df_or_points.columns)
+        records = telemetry_df_or_points.to_dict("records")
+    else:
+        records = telemetry_df_or_points
+        columns = set().union(*(record.keys() for record in records)) if records else set()
+    if not records:
+        return out
+    required = {"event_time", "location_valid", "lat", "lon"}
+    missing = required - columns
+    if missing:
+        raise ValueError(f"telemetry missing columns: {sorted(missing)}")
+
+    def event_datetime(value) -> datetime | None:
+        if value is None or pd.isna(value):
+            return None
+        dt = value if isinstance(value, datetime) else pd.Timestamp(value).to_pydatetime()
+        return dt.astimezone(timezone.utc).replace(tzinfo=None) if dt.tzinfo else dt
+
+    def numeric(value) -> float:
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return float("nan")
+
+    t_naive = t.to_pydatetime()
+    start = (t - pd.Timedelta(minutes=15)).to_pydatetime()
+    has_receive_time = "receive_time" in columns
+    window: list[tuple[datetime, float, float, float, float]] = []
+    for record in records:
+        valid = str(record.get("location_valid", False)).lower() in ("true", "1")
+        if not valid:
+            continue
+        event_time = event_datetime(record.get("event_time"))
+        if event_time is None or not start <= event_time <= t_naive:
+            continue
+        if has_receive_time:
+            received = event_datetime(record.get("receive_time"))
+            if received is None or received > t_naive:
+                continue
+        lat = numeric(record.get("lat"))
+        lon = numeric(record.get("lon"))
+        if not (-90 <= lat <= 90 and -180 <= lon <= 180) or (lat == 0 and lon == 0):
+            continue
+        speed = numeric(record.get("speed"))
+        if not 0 <= speed <= 120:
+            speed = float("nan")
+        window.append((event_time, lat, lon, speed, numeric(record.get("heading"))))
+    if not window:
+        return out
+    window.sort(key=lambda point: point[0])
+    last = window[-1]
+    stop_lat = float(target_stop_info["stop_lat"])
+    stop_lon = float(target_stop_info["stop_lon"])
+    distance = haversine_m(last[1], last[2], stop_lat, stop_lon)
+    required_kmh = distance / horizon_s * 3.6 if horizon_s > 0 else float("nan")
+    out.update(
+        dist_to_target_m=distance,
+        required_speed_kmh=required_kmh,
+        speed_last_kmh=last[3],
+        last_lat=last[1],
+        last_lon=last[2],
+        last_heading=last[4],
+        telemetry_age_s=float((t_naive - last[0]).total_seconds()),
+        points_15m=float(len(window)),
+    )
+    for minutes in (1, 3, 5):
+        cutoff = (t - pd.Timedelta(minutes=minutes)).to_pydatetime()
+        recent = [point for point in window if point[0] >= cutoff]
+        speeds = np.array([point[3] for point in recent if np.isfinite(point[3])])
+        out[f"speed_mean_{minutes}m"] = float(speeds.mean()) if len(speeds) else float("nan")
+        if minutes == 5:
+            out["points_5m"] = float(len(recent))
+            if len(speeds):
+                out["speed_p90_5m"] = float(np.quantile(speeds, 0.9))
+                out["speed_std_5m"] = float(speeds.std(ddof=0))
+                out["idle_ratio_5m"] = float((speeds < 3).mean())
+    if np.isfinite(required_kmh):
+        denominator = max(required_kmh, 1.0)
+        out["speed_to_required_ratio"] = out["speed_last_kmh"] / denominator
+        out["speed_mean_to_required_ratio"] = out["speed_mean_5m"] / denominator
+    return out

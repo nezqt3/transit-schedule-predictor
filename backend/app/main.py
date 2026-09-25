@@ -1,11 +1,13 @@
 import logging
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI
 
 from app.api.router import api_router
 from app.core.config import settings
 from app.ndtp.server import NdtServer
+from app.services.runtime_lookup import RuntimeLookup
 from app.services.telemetry import TelemetryService
 
 
@@ -14,6 +16,14 @@ async def lifespan(app: FastAPI):
     # startup
     telemetry = TelemetryService()
     app.state.telemetry = telemetry
+    app.state.runtime_lookup = RuntimeLookup(
+        settings.runtime_schedule_path,
+        settings.runtime_traffic_path,
+    )
+    app.state.ml_client = httpx.AsyncClient(
+        timeout=settings.ml_request_timeout_s,
+        trust_env=False,
+    )
 
     ndtp_server = NdtServer(
         on_event=telemetry.handle_event,
@@ -39,6 +49,7 @@ async def lifespan(app: FastAPI):
 
     # shutdown
     await ndtp_server.stop()
+    await app.state.ml_client.aclose()
 
 
 app = FastAPI(

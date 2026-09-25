@@ -40,6 +40,8 @@ services:
       ML_SERVICE_URL: http://ml:8001
       NDTP_HOST: 0.0.0.0
       NDTP_PORT: 9201
+      RUNTIME_SCHEDULE_PATH: /app/runtime_data/schedule_plan.csv
+      RUNTIME_TRAFFIC_PATH: /app/runtime_data/traffic.csv
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: ${POSTGRES_DB:-transport}
@@ -49,6 +51,8 @@ services:
     ports:
       - "8000:8000"
       - "9201:9201"
+    volumes:
+      - ./data/raw/validate:/app/runtime_data:ro
     depends_on:
       postgres:
         condition: service_healthy
