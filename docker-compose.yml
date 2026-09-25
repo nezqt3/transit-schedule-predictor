@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-transport}
+      POSTGRES_USER: ${POSTGRES_USER:-transport}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-transport}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-transport}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ml:
+    build: ./ml
+    environment:
+      ML_SERVICE_HOST: 0.0.0.0
+      ML_SERVICE_PORT: 8001
+      ARTIFACTS_DIR: /app/artifacts
+      MODEL_NAME: ${MODEL_NAME:-catboost}
+      MODEL_VERSION: ${MODEL_VERSION:-1.0}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    environment:
+      BACKEND_HOST: 0.0.0.0
+      BACKEND_PORT: 8000
+      ML_SERVICE_URL: http://ml:8001
+      NDTP_HOST: 0.0.0.0
+      NDTP_PORT: 9201
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-transport}
+      POSTGRES_USER: ${POSTGRES_USER:-transport}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-transport}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "8000:8000"
+      - "9201:9201"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ml:
+        condition: service_started
+
+volumes:
+  postgres_data:
