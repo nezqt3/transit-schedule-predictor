@@ -19,4 +19,6 @@ export const queryClient = new QueryClient({
 export const queryKeys = {
   health: ['health'] as const,
   vehicles: ['vehicles'] as const,
+  predictions: ['predictions'] as const,
+  vehicleHistory: (unitId: number) => ['vehicles', unitId, 'history'] as const,
 }

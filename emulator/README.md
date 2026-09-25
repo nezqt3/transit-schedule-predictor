@@ -67,6 +67,11 @@ curl -s -X POST http://localhost:18080/api/config \
   -d @config.json
 ```
 
+`config.json` в этой папке уже нацелен на Backend через
+`host.docker.internal:9201`. Перед отправкой конфигурации запустите
+`docker compose up -d --build backend frontend`; поступившие пакеты видны на
+`http://localhost:8080/` и через `GET /api/v1/vehicles`.
+
 Невалидный конфиг → HTTP 400, тело `{ "timestamp", "status", "error", "message" }`.
 
 ---

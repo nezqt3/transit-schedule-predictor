@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     artifacts_dir: str = "artifacts"
     model_name: str = "catboost"
     model_version: str = "1.0"
+    schedule_plan_path: str = "data/raw/validate/schedule_plan.csv"
 
     log_level: str = "INFO"
 

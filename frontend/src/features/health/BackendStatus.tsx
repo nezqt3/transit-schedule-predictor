@@ -9,8 +9,8 @@ export function BackendStatus() {
 
   const state = isError ? 'error' : isPending ? 'pending' : 'ok'
   const label =
-    state === 'ok' && data ? `${data.service}: ${data.status}` :
-    state === 'pending' ? 'Подключение к backend…' : 'Backend недоступен'
+    state === 'ok' && data ? 'Backend доступен' :
+    state === 'pending' ? 'Подключение…' : 'Backend недоступен'
 
   return (
     <span className={cn('backend-status', `backend-status--${state}`)}>
