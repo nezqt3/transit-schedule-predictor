@@ -7,7 +7,7 @@ name = "transit-delay-ml"
 version = "0.1.0"
 description = "Models and FastAPI service for transit delay prediction"
 requires-python = ">=3.10"
-dependencies = ["fastapi>=0.110,<1", "uvicorn[standard]>=0.29,<1", "pydantic>=2,<3", "pandas>=2,<3", "numpy>=1.26,<3", "scikit-learn>=1.4,<2", "joblib>=1.3,<2"]
+dependencies = ["fastapi>=0.110,<1", "uvicorn[standard]>=0.29,<1", "pydantic>=2,<3", "pydantic-settings>=2.7,<3", "pandas>=2,<3", "numpy>=1.26,<3", "scikit-learn>=1.4,<2", "joblib>=1.3,<2"]
 
 [project.optional-dependencies]
 models = ["catboost>=1.2,<2", "torch>=2.2,<3"]
