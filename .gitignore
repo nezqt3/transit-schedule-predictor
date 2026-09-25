@@ -1,0 +1,10 @@
+.DS_Store
+.env
+kaggle.json
+ml/artifacts/*.zip
+ml/artifacts/*.csv
+ml/artifacts/*.cbm
+ml/artifacts/*.pt
+ml/artifacts/*.joblib
+emulator/*.tar
+emulator/ndtp-telemetry-emulator.tar
