@@ -123,3 +123,20 @@ def test_emulator_realtime_cells_follow_published_layout():
     assert packet.cells[parser.CELL_NAV00].latitude == pytest.approx(55.7551234)
     assert packet.cells[parser.CELL_NAV00].longitude == pytest.approx(37.6173210)
     assert packet.cells[f"{parser.CELL_CAN10}:0"].alarm_flags == 0x10000
+
+
+def test_official_optional_cells_do_not_discard_navigation():
+    body = parser.build_nph(parser.SERVICE_NAVDATA, parser.NPH_TYPE_REALTIME)
+    body += bytes([parser.CELL_NAV00, 0]) + parser.build_nav00_payload(
+        timestamp=1725000000, latitude=55.7551234, longitude=37.6173210,
+    )
+    # Размеры взяты из реальных пакетов официального образа v1.0.
+    body += bytes([4, 0]) + bytes(15)    # IRMA: двери
+    body += bytes([21, 0]) + bytes(180)  # алкодатчик
+    body += bytes([100, 0]) + bytes(44)  # сырой датчик
+    body += bytes([parser.CELL_CAN10, 0]) + bytes(parser.CELL_SIZES[parser.CELL_CAN10])
+    frame = parser.build_npl(len(body), 1166336, body) + body
+
+    _, packet = parser.parse_packet(frame)
+    assert packet.cells[parser.CELL_NAV00].latitude == pytest.approx(55.7551234)
+    assert f"{parser.CELL_CAN10}:0" in packet.cells

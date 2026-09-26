@@ -45,9 +45,15 @@ CELL_SIZES: dict[int, int] = {
     for cell_type, fmt in _CELL_STRUCTS.items()
 }
 
-# Типы, которые мы умеем пропускать целиком (размер известен из спеки),
-# но не декодируем: не нужны для прогноза задержки.
-SKIPPABLE_CELL_SIZES: dict[int, int] = {15: 50}
+# Остальные фиксированные ячейки из каталога официального эмулятора v1.0.
+# Размеры проверены по отправленным им пакетам. Без них один датчик дверей,
+# пассажиропотока и т. п. приводил к потере всего навигационного пакета.
+SKIPPABLE_CELL_SIZES: dict[int, int] = {
+    3: 14, 4: 15, 5: 6, 6: 9, 7: 1, 9: 40,
+    12: 5, 13: 13, 14: 15, 15: 50, 17: 46,
+    18: 50, 19: 40, 20: 8, 21: 180, 22: 24,
+    23: 16, 100: 44,
+}
 
 
 class NdtParseError(ValueError):
@@ -213,13 +219,13 @@ def parse_handshake(nph_body: bytes) -> HandshakeRequest:
     """Тело NPH_SGC_CONN_REQUEST: 18 байт."""
     if len(nph_body) < NPH_SIZE + 18:
         raise NdtParseError("усечённое тело handshake")
-    (_proto_high, _proto_low, _flags, peer_address, _max_size, _reserved) = (
+    (proto_high, proto_low, _flags, peer_address, _max_size, _reserved) = (
         struct.unpack_from("<HHHIII", nph_body, NPH_SIZE)
     )
     return HandshakeRequest(
         peer_address=peer_address,
-        proto_major=6,
-        proto_minor=2,
+        proto_major=proto_high,
+        proto_minor=proto_low,
     )
 
 

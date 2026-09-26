@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+from time import perf_counter
 
 import numpy as np
 import pandas as pd
@@ -30,8 +31,14 @@ def hackathon_score(mae: float, targets: np.ndarray, mae_target: float | None) -
 
 
 def train(train_frame: pd.DataFrame, test_frame: pd.DataFrame,
-          model_path: Path = MODEL_PATH, mae_target: float | None = None) -> dict:
+          model_path: Path = MODEL_PATH, mae_target: float | None = None,
+          task_type: str = "CPU", devices: str = "0",
+          gpu_ram_part: float = 0.5) -> dict:
     """Fit on train only; use test labels solely for final local comparison."""
+    if task_type not in {"CPU", "GPU"}:
+        raise ValueError("task_type must be CPU or GPU")
+    if task_type == "GPU" and not 0 < gpu_ram_part <= 0.95:
+        raise ValueError("gpu_ram_part must be in (0, 0.95]")
     for name, frame in (("train", train_frame), ("test", test_frame)):
         missing = set(FEATURES + ["T", "target_delay_s"]) - set(frame.columns)
         if missing:
@@ -49,21 +56,29 @@ def train(train_frame: pd.DataFrame, test_frame: pd.DataFrame,
         learning_rate=0.03, random_seed=42, verbose=False,
         allow_writing_files=False, thread_count=-1,
     )
+    if task_type == "GPU":
+        params.pop("thread_count")
+        params.update(task_type="GPU", devices=devices,
+                      gpu_ram_part=gpu_ram_part)
     cutoff_time = ordered.loc[cutoff, "T"]
     train_part = ordered[ordered["T"] < cutoff_time]
     early_stop_part = ordered[ordered["T"] >= cutoff_time]
     if len(train_part) < 2 or early_stop_part.empty:
         raise ValueError("not enough distinct training timestamps for a time split")
     selector = CatBoostRegressor(**params, early_stopping_rounds=100)
+    started = perf_counter()
     selector.fit(
         train_part[FEATURES], target(train_part),
         cat_features=["tr_id"],
         eval_set=(early_stop_part[FEATURES], target(early_stop_part)),
         verbose=False,
     )
+    selection_seconds = perf_counter() - started
     best_iterations = max(1, selector.best_iteration_ + 1)
     model = CatBoostRegressor(**{**params, "iterations": best_iterations})
+    started = perf_counter()
     model.fit(ordered[FEATURES], target(ordered), cat_features=["tr_id"], verbose=False)
+    final_fit_seconds = perf_counter() - started
 
     truth = test_frame["target_delay_s"].to_numpy(float)
     baseline = test_frame["cur_dev_s"].to_numpy(float)
@@ -79,8 +94,13 @@ def train(train_frame: pd.DataFrame, test_frame: pd.DataFrame,
         "target": "delta_target = target_delay_s - cur_dev_s",
         "model": "catboost_residual_mae",
         "model_version": "1.0",
+        "task_type": task_type,
+        "devices": devices if task_type == "GPU" else None,
+        "gpu_ram_part": gpu_ram_part if task_type == "GPU" else None,
         "feature_columns": FEATURES,
         "best_iterations": best_iterations,
+        "selection_seconds": selection_seconds,
+        "final_fit_seconds": final_fit_seconds,
         "n_train": len(train_frame),
         "n_test": len(test_frame),
         "mae_baseline_cur_dev_s": mae_baseline,
@@ -103,14 +123,23 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mae-target", type=float, default=None,
                         help="Organizer MAE_TARGET in seconds; omit if not published")
+    parser.add_argument("--task-type", choices=("CPU", "GPU"), default="CPU")
+    parser.add_argument("--devices", default="0", help="CatBoost GPU device IDs")
+    parser.add_argument("--gpu-ram-part", type=float, default=0.5)
+    parser.add_argument("--processed-dir", type=Path, default=ROOT / "data" / "processed")
+    parser.add_argument("--model-path", type=Path)
     args = parser.parse_args()
     mae_target = args.mae_target
     if mae_target is None and os.getenv("MAE_TARGET"):
         mae_target = float(os.environ["MAE_TARGET"])
-    processed = ROOT / "data" / "processed"
+    processed = args.processed_dir
     train_frame = pd.read_parquet(processed / "train_features.parquet")
     test_frame = pd.read_parquet(processed / "test_features.parquet")
-    print(json.dumps(train(train_frame, test_frame, mae_target=mae_target),
+    model_path = args.model_path or (MODEL_PATH if args.task_type == "CPU" else
+                                     MODEL_PATH.with_name("catboost_residual_mae_gpu.cbm"))
+    print(json.dumps(train(train_frame, test_frame, model_path=model_path,
+                           mae_target=mae_target, task_type=args.task_type,
+                           devices=args.devices, gpu_ram_part=args.gpu_ram_part),
                      ensure_ascii=False, indent=2))
 
 
