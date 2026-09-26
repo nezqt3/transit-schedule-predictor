@@ -3,7 +3,6 @@ import { NavLink } from 'react-router-dom'
 
 import { env } from '@/config/env'
 import { logout as logoutRequest } from '@/features/auth/api'
-import { BackendStatus } from '@/features/health/BackendStatus'
 import { cn } from '@/lib/cn'
 import { queryClient } from '@/lib/api/queryClient'
 import { useAuthStore } from '@/store/auth'
@@ -46,14 +45,6 @@ export function NavBar() {
         ))}
       </nav>
 
-      <BackendStatus />
-      <span className="topbar__date">
-        {new Date().toLocaleDateString('ru-RU', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        })}
-      </span>
       <button className="topbar__logout" onClick={handleLogout} title="Выйти" type="button">
         <LogOut size={16} />
         <span>Выйти</span>

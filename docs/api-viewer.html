@@ -13,14 +13,17 @@
   </head>
   <body>
     <div id="notice">
-      Полная спецификация: <a href="openapi.json">openapi.json</a>. Живой Swagger —
+      Схема встроена прямо в эту страницу — fetch ей не нужен, поэтому Swagger UI
+      работает и из clone, и из просмотрщика файлов на GitHub. Отдельный файл:
+      <a href="openapi.json">openapi.json</a>. Живой Swagger с запросами —
       <a href="http://localhost:8000/docs">http://localhost:8000/docs</a> (нужен запущенный backend).
     </div>
     <div id="swagger"></div>
+    <script id="openapi-schema" type="application/json">__OPENAPI_SCHEMA__</script>
     <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
     <script>
       SwaggerUIBundle({
-        url: "openapi.json",
+        spec: JSON.parse(document.getElementById("openapi-schema").textContent),
         dom_id: "#swagger",
         deepLinking: true,
         tryItOutEnabled: false,

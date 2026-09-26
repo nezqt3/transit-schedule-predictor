@@ -130,6 +130,7 @@ function LiveDashboard() {
   }, [filtered, selectedUnitId, selectUnit])
 
   const selectedEvent = filtered.find((event) => event.unit_id === selectedUnitId)
+  const { data: selectedHistory = [] } = useVehicleHistory(selectedUnitId)
   const selectedPrediction = predictions.find((prediction) => prediction.unit_id === selectedUnitId)
   const attention = filtered.filter((event) => needsAttention(event, now))
   const rest = filtered.filter((event) => !needsAttention(event, now))
@@ -168,14 +169,14 @@ function LiveDashboard() {
           <div className="poll-status">{streamConnected ? 'NDTP · онлайн' : dataUpdatedAt ? `REST · ${formatClock(dataUpdatedAt)}` : 'Ожидаем соединение'}</div>
         </div>
         <div className="dispatch-map-area__map">
-          <VehicleMap events={filtered} onSelect={selectUnit} selectedUnitId={selectedUnitId} />
+          <VehicleMap events={filtered} onSelect={selectUnit} selectedHistory={selectedHistory} selectedUnitId={selectedUnitId} />
           {isPending && <div className="map-state"><strong>Загружаем позиции</strong><span>Ожидаем ответ от backend.</span></div>}
           {isError && !isPending && <div className="map-state map-state--error"><WifiOff size={20} /><strong>Backend недоступен</strong><span>{error?.message ?? 'Не удалось получить телеметрию.'}</span></div>}
           {!isPending && !isError && events.length === 0 && <div className="map-state"><strong>Нет телеметрии</strong><span>Карта заполнится, когда поступит первый NDTP-пакет.</span></div>}
           {!isPending && !isError && events.length > 0 && filtered.length === 0 && <div className="map-state"><strong>Нет совпадений</strong><span>Измените поиск или фильтр состояния.</span></div>}
           {!isPending && !isError && filtered.length > 0 && visibleOnMap === 0 && <div className="map-state"><MapPinOff size={20} /><strong>Нет валидных координат</strong><span>Выбранные терминалы видны в списке слева.</span></div>}
           {allStale && !isError && <div className="map-warning"><Clock3 size={16} /> {historicalPackets ? 'NDTP передаёт январские timestamps. Для виртуального времени и прогноза выберите «Январь».' : 'Все последние координаты устарели'}</div>}
-          <div className="map-legend"><span><Navigation2 size={14} /> Движется</span><span><Square size={13} /> Стоит</span><span><Clock3 size={14} /> Устарели</span><span><AlertTriangle size={14} /> Тревога</span></div>
+          <div className="map-legend"><span><Navigation2 size={14} /> Движется</span><span><Square size={13} /> Стоит</span><span><Clock3 size={14} /> Устарели</span><span className="map-legend__track">— GPS-след</span><span><AlertTriangle size={14} /> Тревога</span></div>
         </div>
       </main>
     </div>
