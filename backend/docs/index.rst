@@ -1,21 +1,15 @@
 Transport Delay Predictor
 =========================
 
-Backend системы раннего прогнозирования задержек
-наземного пассажирского транспорта.
+Backend принимает NDTP-телеметрию, вызывает ML Service и отдаёт
+защищённое REST API диспетчерской. Интерактивный OpenAPI доступен
+в ``/docs``, ReDoc — в ``/redoc``.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Руководство:
 
+   overview
+   authentication
+   configuration
    api
-
-
-API Documentation
-=================
-
-REST API также доступно через:
-
-* Swagger UI: ``/docs``
-* ReDoc: ``/redoc``
-* OpenAPI: ``/openapi.json``

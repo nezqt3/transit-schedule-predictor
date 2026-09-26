@@ -26,7 +26,9 @@ async def predict_delay(
     current_point: dict | None = None,
 ) -> dict:
     """Call ML with at most 150 normalized packets for the target vehicle."""
-    normalized_t = T.replace(tzinfo=timezone.utc) if T.tzinfo is None else T.astimezone(timezone.utc)
+    normalized_t = (
+        T.replace(tzinfo=timezone.utc) if T.tzinfo is None else T.astimezone(timezone.utc)
+    )
     normalized_target = (
         target_time_begin.replace(tzinfo=timezone.utc)
         if target_time_begin.tzinfo is None else target_time_begin.astimezone(timezone.utc)

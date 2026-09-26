@@ -40,7 +40,7 @@ preprocessing:
 	cd scripts && python -m scripts.prepare_dataset
 
 docs:
-	cd backend && sphinx-build -b html docs docs/_build/html
+	cd backend && sphinx-build -W --keep-going -b html docs docs/_build/html
 
 
 # --- frontend: локально (pnpm) ---
