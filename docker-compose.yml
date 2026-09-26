@@ -21,7 +21,7 @@ services:
       ML_SERVICE_HOST: 0.0.0.0
       ML_SERVICE_PORT: 8001
       ARTIFACTS_DIR: /app/artifacts
-      MODEL_NAME: ${MODEL_NAME:-lightgbm_plan}
+      MODEL_NAME: ${MODEL_NAME:-catboost}
       MODEL_VERSION: ${MODEL_VERSION:-1.0}
       SCHEDULE_PLAN_PATH: /app/runtime_data/schedule_plan.csv
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
@@ -101,6 +101,24 @@ services:
       - ./frontend/index.html:/app/index.html
       - ./frontend/vite.config.ts:/app/vite.config.ts
       - ./frontend/public:/app/public
+    depends_on:
+      backend:
+        condition: service_started
+
+  # Дополнительный CSV → NDTP replay для расширенного дебага.
+  # Не заменяет эмулятор организаторов и запускается только явным профилем:
+  # docker compose --profile replay up -d --build backend dataset-replay
+  dataset-replay:
+    profiles: ["replay"]
+    build: ./emulator/dataset_replay
+    environment:
+      REPLAY_DATA_ROOT: /data
+      REPLAY_NDTP_TARGET_HOST: backend
+      REPLAY_NDTP_TARGET_PORT: 9201
+    ports:
+      - "${REPLAY_API_PORT:-18081}:18081"
+    volumes:
+      - ./data/raw:/data:ro
     depends_on:
       backend:
         condition: service_started
