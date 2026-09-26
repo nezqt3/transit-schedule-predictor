@@ -2,7 +2,6 @@ import { List, Map, Play } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
 import { env } from '@/config/env'
-import { BackendStatus } from '@/features/health/BackendStatus'
 import { cn } from '@/lib/cn'
 
 const links = [
@@ -32,8 +31,6 @@ export function NavBar() {
         ))}
       </nav>
 
-      <BackendStatus />
-      <span className="topbar__date">{new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
     </header>
   )
 }
