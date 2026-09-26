@@ -36,15 +36,19 @@ def wait_for_api() -> None:
     raise RuntimeError(f"replay API did not become ready at {API_URL}")
 
 
-def choose_trip() -> int:
+def choose_trips() -> list[int]:
     configured = os.getenv("REPLAY_TR_ID")
     if configured:
-        return int(configured)
+        return [int(configured)]
     query = urlencode({"dataset": DATASET, "limit": 100})
     scenarios = api_request(f"/api/scenarios?{query}")
-    for scenario in scenarios:
-        if scenario["valid_packets"]:
-            return scenario["tr_id"]
+    if os.getenv("REPLAY_ALL") == "1" and scenarios:
+        return [scenario["tr_id"] for scenario in scenarios]
+    valid = [scenario["tr_id"] for scenario in scenarios if scenario["valid_packets"]]
+    if os.getenv("REPLAY_ALL_VALID") == "1" and valid:
+        return valid
+    if valid:
+        return [valid[0]]
     raise RuntimeError(f"no valid NDTP packets in dataset {DATASET!r}")
 
 
@@ -69,18 +73,19 @@ def main() -> None:
     if status["state"] == "paused":
         api_request("/api/replay/resume", {})
     elif status["state"] != "running":
-        tr_id = choose_trip()
+        tr_ids = choose_trips()
         try:
             api_request("/api/replay/start", {
                 "dataset": DATASET,
-                "tr_ids": [tr_id],
-                "time_mode": "shift_to_now",
-                "valid_locations_only": True,
+                "tr_ids": tr_ids,
+                "time_mode": os.getenv("REPLAY_TIME_MODE", "shift_to_now"),
+                "speed_multiplier": float(os.getenv("REPLAY_SPEED", "1")),
+                "valid_locations_only": os.getenv("REPLAY_VALID_ONLY", "1") != "0",
             })
         except HTTPError as exc:
             if exc.code != 409:
                 raise
-        print(f"Started NDTP replay for tr_id={tr_id} ({DATASET})")
+        print(f"Started NDTP replay for {len(tr_ids)} vehicle(s) ({DATASET})")
     wait_for_connection()
 
 

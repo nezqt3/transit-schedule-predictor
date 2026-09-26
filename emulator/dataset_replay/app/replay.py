@@ -8,6 +8,7 @@ import math
 from collections import defaultdict
 from datetime import datetime, timezone
 from time import monotonic
+from zoneinfo import ZoneInfo
 
 from .client import NdtpClient
 from .config import Settings
@@ -33,6 +34,13 @@ def _distance_m(a: TelemetryRow | None, b: TelemetryRow) -> int:
     dlon = math.radians(b.longitude - a.longitude)
     value = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
     return int(6_371_000 * 2 * math.atan2(math.sqrt(value), math.sqrt(1 - value)))
+
+
+def _packet_time(row: TelemetryRow, source_start: datetime,
+                 wall_start: datetime, request: ReplayStartRequest) -> datetime:
+    if request.time_mode == TimeMode.ORIGINAL:
+        return row.event_time.replace(tzinfo=ZoneInfo("Europe/Moscow"))
+    return wall_start + (row.event_time - source_start) / request.speed_multiplier
 
 
 class ReplayManager:
@@ -65,6 +73,7 @@ class ReplayManager:
             state=ReplayState.RUNNING,
             dataset=request.dataset,
             time_mode=request.time_mode,
+            speed_multiplier=request.speed_multiplier,
             started_at=datetime.now(timezone.utc),
             total_packets=len(rows),
             units=[
@@ -144,7 +153,7 @@ class ReplayManager:
         for row in rows:
             if self._stop.is_set():
                 return
-            target_elapsed = (row.available_at - source_start).total_seconds()
+            target_elapsed = (row.available_at - source_start).total_seconds() / request.speed_multiplier
             while True:
                 if not self._continue.is_set():
                     pause_started = monotonic()
@@ -161,12 +170,7 @@ class ReplayManager:
                 except asyncio.TimeoutError:
                     pass
 
-            source_delta = row.event_time - source_start
-            emulated_time = (
-                row.event_time
-                if request.time_mode == TimeMode.ORIGINAL
-                else wall_start.replace(tzinfo=None) + source_delta
-            )
+            emulated_time = _packet_time(row, source_start, wall_start, request)
             tracks[row.unit_id] += _distance_m(previous.get(row.unit_id), row)
             previous[row.unit_id] = row
             status = statuses[(row.tr_id, row.unit_id)]

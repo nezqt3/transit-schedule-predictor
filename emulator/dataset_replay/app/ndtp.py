@@ -69,21 +69,21 @@ def build_realtime(
         flags |= 0x80
     if emulated_time.tzinfo is None:
         emulated_time = emulated_time.replace(tzinfo=timezone.utc)
-    speed = _uint(row.speed_kmh, 65535)
+    speed = _uint(row.speed_kmh, 65534, 65535)
     nav = struct.pack(
         "<IIIBBHHHHHBB",
         int(emulated_time.timestamp()),
         _uint(abs(longitude) * 1e7, 0xFFFFFFFF),
         _uint(abs(latitude) * 1e7, 0xFFFFFFFF),
         flags,
-        250,
+        255,  # battery voltage is absent from the CSV
         speed,
-        speed,
-        _uint(row.heading, 360),
+        65535,  # instantaneous speed is not a measured maximum
+        _uint(row.heading, 360, 65535),
         track_m % 65536,
-        _uint(row.altitude_m, 65535, 150),
-        9,
-        2,
+        _uint(row.altitude_m, 65534, 65535),
+        255,  # satellite count is absent from the CSV
+        255,
     )
     body = _nph(SERVICE_NAVDATA, NPH_TYPE_REALTIME, request_id)
     body += bytes((CELL_NAV00, 0)) + nav

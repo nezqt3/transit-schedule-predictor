@@ -9,12 +9,14 @@ from __future__ import annotations
 import csv
 import math
 import re
+from bisect import bisect_left, bisect_right
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 
 from app.schemas.replay import (
-    ReplayPoint, ReplayScenario, ReplayStop, ReplayTelemetry, ReplayVehicle,
+    ReplayFleet, ReplayFleetVehicle, ReplayPoint, ReplayRun, ReplayScenario,
+    ReplayStop, ReplayTelemetry, ReplayVehicle,
 )
 
 
@@ -38,6 +40,28 @@ def _number(value: str | None) -> float | None:
         return None
 
 
+def _distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = (math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1))
+         * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2)
+    return 12_742_000 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def _repeat_period(stops: list[ReplayStop]) -> int | None:
+    """Find the shortest strongly repeated planned stop sequence."""
+    places = [stop.place_id for stop in stops]
+    for period in range(8, min(200, len(places) // 2) + 1):
+        comparable = len(places) - period
+        if comparable < 20:
+            continue
+        matches = sum(places[index] == places[index + period]
+                      for index in range(comparable))
+        if matches / comparable >= 0.85:
+            return period
+    return None
+
+
 class ReplayDataset:
     """Immutable CSV snapshot for a separate historical playback source."""
 
@@ -47,6 +71,7 @@ class ReplayDataset:
         self.points: dict[int, list[ReplayPoint]] = defaultdict(list)
         self.by_sample: dict[str, tuple[int, ReplayPoint]] = {}
         self.units: dict[int, int] = {}
+        self._fleet: ReplayFleet | None = None
 
         # Deliberately ignore time_fact_begin: only the published plan enters ML.
         with Path(schedule_path).open(encoding="utf-8", newline="") as handle:
@@ -59,6 +84,8 @@ class ReplayDataset:
                     stop_id=int(row["tt_action_item_id"]),
                     planned_at=datetime.fromisoformat(row["time_begin"]),
                     lat=coords[0], lon=coords[1],
+                    place_id=f"{coords[0]:.5f},{coords[1]:.5f}",
+                    address=(row.get("building_address") or "").strip() or None,
                 ))
         for stops in self.stops.values():
             stops.sort(key=lambda stop: (stop.planned_at, stop.stop_id))
@@ -115,6 +142,84 @@ class ReplayDataset:
         for points in self.points.values():
             points.sort(key=lambda point: point.T)
 
+        self._confirm_stops()
+
+    def _confirm_stops(self) -> None:
+        """Retrospectively verify planned stop geometry against recorded GPS."""
+        for tr_id, stops in self.stops.items():
+            rows = self.traffic.get(tr_id, [])
+            times = [row["event_time"] for row in rows]
+            for stop in stops:
+                left = bisect_left(times, stop.planned_at - timedelta(minutes=8))
+                right = bisect_right(times, stop.planned_at + timedelta(minutes=8))
+                nearest = min((
+                    _distance_m(stop.lat, stop.lon, row["lat"], row["lon"])
+                    for row in rows[left:right]
+                ), default=None)
+                stop.gps_distance_m = round(nearest, 1) if nearest is not None else None
+                stop.gps_confirmed = nearest is not None and nearest <= 120
+
+    def _runs(self, tr_id: int) -> list[ReplayRun]:
+        stops = self.stops.get(tr_id, [])
+        if not stops:
+            return []
+        period = _repeat_period(stops)
+        groups: list[list[ReplayStop]] = []
+        if period is not None:
+            groups = [stops[index:index + period]
+                      for index in range(0, len(stops), period)]
+        else:
+            current: list[ReplayStop] = []
+            for stop in stops:
+                if current and stop.planned_at - current[-1].planned_at > timedelta(minutes=20):
+                    groups.append(current)
+                    current = []
+                current.append(stop)
+            if current:
+                groups.append(current)
+        result = []
+        for index, group in enumerate(groups, 1):
+            confirmed = sum(stop.gps_confirmed for stop in group)
+            result.append(ReplayRun(
+                run_id=f"{tr_id}-{index}", tr_id=tr_id,
+                start_at=group[0].planned_at, end_at=group[-1].planned_at,
+                stop_ids=[stop.stop_id for stop in group],
+                confirmed_stops=confirmed,
+                valid=len(group) >= 8 and confirmed >= 5
+                and confirmed / len(group) >= 0.5,
+            ))
+        return result
+
+    def fleet(self) -> ReplayFleet:
+        """Return one shared January timeline for all recorded GPS vehicles."""
+        if self._fleet is not None:
+            return self._fleet
+        vehicles = []
+        bounds = []
+        for tr_id in sorted(self.units):
+            rows = self.traffic.get(tr_id, [])
+            sampled: dict[int, ReplayTelemetry] = {}
+            for row in rows:
+                available = max(row["event_time"], row["receive_time"])
+                bounds.append(available)
+                sampled[int(available.timestamp()) // 45] = ReplayTelemetry(
+                    available_at=available, event_time=row["event_time"],
+                    lat=row["lat"], lon=row["lon"], speed=row["speed"],
+                    heading=row["heading"],
+                )
+            vehicles.append(ReplayFleetVehicle(
+                tr_id=tr_id, unit_id=self.units[tr_id],
+                telemetry=sorted(sampled.values(), key=lambda point: point.available_at),
+                stops=self.stops.get(tr_id, []), runs=self._runs(tr_id),
+                points=self.points.get(tr_id, []),
+            ))
+        if not bounds:
+            raise ValueError("historical replay has no valid GPS")
+        self._fleet = ReplayFleet(
+            start_at=min(bounds), end_at=max(bounds), vehicles=vehicles,
+        )
+        return self._fleet
+
     def vehicles(self) -> list[ReplayVehicle]:
         result = []
         for tr_id, points in self.points.items():
@@ -139,6 +244,7 @@ class ReplayDataset:
                 by_bucket[bucket] = ReplayTelemetry(
                     available_at=available, event_time=row["event_time"],
                     lat=row["lat"], lon=row["lon"], speed=row["speed"],
+                    heading=row["heading"],
                 )
         visible.extend(by_bucket.values())
         visible.sort(key=lambda row: row.available_at)

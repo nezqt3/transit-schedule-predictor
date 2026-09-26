@@ -19,6 +19,7 @@ class ReplayTelemetry(BaseModel):
     lat: float
     lon: float
     speed: float | None
+    heading: float | None = None
 
 
 class ReplayStop(BaseModel):
@@ -26,6 +27,10 @@ class ReplayStop(BaseModel):
     planned_at: datetime
     lat: float
     lon: float
+    place_id: str = ""
+    address: str | None = None
+    gps_confirmed: bool = False
+    gps_distance_m: float | None = None
 
 
 class ReplayPoint(BaseModel):
@@ -53,3 +58,38 @@ class ReplayPrediction(BaseModel):
     predicted_delay_s: float
     baseline_delay_s: float
     model_version: str
+
+
+class ReplayRun(BaseModel):
+    run_id: str
+    tr_id: int
+    start_at: datetime
+    end_at: datetime
+    stop_ids: list[int]
+    confirmed_stops: int
+    valid: bool
+
+
+class ReplayFleetVehicle(BaseModel):
+    tr_id: int
+    unit_id: int
+    telemetry: list[ReplayTelemetry]
+    stops: list[ReplayStop]
+    runs: list[ReplayRun]
+    points: list[ReplayPoint]
+
+
+class ReplayFleet(BaseModel):
+    source: str = "historical_csv_test"
+    start_at: datetime
+    end_at: datetime
+    vehicles: list[ReplayFleetVehicle]
+
+
+class ReplayStreamStatus(BaseModel):
+    state: str
+    source_at: datetime | None
+    time_mode: str | None
+    speed_multiplier: float
+    sent_packets: int
+    total_packets: int

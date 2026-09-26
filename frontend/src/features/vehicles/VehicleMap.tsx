@@ -1,12 +1,12 @@
-import { CircleHelp, Clock3, LocateFixed, Navigation2, OctagonAlert, Square, ZoomIn, ZoomOut } from 'lucide-react'
+import { LocateFixed, ZoomIn, ZoomOut } from 'lucide-react'
 import L, { type LatLngTuple, type Map as LeafletMap } from 'leaflet'
 import { useCallback, useEffect, useRef } from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
 import 'leaflet/dist/leaflet.css'
 
 import { hasValidPosition, speedKmh } from '@/lib/telemetry/readEvent'
-import { statusLabel, vehicleStatus, type VehicleStatus } from '@/lib/telemetry/vehicleStatus'
+import { statusLabel, vehicleStatus } from '@/lib/telemetry/vehicleStatus'
 import type { TelemetryEvent } from '@/types/api'
+import { markerIcon } from './markerIcon'
 
 type VehicleMapProps = {
   events: readonly TelemetryEvent[]
@@ -15,28 +15,12 @@ type VehicleMapProps = {
 }
 
 const DEFAULT_CENTER: LatLngTuple = [55.7512, 37.6184]
-const markerIcons = {
-  alarm: OctagonAlert,
-  'no-position': CircleHelp,
-  stale: Clock3,
-  moving: Navigation2,
-  stopped: Square,
-  unknown: CircleHelp,
-} as const
-
 function coordinates(event: TelemetryEvent): LatLngTuple | null {
   if (!hasValidPosition(event) || !event.nav) return null
   const { latitude, longitude } = event.nav
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null
   if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return null
   return [latitude, longitude]
-}
-
-function markerIcon(status: VehicleStatus, selected: boolean, heading: number | null) {
-  const Icon = markerIcons[status]
-  const rotation = status === 'moving' && heading !== null ? `transform:rotate(${heading}deg)` : ''
-  const html = `<span class="vehicle-marker vehicle-marker--${status}${selected ? ' vehicle-marker--selected' : ''}"><span class="vehicle-marker__glyph" style="${rotation}">${renderToStaticMarkup(<Icon size={20} strokeWidth={2.8} />)}</span></span>`
-  return L.divIcon({ html, className: 'vehicle-marker-wrap', iconSize: [38, 38], iconAnchor: [19, 19] })
 }
 
 export function VehicleMap({ events, selectedUnitId, onSelect }: VehicleMapProps) {

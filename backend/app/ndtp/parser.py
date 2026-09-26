@@ -88,13 +88,13 @@ class Nav00:
     coordinates_valid: bool
     alert: bool
     sos: bool
-    battery_voltage_mv: int
-    speed_avg: float
-    speed_max: float
-    course: int
+    battery_voltage_mv: int | None
+    speed_avg: float | None
+    speed_max: float | None
+    course: int | None
     track_m: int
-    altitude_m: int
-    satellites: int
+    altitude_m: int | None
+    satellites: int | None
     pdop: int
 
 
@@ -252,13 +252,13 @@ def decode_cell(cell_type: int, payload: bytes) -> object | None:
             coordinates_valid=valid,
             alert=bool(extra_dop & 0x02),
             sos=bool(extra_dop & 0x04),
-            battery_voltage_mv=bat_voltage * 20,
-            speed_avg=float(speed_avg),
-            speed_max=float(speed_max),
-            course=course,
+            battery_voltage_mv=None if bat_voltage == 255 else bat_voltage * 20,
+            speed_avg=None if speed_avg == 65535 else float(speed_avg),
+            speed_max=None if speed_max == 65535 else float(speed_max),
+            course=None if course == 65535 else course,
             track_m=track,
-            altitude_m=altitude,
-            satellites=nsat,
+            altitude_m=None if altitude == 65535 else altitude,
+            satellites=None if nsat == 255 else nsat,
             pdop=_pdop,
         )
     if cell_type == CELL_INT_SENSOR02:

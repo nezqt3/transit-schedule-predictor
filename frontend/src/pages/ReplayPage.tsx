@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import { predictReplayPoint, useReplayScenario, useReplayVehicles } from '@/features/replay/api'
 import { ReplayMap } from '@/features/replay/ReplayMap'
@@ -11,7 +12,9 @@ const seconds = (value: number) => `${value > 0 ? '+' : ''}${value.toFixed(0)} �
 
 export function ReplayPage() {
   const { data: vehicles = [], isError: vehiclesError } = useReplayVehicles()
-  const [trId, setTrId] = useState<number | null>(null)
+  const [searchParams] = useSearchParams()
+  const requestedTrId = Number(searchParams.get('tr_id'))
+  const [trId, setTrId] = useState<number | null>(requestedTrId > 0 ? requestedTrId : null)
   useEffect(() => {
     if (trId === null && vehicles.length > 0) setTrId(vehicles[0]!.tr_id)
   }, [vehicles, trId])
@@ -103,7 +106,7 @@ export function ReplayPage() {
         </div>
         <label>Скорость
           <select onChange={(event) => setSpeed(Number(event.target.value))} value={speed}>
-            <option value={60}>60×</option><option value={300}>300×</option>
+            <option value={1}>1×</option><option value={60}>60×</option><option value={300}>300×</option>
             <option value={600}>600×</option><option value={1800}>1800×</option>
           </select>
         </label>
