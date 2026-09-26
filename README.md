@@ -100,13 +100,36 @@ scripts/                      вспомогательные команды
 
 ### Backend и эмулятор
 
-Перед запуском положите `ndtp-telemetry-emulator.tar` в `emulator/`. Архив исключён из Git; подробная инструкция и спецификация пакетов находятся в [`emulator/README.md`](emulator/README.md).
+Образ организаторов можно положить в корень проекта или `emulator/` (оба пути
+исключены из Git). Запуск Backend, Frontend и официального NDTP-эмулятора:
 
 ```bash
-./scripts/start_emulator.sh
+make up-ndtp
 ```
 
-Конфигурация эмулятора передаётся через `emulator/config.json`. Backend подключается к TCP-порту NDTP и принимает телеметрию от бортовых устройств.
+Если `make` в Windows не установлен, те же команды в PowerShell:
+
+```powershell
+docker compose up -d --build backend frontend
+python scripts/start_official_emulator.py
+```
+
+Команда применяет [`emulator/official-demo-config.json`](emulator/official-demo-config.json)
+с двумя генерируемыми терминалами и проверяет приём пакетов в Backend. Свой
+конфиг можно загрузить командой:
+
+```bash
+python scripts/start_official_emulator.py --config emulator/config.json
+```
+
+Подробности протокола — в
+[`docs/Emulator-and-Telematic-Packets-Specification.md`](docs/Emulator-and-Telematic-Packets-Specification.md).
+
+Официальный эмулятор генерирует синтетическое движение. В NDTP есть GPS,
+скорость, курс и пройденное расстояние (`track`/одометр), но нет идентификатора
+маршрута или перечня остановок. Синяя линия на основной NDTP-карте — след
+**уже принятых** GPS-пакетов выбранного терминала. Для проверки маршрутов по
+реальным проездам используйте январский CSV → NDTP replay ниже.
 
 Для расширенного дебага доступен второй, независимый эмулятор, который
 последовательно воспроизводит реальные строки конкурсного `traffic.csv` через
