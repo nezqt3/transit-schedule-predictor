@@ -10,6 +10,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.error import URLError
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 
@@ -19,7 +20,9 @@ CONTAINER = "ndtp-emu"
 
 
 def docker(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(["docker", *args], check=check, capture_output=True, text=True)
+    return subprocess.run(
+        ["docker", *args], check=check, capture_output=True, text=True, cwd=ROOT
+    )
 
 
 def ensure_image() -> None:
@@ -53,9 +56,52 @@ def ensure_container(api_port: int) -> None:
     print(f"Started {CONTAINER}: {result.stdout.strip()[:12]}")
 
 
-def read_json(url: str) -> object:
-    with urlopen(url, timeout=3) as response:
+def connect_to_compose_backend() -> str | None:
+    """Attach the emulator to Backend's Compose network and return its DNS name."""
+    backend = docker("compose", "ps", "-q", "backend", check=False).stdout.strip()
+    if not backend:
+        return None
+    backend_info = json.loads(docker("inspect", backend).stdout)[0]
+    networks = list(backend_info["NetworkSettings"]["Networks"])
+    if not networks:
+        return None
+    network = networks[0]
+    emulator_info = json.loads(docker("inspect", CONTAINER).stdout)[0]
+    if network not in emulator_info["NetworkSettings"]["Networks"]:
+        docker("network", "connect", network, CONTAINER)
+    return "backend"
+
+
+def read_json(url: str, token: str | None = None) -> object:
+    request = Request(url, headers={"Authorization": f"Bearer {token}"} if token else {})
+    with urlopen(request, timeout=3) as response:
         return json.load(response)
+
+
+def authenticate(backend_url: str, username: str, password: str) -> str:
+    request = Request(
+        f"{backend_url.rstrip('/')}/api/v1/auth/token",
+        data=urlencode({"username": username, "password": password}).encode("utf-8"),
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        method="POST",
+    )
+    with urlopen(request, timeout=5) as response:
+        payload = json.load(response)
+    return payload["access_token"]
+
+
+def wait_for_authentication(backend_url: str, username: str, password: str) -> str:
+    """Wait until the freshly started Backend and its auth storage are ready."""
+    last_error: Exception | None = None
+    for _ in range(30):
+        try:
+            return authenticate(backend_url, username, password)
+        except (OSError, URLError, KeyError, TypeError, ValueError) as exc:
+            last_error = exc
+            time.sleep(1)
+    raise RuntimeError(
+        f"Backend authentication did not become ready at {backend_url}: {last_error}"
+    )
 
 
 def wait_for_api(api_port: int) -> None:
@@ -79,32 +125,54 @@ def post_config(api_port: int, config: dict) -> None:
         response.read()
 
 
-def wait_for_backend(unit_ids: set[int], backend_url: str, configured_at: datetime) -> None:
+def wait_for_backend(
+    unit_ids: set[int], backend_url: str, configured_at: datetime, token: str
+) -> None:
     url = f"{backend_url.rstrip('/')}/api/v1/vehicles"
+    seen: set[int] = set()
+    last_error: Exception | None = None
     for _ in range(20):
         try:
-            events = read_json(url)
+            events = read_json(url, token)
             fresh = {
                 event["unit_id"] for event in events
                 if event["unit_id"] in unit_ids
                 and datetime.fromisoformat(event["received_at"].replace("Z", "+00:00")) >= configured_at
             }
+            seen.update(fresh)
             if fresh == unit_ids:
                 print(f"Backend received fresh NDTP packets from {len(fresh)} unit(s): {sorted(fresh)}")
                 return
-        except (OSError, URLError):
-            pass
+        except (OSError, URLError, KeyError, TypeError, ValueError) as exc:
+            last_error = exc
         time.sleep(1)
-    raise RuntimeError(f"Backend did not receive fresh NDTP packets from all units: {sorted(unit_ids)}")
+    missing = sorted(unit_ids - seen)
+    detail = f"; last API error: {last_error}" if last_error else ""
+    raise RuntimeError(
+        f"Backend did not receive fresh NDTP packets from unit(s): {missing}{detail}"
+    )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=ROOT / "emulator" / "official-demo-config.json")
     parser.add_argument("--api-port", type=int, default=int(os.getenv("EMU_API_PORT", "18080")))
-    parser.add_argument("--target-host", default=os.getenv("TARGET_HOST", "host.docker.internal"))
+    parser.add_argument("--target-host", default=os.getenv("TARGET_HOST"))
     parser.add_argument("--target-port", type=int, default=int(os.getenv("NDTP_TARGET_PORT", "9201")))
-    parser.add_argument("--backend-url", default=os.getenv("BACKEND_URL", "http://127.0.0.1:8000"))
+    parser.add_argument(
+        "--backend-url",
+        default=os.getenv(
+            "BACKEND_URL", f"http://127.0.0.1:{os.getenv('FRONTEND_PORT', '8080')}"
+        ),
+    )
+    parser.add_argument(
+        "--backend-username",
+        default=os.getenv("AUTH_BOOTSTRAP_USERNAME", "dispatcher"),
+    )
+    parser.add_argument(
+        "--backend-password",
+        default=os.getenv("AUTH_BOOTSTRAP_PASSWORD", "transport"),
+    )
     args = parser.parse_args()
 
     config = json.loads(args.config.read_text(encoding="utf-8"))
@@ -116,11 +184,17 @@ def main() -> None:
 
     ensure_image()
     ensure_container(args.api_port)
+    if args.target_host is None:
+        args.target_host = connect_to_compose_backend() or "host.docker.internal"
+        config["targetHost"] = args.target_host
     wait_for_api(args.api_port)
+    token = wait_for_authentication(
+        args.backend_url, args.backend_username, args.backend_password
+    )
     configured_at = datetime.now(timezone.utc) - timedelta(seconds=2)
     post_config(args.api_port, config)
     print(f"Official NDTP emulator configured for {len(unit_ids)} unit(s) at {args.target_host}:{args.target_port}")
-    wait_for_backend(unit_ids, args.backend_url, configured_at)
+    wait_for_backend(unit_ids, args.backend_url, configured_at, token)
 
 
 if __name__ == "__main__":
