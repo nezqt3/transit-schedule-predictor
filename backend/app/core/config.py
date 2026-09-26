@@ -32,6 +32,15 @@ class Settings(BaseSettings):
 
     log_level: str = "INFO"
 
+    auth_bootstrap_username: str = "dispatcher"
+    auth_bootstrap_password: str = "transport"
+    auth_jwt_secret: str = "change-me-in-production-use-32-bytes"
+    auth_token_expire_minutes: int = 480
+    auth_jwt_algorithm: str = "HS256"
+    auth_cookie_name: str = "transport_session"
+    auth_cookie_secure: bool = False
+    auth_database_connect_timeout_s: float = 3.0
+
     @property
     def database_url(self) -> str:
         return (

@@ -83,7 +83,10 @@ async def predict_from_buffer(
     explicit_stop = (target_time_begin, stop_lat, stop_lon)
     if any(value is not None for value in explicit_stop):
         if not all(value is not None for value in explicit_stop):
-            raise HTTPException(status_code=422, detail="provide target_time_begin, stop_lat and stop_lon together")
+            raise HTTPException(
+                status_code=422,
+                detail="provide target_time_begin, stop_lat and stop_lon together",
+            )
         stop = {
             "tr_id": tr_id,
             "target_time_begin": target_time_begin,

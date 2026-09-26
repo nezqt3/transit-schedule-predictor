@@ -25,6 +25,114 @@ a {
   color: var(--accent);
 }
 
+button,
+input {
+  font: inherit;
+}
+
+/* authentication */
+
+.auth-loading {
+  color: var(--text-muted);
+  display: grid;
+  height: 100%;
+  place-items: center;
+}
+
+.login-page {
+  align-items: center;
+  display: grid;
+  min-height: 100%;
+  padding: 24px;
+  place-items: center;
+}
+
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 0.3);
+  display: grid;
+  gap: 18px;
+  max-width: 420px;
+  padding: 32px;
+  width: 100%;
+}
+
+.login-card__icon {
+  align-items: center;
+  background: rgb(79 157 255 / 0.12);
+  border-radius: 10px;
+  color: var(--accent);
+  display: flex;
+  height: 48px;
+  justify-content: center;
+  width: 48px;
+}
+
+.login-card h1 {
+  font-size: 20px;
+  margin: 0;
+}
+
+.login-card p {
+  color: var(--text-muted);
+  margin: 5px 0 0;
+}
+
+.login-field {
+  display: grid;
+  gap: 7px;
+}
+
+.login-field span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.login-field input {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  outline: none;
+  padding: 10px 12px;
+}
+
+.login-field input:focus {
+  border-color: var(--accent);
+}
+
+.login-card button,
+.topbar__logout {
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.login-card button {
+  background: var(--accent);
+  color: #07111f;
+  font-weight: 600;
+  padding: 11px 16px;
+}
+
+.login-card button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.login-card .login-card__error {
+  color: var(--error);
+  font-size: 12px;
+  margin: -5px 0;
+}
+
+.login-card > a {
+  font-size: 12px;
+  justify-self: center;
+}
+
 /* shell */
 
 .shell {
@@ -96,6 +204,20 @@ a {
 }
 
 .topbar__link--active {
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+.topbar__logout {
+  align-items: center;
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  gap: 7px;
+  padding: 7px 9px;
+}
+
+.topbar__logout:hover {
   background: var(--surface-raised);
   color: var(--text);
 }

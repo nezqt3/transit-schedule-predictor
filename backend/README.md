@@ -29,6 +29,21 @@ Backend отвечает за:
 
 Backend **не обучает ML-модели**. Обучение выполняется отдельно. Backend работает только с готовым ML inference service.
 
+## Авторизация
+
+Health check и API-документация публичны. Vehicles и predictions API требуют
+авторизацию. ``POST /api/v1/auth/token`` принимает OAuth2 form с полями
+``username`` и ``password`` и сохраняет JWT в ``HttpOnly`` cookie. Frontend восстанавливает
+сессию через ``GET /api/v1/auth/me``. Для Swagger и CLI также поддерживается
+``Authorization: Bearer <token>``.
+
+При первом запуске Backend создаёт таблицу ``auth_users`` и bootstrap-диспетчера
+из ``AUTH_BOOTSTRAP_USERNAME`` / ``AUTH_BOOTSTRAP_PASSWORD``. Пароль хранится только как
+Argon2-хеш; повторный старт не меняет существующую учётную запись.
+Локальные demo-данные: ``dispatcher`` / ``transport``. Перед деплоем задайте
+свои bootstrap-данные, длинный ``AUTH_JWT_SECRET`` и ``AUTH_COOKIE_SECURE=true`` в ``.env``.
+Подробная Sphinx-документация собирается командой ``make docs``.
+
 ## Рабочий путь прогноза
 
 NDTP-пакеты поступают на TCP `:9201`. `TelemetryService` хранит до 150 последних

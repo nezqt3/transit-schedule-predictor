@@ -5,8 +5,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-transport}
       POSTGRES_USER: ${POSTGRES_USER:-transport}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-transport}
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -48,6 +46,14 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-transport}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-transport}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      AUTH_BOOTSTRAP_USERNAME: ${AUTH_BOOTSTRAP_USERNAME:-dispatcher}
+      AUTH_BOOTSTRAP_PASSWORD: ${AUTH_BOOTSTRAP_PASSWORD:-transport}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-in-production-use-32-bytes}
+      AUTH_TOKEN_EXPIRE_MINUTES: ${AUTH_TOKEN_EXPIRE_MINUTES:-480}
+      AUTH_JWT_ALGORITHM: ${AUTH_JWT_ALGORITHM:-HS256}
+      AUTH_COOKIE_NAME: ${AUTH_COOKIE_NAME:-transport_session}
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
+      AUTH_DATABASE_CONNECT_TIMEOUT_S: ${AUTH_DATABASE_CONNECT_TIMEOUT_S:-3.0}
     ports:
       - "8000:8000"
       - "9201:9201"
