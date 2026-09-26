@@ -8,6 +8,7 @@ from fastapi import FastAPI, Request
 
 from service.config import settings
 from service.schemas import HealthResponse, PredictRequest, PredictResponse
+from src.inference.baseline import BaselinePredictor
 from src.inference.lightgbm_plan import LightGBMPlanPredictor
 from src.inference.predictor import Predictor
 
@@ -16,7 +17,9 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if settings.model_name == "lightgbm_plan":
+    if settings.model_name == "baseline":
+        app.state.predictor = BaselinePredictor(settings.model_version)
+    elif settings.model_name == "lightgbm_plan":
         app.state.predictor = LightGBMPlanPredictor(
             Path(settings.artifacts_dir), Path(settings.schedule_plan_path),
         )
@@ -41,7 +44,9 @@ def health() -> HealthResponse:
 
 @app.post("/predict", response_model=PredictResponse)
 def predict(payload: PredictRequest, request: Request) -> PredictResponse:
-    predictor: Predictor | LightGBMPlanPredictor = request.app.state.predictor
+    predictor: BaselinePredictor | Predictor | LightGBMPlanPredictor = (
+        request.app.state.predictor
+    )
     prediction = predictor.predict(
         tr_id=payload.tr_id,
         T=payload.T,

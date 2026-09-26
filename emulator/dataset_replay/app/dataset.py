@@ -107,4 +107,3 @@ class TrafficDataset:
         if not selected:
             raise ValueError("the selected replay interval contains no packets")
         return selected
-

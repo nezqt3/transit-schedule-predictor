@@ -51,3 +51,6 @@ data/submissions/submission.csv
 ndtp-telemetry-emulator.tar
 emulator/*.tar
 emulator/ndtp-telemetry-emulator.tar
+
+# Sphinx doctree cache (built HTML in docs/public is committed on purpose)
+docs/public/pydoc/.doctrees/

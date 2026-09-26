@@ -7,10 +7,13 @@ from fastapi import APIRouter, HTTPException, Request
 
 from app.core.config import settings
 from app.schemas.replay import (
-    ReplayFleet, ReplayPrediction, ReplayScenario, ReplayStreamStatus, ReplayVehicle,
+    ReplayFleet,
+    ReplayPrediction,
+    ReplayScenario,
+    ReplayStreamStatus,
+    ReplayVehicle,
 )
 from app.services.ml_client import request_prediction
-
 
 router = APIRouter()
 

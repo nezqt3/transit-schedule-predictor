@@ -66,4 +66,3 @@ class NdtpClient:
                 await writer.wait_closed()
             except (OSError, ConnectionError):
                 pass
-

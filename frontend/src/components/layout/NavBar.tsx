@@ -1,8 +1,11 @@
-import { List, Map, Play } from 'lucide-react'
+import { List, LogOut, Map, Play } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
 import { env } from '@/config/env'
+import { logout as logoutRequest } from '@/features/auth/api'
 import { cn } from '@/lib/cn'
+import { queryClient } from '@/lib/api/queryClient'
+import { useAuthStore } from '@/store/auth'
 
 const links = [
   { to: '/', label: 'Карта', icon: Map, end: true },
@@ -11,6 +14,17 @@ const links = [
 ]
 
 export function NavBar() {
+  const clearUser = useAuthStore((state) => state.clearUser)
+
+  async function handleLogout() {
+    try {
+      await logoutRequest()
+    } finally {
+      clearUser()
+    }
+    queryClient.clear()
+  }
+
   return (
     <header className="topbar">
       <div className="topbar__brand">
@@ -31,6 +45,10 @@ export function NavBar() {
         ))}
       </nav>
 
+      <button className="topbar__logout" onClick={handleLogout} title="Выйти" type="button">
+        <LogOut size={16} />
+        <span>Выйти</span>
+      </button>
     </header>
   )
 }

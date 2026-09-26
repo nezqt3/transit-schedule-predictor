@@ -54,8 +54,12 @@ format:
 preprocessing:
 	cd ml && python -m src.offline.dataset_builder --split train
 
+# Собирает публичные документы в docs/public/ (коммитится в Git):
+# PyDoc (Sphinx) + статичный OpenAPI-файл и самодостаточный Swagger UI.
 docs:
-	cd backend && sphinx-build -b html docs docs/_build/html
+	cd backend && sphinx-build -W --keep-going -b html docs ../docs/public/pydoc
+	python scripts/export_openapi.py
+	touch docs/public/.nojekyll
 
 
 # --- frontend: локально (pnpm) ---

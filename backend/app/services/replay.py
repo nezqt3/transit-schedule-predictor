@@ -15,10 +15,15 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from app.schemas.replay import (
-    ReplayFleet, ReplayFleetVehicle, ReplayPoint, ReplayRun, ReplayScenario,
-    ReplayStop, ReplayTelemetry, ReplayVehicle,
+    ReplayFleet,
+    ReplayFleetVehicle,
+    ReplayPoint,
+    ReplayRun,
+    ReplayScenario,
+    ReplayStop,
+    ReplayTelemetry,
+    ReplayVehicle,
 )
-
 
 POINT = re.compile(r"POINT\s*\(\s*([-+\d.eE]+)\s+([-+\d.eE]+)\s*\)")
 

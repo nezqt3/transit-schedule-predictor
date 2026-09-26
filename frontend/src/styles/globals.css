@@ -9,6 +9,21 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 a { color: var(--accent); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
+/* Authentication */
+.auth-loading { display: grid; height: 100%; place-items: center; color: var(--text-muted); }
+.login-page { display: grid; min-height: 100%; padding: 24px; place-items: center; background: var(--bg); }
+.login-card { display: grid; gap: 18px; width: min(420px, 100%); padding: 32px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); box-shadow: 0 24px 80px #17375f1f; }
+.login-card__icon { display: grid; width: 48px; height: 48px; place-items: center; border-radius: 10px; color: var(--accent); background: #e9f2ff; }
+.login-card h1 { margin: 0; font-size: 20px; }
+.login-card p { margin: 5px 0 0; color: var(--text-muted); }
+.login-field { display: grid; gap: 7px; }
+.login-field span { color: var(--text-muted); font-size: 12px; }
+.login-field input { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); background: var(--surface-raised); }
+.login-card button { padding: 11px 16px; border: 0; border-radius: var(--radius-sm); color: white; background: var(--accent); font-weight: 700; }
+.login-card button:disabled { cursor: wait; opacity: .65; }
+.login-card .login-card__error { margin: -5px 0; color: var(--error); font-size: 12px; }
+.login-card > a { justify-self: center; font-size: 12px; }
+
 .shell { display: grid; grid-template-rows: 70px minmax(0, 1fr); height: 100%; min-height: 0; }
 .shell__body { min-height: 0; overflow: hidden; }
 .topbar { display: flex; align-items: stretch; gap: 0; min-width: 0; background: var(--accent); color: white; box-shadow: 0 2px 8px #183f7c20; position: relative; z-index: 1000; }
@@ -19,6 +34,8 @@ a { color: var(--accent); }
 .topbar__link--active { color: white; font-weight: 700; }
 .topbar__link--active::after { content: ''; position: absolute; bottom: 0; left: 30px; right: 30px; height: 4px; background: white; }
 .topbar__link svg { flex: none; }
+.topbar__logout { display: flex; align-items: center; gap: 7px; padding: 0 22px; border: 0; border-left: 1px solid #ffffff38; color: white; background: transparent; font-weight: 600; }
+.topbar__logout:hover { background: #ffffff18; }
 
 .dispatch-screen { display: grid; grid-template-columns: 390px minmax(0, 1fr); height: 100%; min-height: 0; background: white; }
 .dispatch-sidebar { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: white; border-right: 1px solid var(--border); z-index: 600; }
