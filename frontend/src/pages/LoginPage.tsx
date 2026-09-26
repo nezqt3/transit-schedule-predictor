@@ -73,7 +73,6 @@ export function LoginPage() {
         <button disabled={isSubmitting} type="submit">
           {isSubmitting ? 'Входим…' : 'Войти'}
         </button>
-        <a href="/docs" rel="noreferrer" target="_blank">API-документация</a>
       </form>
     </main>
   )

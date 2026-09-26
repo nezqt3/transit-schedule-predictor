@@ -1,4 +1,4 @@
-.PHONY: up down build logs test features train submit run-online \
+.PHONY: up down build logs test features train submit run-online up-ndtp \
 	up-dataset-replay replay-start logs-dataset-replay lint format preprocessing docs \
 	fe-install fe-dev fe-build fe-check fe-preview fe-clean \
 	up-frontend up-frontend-dev logs-frontend
@@ -31,6 +31,10 @@ submit:
 run-online:
 	docker compose up --build ml backend
 
+up-ndtp:
+	docker compose up -d --build backend frontend
+	python scripts/start_official_emulator.py
+
 up-dataset-replay:
 	docker compose --profile replay up -d --build backend dataset-replay
 	python scripts/start_dataset_replay.py
@@ -51,11 +55,10 @@ preprocessing:
 	cd ml && python -m src.offline.dataset_builder --split train
 
 # Собирает публичные документы в docs/public/ (коммитится в Git):
-# PyDoc (Sphinx) + статичный OpenAPI-файл и ReDoc-вьюер.
+# PyDoc (Sphinx) + статичный OpenAPI-файл и самодостаточный Swagger UI.
 docs:
 	cd backend && sphinx-build -W --keep-going -b html docs ../docs/public/pydoc
 	python scripts/export_openapi.py
-	cp docs/api-viewer.html docs/public/api.html
 	touch docs/public/.nojekyll
 
 

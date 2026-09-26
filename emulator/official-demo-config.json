@@ -4,14 +4,14 @@
   "units": [
     {
       "unitId": 1166336,
-      "intervalMs": 5000,
-      "autoGenerate": false,
+      "intervalMs": 3000,
+      "autoGenerate": true,
       "cells": []
     },
     {
-      "unitId": 1166337,
-      "intervalMs": 3000,
-      "autoGenerate": false,
+      "unitId": 1166789,
+      "intervalMs": 5000,
+      "autoGenerate": true,
       "cells": []
     }
   ]

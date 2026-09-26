@@ -48,6 +48,7 @@ data/processed/*_features.parquet
 data/submissions/submission.csv
 
 # Emulator archives
+ndtp-telemetry-emulator.tar
 emulator/*.tar
 emulator/ndtp-telemetry-emulator.tar
 
