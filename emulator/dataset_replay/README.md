@@ -16,8 +16,14 @@ Labels, фактическое расписание и будущие строк
 ## Запуск
 
 ```bash
-docker compose --profile replay up -d --build backend dataset-replay
+make up-dataset-replay
 ```
+
+Эта команда поднимает контейнеры и сразу запускает NDTP-поток для рейса с
+наибольшим числом GPS-пакетов в `validate`. Для своего рейса задайте
+`REPLAY_TR_ID`, для другого набора — `REPLAY_DATASET`. Повторный запуск не
+прерывает уже идущий поток. Если контейнеры уже запущены, достаточно
+`make replay-start`.
 
 API и Swagger:
 
