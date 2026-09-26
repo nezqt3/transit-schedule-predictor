@@ -7,11 +7,12 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { addLine, bindMarkerZoom, fitMap, mapStyle, type MapPosition } from '@/lib/map/maplibre'
 import { eventTimeMs, hasValidPosition, speedKmh } from '@/lib/telemetry/readEvent'
 import { statusLabel, vehicleStatus } from '@/lib/telemetry/vehicleStatus'
-import type { TelemetryEvent } from '@/types/api'
+import type { StoredPrediction, TelemetryEvent } from '@/types/api'
 import { markerElement } from './markerIcon'
 
 type VehicleMapProps = {
   events: readonly TelemetryEvent[]
+  predictions: readonly StoredPrediction[]
   selectedHistory: readonly TelemetryEvent[]
   selectedUnitId: number | null
   onSelect: (unitId: number) => void
@@ -27,7 +28,7 @@ function coordinates(event: TelemetryEvent): MapPosition | null {
   return [longitude, latitude]
 }
 
-export function VehicleMap({ events, selectedHistory, selectedUnitId, onSelect }: VehicleMapProps) {
+export function VehicleMap({ events, predictions, selectedHistory, selectedUnitId, onSelect }: VehicleMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<Map | null>(null)
   const markersRef = useRef<Marker[]>([])
@@ -90,12 +91,15 @@ export function VehicleMap({ events, selectedHistory, selectedUnitId, onSelect }
       points.push(point)
       const status = vehicleStatus(event, now)
       const speed = speedKmh(event)
-      const element = markerElement(status, event.unit_id === selectedUnitId, event.nav?.course ?? null)
-      element.setAttribute('aria-label', `Терминал ${event.unit_id}: ${statusLabel[status]}`)
+      const displaySpeed = speed !== null && speed >= 0 && speed <= 120 ? speed : null
+      const prediction = predictions.find((item) => item.unit_id === event.unit_id)
+      const element = markerElement(status, event.unit_id === selectedUnitId, event.nav?.course ?? null,
+        { delaySeconds: prediction?.predicted_delay_s, speedKmh: displaySpeed })
+      element.setAttribute('aria-label', `Терминал ${event.unit_id}: ${statusLabel[status]}${prediction?.predicted_delay_s != null && prediction.predicted_delay_s >= 120 ? `, прогноз опоздания ${Math.round(prediction.predicted_delay_s)} секунд` : ''}${status === 'moving' && displaySpeed !== null ? `, ${Math.round(displaySpeed)} км/ч` : ''}`)
       element.addEventListener('click', () => onSelect(event.unit_id))
       const tooltip = document.createElement('span')
       tooltip.className = 'vehicle-tooltip'
-      tooltip.innerHTML = `<strong>#${event.unit_id}</strong><span>${statusLabel[status]}${speed === null ? '' : ` · ${speed.toFixed(0)} км/ч`}</span>`
+      tooltip.innerHTML = `<strong>#${event.unit_id}</strong><span>${statusLabel[status]}${displaySpeed === null ? '' : ` · ${displaySpeed.toFixed(0)} км/ч`}</span>`
       element.append(tooltip)
       markersRef.current.push(new maplibregl.Marker({ element, anchor: 'center' }).setLngLat(point).addTo(map))
     }
@@ -108,7 +112,7 @@ export function VehicleMap({ events, selectedHistory, selectedUnitId, onSelect }
       markersRef.current.forEach((marker) => marker.remove())
       markersRef.current = []
     }
-  }, [events, selectedHistory, selectedUnitId, onSelect, mapLoaded])
+  }, [events, predictions, selectedHistory, selectedUnitId, onSelect, mapLoaded])
 
   useEffect(() => {
     if (selectedUnitId === centeredUnitRef.current) return

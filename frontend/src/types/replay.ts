@@ -24,6 +24,7 @@ export type ReplayStop = {
   address: string | null
   gps_confirmed: boolean
   gps_distance_m: number | null
+  gps_confirmed_at: string | null
 }
 
 export type ReplayPoint = {

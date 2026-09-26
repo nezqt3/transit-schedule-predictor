@@ -157,12 +157,18 @@ class ReplayDataset:
             for stop in stops:
                 left = bisect_left(times, stop.planned_at - timedelta(minutes=8))
                 right = bisect_right(times, stop.planned_at + timedelta(minutes=8))
-                nearest = min((
-                    _distance_m(stop.lat, stop.lon, row["lat"], row["lon"])
+                candidates = [
+                    (_distance_m(stop.lat, stop.lon, row["lat"], row["lon"]),
+                     max(row["event_time"], row["receive_time"]))
                     for row in rows[left:right]
-                ), default=None)
+                ]
+                nearest = min((distance for distance, _ in candidates), default=None)
                 stop.gps_distance_m = round(nearest, 1) if nearest is not None else None
                 stop.gps_confirmed = nearest is not None and nearest <= 120
+                stop.gps_confirmed_at = min(
+                    (available_at for distance, available_at in candidates if distance <= 120),
+                    default=None,
+                )
 
     def _runs(self, tr_id: int) -> list[ReplayRun]:
         stops = self.stops.get(tr_id, [])

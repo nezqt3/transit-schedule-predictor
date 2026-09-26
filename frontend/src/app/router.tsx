@@ -5,7 +5,6 @@ import { RequireAuth } from '@/features/auth/RequireAuth'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { VehiclesPage } from '@/pages/VehiclesPage'
-import { ReplayPage } from '@/pages/ReplayPage'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -18,7 +17,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardPage /> },
           { path: 'vehicles', element: <VehiclesPage /> },
-          { path: 'replay', element: <ReplayPage /> },
+          { path: 'replay', element: <Navigate replace to="/" /> },
           { path: '*', element: <Navigate replace to="/" /> },
         ],
       },

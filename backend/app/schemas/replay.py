@@ -31,6 +31,7 @@ class ReplayStop(BaseModel):
     address: str | None = None
     gps_confirmed: bool = False
     gps_distance_m: float | None = None
+    gps_confirmed_at: datetime | None = None
 
 
 class ReplayPoint(BaseModel):

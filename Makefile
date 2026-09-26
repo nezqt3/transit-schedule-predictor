@@ -36,7 +36,7 @@ up-ndtp:
 	python scripts/start_official_emulator.py
 
 up-dataset-replay:
-	docker compose --profile replay up -d --build backend dataset-replay
+	docker compose --profile replay up -d --build backend frontend dataset-replay
 	python scripts/start_dataset_replay.py
 
 replay-start:

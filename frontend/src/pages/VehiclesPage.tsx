@@ -1,13 +1,22 @@
 import { Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
-import { VehicleFocus } from '@/features/vehicles/VehicleFocus'
 import { VehiclesTable } from '@/features/vehicles/VehiclesTable'
+import { usePredictions } from '@/features/predictions/api'
 import { useVehicleFeed } from '@/features/vehicles/hooks'
 import { useTelemetryStore } from '@/store/telemetry'
+import { useDashboardStore } from '@/store/dashboard'
+import { HistoricalVehiclesTable } from '@/features/replay/HistoricalVehiclesTable'
+import { VehicleDetails } from './DashboardPage'
 
 export function VehiclesPage() {
+  const source = useDashboardStore((state) => state.source)
+  return source === 'historical' ? <HistoricalVehiclesTable /> : <NdtpVehiclesTable />
+}
+
+function NdtpVehiclesTable() {
   const { data: events = [] } = useVehicleFeed()
+  const { data: predictions = [] } = usePredictions()
   const selectedUnitId = useTelemetryStore((state) => state.selectedUnitId)
   const [query, setQuery] = useState('')
 
@@ -19,6 +28,7 @@ export function VehiclesPage() {
 
   const selectedEvent =
     events.find((event) => event.unit_id === selectedUnitId) ?? filtered[0]
+  const selectedPrediction = predictions.find((prediction) => prediction.unit_id === selectedEvent?.unit_id)
 
   return (
     <div className="page">
@@ -36,14 +46,14 @@ export function VehiclesPage() {
               />
             </label>
           </header>
-          <VehiclesTable events={filtered} />
+          <VehiclesTable events={filtered} predictions={predictions} />
         </section>
 
         <section className="panel">
           <header className="panel__head">
-            <h2>Разбор пакета</h2>
+            <h2>Выбранный транспорт</h2>
           </header>
-          <VehicleFocus event={selectedEvent} />
+          <VehicleDetails event={selectedEvent} prediction={selectedPrediction} />
         </section>
       </div>
     </div>
