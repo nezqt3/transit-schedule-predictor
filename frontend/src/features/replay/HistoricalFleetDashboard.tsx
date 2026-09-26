@@ -1,4 +1,4 @@
-import { AlertTriangle, ChevronLeft, ChevronRight, MapPin, Pause, Play, RotateCcw } from 'lucide-react'
+import { AlertTriangle, ChevronLeft, ChevronRight, MapPin, Pause, Play, RotateCcw, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -15,6 +15,18 @@ import type { ReplayPrediction } from '@/types/replay'
 
 const signed = (value: number) => `${value > 0 ? '+' : ''}${value.toFixed(0)} с`
 const LATE_THRESHOLD_S = 120
+type FleetFilter = 'all' | 'attention' | VehicleStatus
+
+const filterOptions: { value: FleetFilter; label: string }[] = [
+  { value: 'all', label: 'Все состояния' },
+  { value: 'attention', label: 'Требуют внимания' },
+  { value: 'alarm', label: 'Тревога' },
+  { value: 'stale', label: 'Устарели координаты' },
+  { value: 'moving', label: 'В движении' },
+  { value: 'stopped', label: 'Стоят' },
+  { value: 'no-position', label: 'Нет координат' },
+  { value: 'unknown', label: 'Скорость неизвестна' },
+]
 
 export function HistoricalFleetDashboard() {
   const { data: fleet, isPending, isError } = useReplayFleet()
@@ -28,6 +40,8 @@ export function HistoricalFleetDashboard() {
   const [showAllRoutes, setShowAllRoutes] = useState(false)
   const [sidebarWidth, setSidebarWidth] = useState(390)
   const [detailsOpen, setDetailsOpen] = useState(true)
+  const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState<FleetFilter>('all')
   const [predictions, setPredictions] = useState<Record<string, ReplayPrediction>>({})
   const [failures, setFailures] = useState<Record<string, string>>({})
   const requested = useRef(new Set<string>())
@@ -120,7 +134,14 @@ export function HistoricalFleetDashboard() {
     }
     return result.sort((a, b) => Number(b.late) - Number(a.late) || a.vehicle.tr_id - b.vehicle.tr_id)
   }, [fleet, timeMs, predictions, followNdtp, ndtpEvents])
-  const selectedVisible = visible.find((item) => item.vehicle.tr_id === selectedId)
+  const filteredVisible = useMemo(() => visible.filter((item) => {
+    const matchesSearch = String(item.vehicle.tr_id).includes(query.trim())
+    const matchesState = filter === 'all'
+      || filter === item.status
+      || (filter === 'attention' && ['alarm', 'stale', 'no-position'].includes(item.status))
+    return matchesSearch && matchesState
+  }), [visible, query, filter])
+  const selectedVisible = filteredVisible.find((item) => item.vehicle.tr_id === selectedId)
 
   const receivedTrack = useMemo(() => followNdtp ? (ndtpHistory ?? []).flatMap((event: TelemetryEvent) => {
     if (!hasValidPosition(event) || !event.nav || eventTimeMs(event) > timeMs) return []
@@ -131,16 +152,19 @@ export function HistoricalFleetDashboard() {
   }) : null, [followNdtp, ndtpHistory, timeMs])
 
   useEffect(() => {
-    if (!visible.length) return
-    if (selectedId === null || !visible.some((item) => item.vehicle.tr_id === selectedId)) {
-      const withDelay = visible.find((item) => {
+    if (!filteredVisible.length) {
+      if (selectedId !== null) setSelectedId(null)
+      return
+    }
+    if (selectedId === null || !filteredVisible.some((item) => item.vehicle.tr_id === selectedId)) {
+      const withDelay = filteredVisible.find((item) => {
         const point = currentPoint(item.vehicle, timeMs)
         return point && point.cur_dev_s >= LATE_THRESHOLD_S
       })
-      const withForecast = visible.find((item) => currentPoint(item.vehicle, timeMs))
-      setSelectedId((withDelay ?? withForecast ?? visible[0]!).vehicle.tr_id)
+      const withForecast = filteredVisible.find((item) => currentPoint(item.vehicle, timeMs))
+      setSelectedId((withDelay ?? withForecast ?? filteredVisible[0]!).vehicle.tr_id)
     }
-  }, [visible, selectedId, timeMs])
+  }, [filteredVisible, selectedId, timeMs])
 
   const selectVehicle = useCallback((trId: number) => setSelectedId(trId), [])
   const selectedRun = selected ? currentRun(selected, timeMs) : null
@@ -165,7 +189,7 @@ export function HistoricalFleetDashboard() {
       (baseline ? point.cur_dev_s : predictions[point.sample_id]!.predicted_delay_s) - point.actual_delay_s,
     ), 0) / evaluated.length : null
   const validRuns = fleet?.vehicles.reduce((sum, vehicle) => sum + vehicle.runs.filter((run) => run.valid).length, 0) ?? 0
-  const activeRoutes = visible.filter((item) => currentRun(item.vehicle, timeMs)).length
+  const activeRoutes = filteredVisible.filter((item) => currentRun(item.vehicle, timeMs)).length
 
   if (isPending) return <div className="historical-loading">Загружаем январские GPS, остановки и рейсы…</div>
   if (isError || !fleet) return <div className="historical-loading">Не удалось загрузить январские данные из backend.</div>
@@ -176,10 +200,14 @@ export function HistoricalFleetDashboard() {
         <div className="historical-sidebar__head">
           <span className="eyebrow">6 января 2026 · запись</span>
           <h1>Транспорт на линии</h1>
-          <p>{visible.length} машин в момент {janClock(timeMs)} · {activeRoutes} на подтверждённых маршрутах · {followNdtp ? 'пакеты Backend NDTP' : 'CSV запись'}</p>
+          <p>{filteredVisible.length}{filteredVisible.length !== visible.length ? ` из ${visible.length}` : ''} машин в момент {janClock(timeMs)} · {activeRoutes} на подтверждённых маршрутах · {followNdtp ? 'пакеты Backend NDTP' : 'CSV запись'}</p>
+          <div className="historical-sidebar__filters">
+            <label className="fleet-search"><Search aria-hidden size={18} /><input aria-label="Поиск по ID транспорта" inputMode="numeric" onChange={(event) => setQuery(event.target.value)} placeholder="Поиск по ID транспорта" value={query} /></label>
+            <label className="fleet-filter"><span className="sr-only">Фильтр по состоянию</span><select onChange={(event) => setFilter(event.target.value as FleetFilter)} value={filter}>{filterOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+          </div>
         </div>
         <div className="historical-fleet-list">
-          {visible.map(({ vehicle, gps, status, late }) => {
+          {filteredVisible.map(({ vehicle, gps, status, late }) => {
             const run = currentRun(vehicle, timeMs)
             const point = currentPoint(vehicle, timeMs)
             const forecast = point ? predictions[point.sample_id] : undefined
@@ -190,7 +218,7 @@ export function HistoricalFleetDashboard() {
               <span className="historical-vehicle__value">{forecast ? signed(forecast.predicted_delay_s) : gps?.speed == null ? '—' : `${gps.speed.toFixed(0)} км/ч`}</span>
             </button>
           })}
-          {!visible.length && <p className="fleet-list__message">{followNdtp ? 'Пока нет подходящих январских NDTP-пакетов в Backend.' : 'В это время свежих GPS-пакетов нет. Переместите ползунок.'}</p>}
+          {!filteredVisible.length && <p className="fleet-list__message">{visible.length ? 'По выбранному поиску и фильтру транспорта нет.' : followNdtp ? 'Пока нет подходящих январских NDTP-пакетов в Backend.' : 'В это время свежих GPS-пакетов нет. Переместите ползунок.'}</p>}
         </div>
       </aside>
 
@@ -233,7 +261,7 @@ export function HistoricalFleetDashboard() {
         <div className="historical-timeline"><span>{janClock(startMs)}</span><input aria-label="Общий момент январской записи" disabled={followNdtp} max={endMs} min={startMs} onChange={(event) => { setPlaying(false); setTimeMs(Number(event.target.value)) }} step={1000} type="range" value={Math.min(Math.max(timeMs, startMs), endMs)} /><span>{janClock(endMs)}</span></div>
         <div className="historical-stats"><span><strong>{visible.filter((item) => item.gps).length}</strong> активных GPS</span><span><strong>{validRuns}</strong> подтверждённых проходов</span><span><strong>{Object.keys(predictions).length}/{dueCount}</strong> прогнозов к T</span><span><strong>{mae(false)?.toFixed(1) ?? '—'}</strong> MAE модели, с</span><span><strong>{mae(true)?.toFixed(1) ?? '—'}</strong> MAE cur_dev, с</span></div>
         <div className="historical-map-wrap">
-          <HistoricalFleetMap onSelect={selectVehicle} receivedTrack={receivedTrack} selected={selected} showAllRoutes={showAllRoutes} timeMs={timeMs} visible={visible} />
+          <HistoricalFleetMap onSelect={selectVehicle} receivedTrack={receivedTrack} selected={selected} showAllRoutes={showAllRoutes} timeMs={timeMs} visible={filteredVisible} />
           <div className="historical-map-legend"><span>↗ Движется · ■ Стоит · ◷ GPS устарел</span><span><AlertTriangle size={13} /> Прогноз ≥2 мин</span><span>— GPS уже пройден</span><span>┄ Плановый маршрут</span><span>● GPS-подтверждённая точка</span></div>
         </div>
         <p className="historical-note">{followNdtp ? 'Позиции и GPS-след выбранной машины взяты из пакетов, принятых Backend по NDTP. ' : 'Позиции взяты из январского CSV по времени получения. '}Расписание и точки ML взяты из январских CSV; исходное T не сдвигается. Номер общественного маршрута, тревоги и CAN-датчики в записи отсутствуют. MAE этого дня — диагностика, не независимая оценка: train и test относятся к одним суткам. Из 30 терминалов валидный GPS есть у 23.</p>

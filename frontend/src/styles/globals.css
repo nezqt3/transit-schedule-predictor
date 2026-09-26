@@ -238,6 +238,7 @@ a { color: var(--accent); }
 .historical-sidebar__head { padding: 15px 20px 13px; border-bottom: 1px solid var(--border); }
 .historical-sidebar__head h1 { margin: 3px 0; font-size: 21px; line-height: 1.2; }
 .historical-sidebar__head p { margin: 0; color: #607b9c; font-size: 12px; }
+.historical-sidebar__filters { margin-top: 12px; }
 .historical-fleet-list { flex: 1; min-height: 130px; overflow-y: auto; }
 .historical-vehicle { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 54px; padding: 8px 14px 8px 20px; text-align: left; border: 0; border-bottom: 1px solid #e5ebf4; background: white; color: var(--text); }
 .historical-vehicle:hover { background: #f3f7fe; }
