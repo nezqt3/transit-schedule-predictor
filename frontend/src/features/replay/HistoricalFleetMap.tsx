@@ -5,9 +5,9 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 
 import { markerElement } from '@/features/vehicles/markerIcon'
 import { bindMarkerZoom, createRouteOverlay, fitMap, mapStyle, textElement, type MapLine, type MapPosition } from '@/lib/map/maplibre'
-import { statusLabel, type VehicleStatus } from '@/lib/telemetry/vehicleStatus'
-import type { ReplayFleetVehicle, ReplayTelemetry } from '@/types/replay'
-import { currentRun, janMs } from './fleetClock'
+import { statusLabel } from '@/lib/telemetry/vehicleStatus'
+import type { ReplayFleetVehicle } from '@/types/replay'
+import { currentRun, displaySpeedKmh, janMs, stopLabel, type ReplayFleetItem } from './fleetClock'
 
 type RouteLineProperties = {
   kind: 'background' | 'planned' | 'track'
@@ -20,29 +20,19 @@ type RouteFeature = {
   geometry: { type: 'LineString'; coordinates: MapPosition[] }
 }
 
-export type VisibleVehicle = {
-  vehicle: ReplayFleetVehicle
-  gps: ReplayTelemetry | null
-  status: VehicleStatus
-  late: boolean
-}
-
 type Props = {
-  visible: VisibleVehicle[]
+  visible: ReplayFleetItem[]
   selected: ReplayFleetVehicle | null
   timeMs: number
-  showAllRoutes: boolean
-  receivedTrack: ReplayTelemetry[] | null
   onSelect: (trId: number) => void
 }
 
-function stopElement(confirmed: boolean) {
+function stopElement() {
   const element = document.createElement('span')
   element.className = 'map-circle-marker'
   Object.assign(element.style, {
-    width: confirmed ? '8px' : '6px', height: confirmed ? '8px' : '6px',
-    borderColor: confirmed ? '#d36b21' : '#8092aa',
-    background: confirmed ? '#f29a42' : '#fff', opacity: '0.9',
+    width: '8px', height: '8px', borderColor: '#d36b21',
+    background: '#f29a42', opacity: '0.9',
   })
   return element
 }
@@ -55,13 +45,14 @@ function attachTooltip(map: Map, marker: Marker, label: string) {
   element.addEventListener('mouseleave', () => popup.remove())
 }
 
-export function HistoricalFleetMap({ visible, selected, timeMs, showAllRoutes, receivedTrack, onSelect }: Props) {
+export function HistoricalFleetMap({ visible, selected, timeMs, onSelect }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<Map | null>(null)
   const markersRef = useRef<Marker[]>([])
   const routeOverlayRef = useRef<ReturnType<typeof createRouteOverlay> | null>(null)
-  const fittedRef = useRef(false)
-  const selectedRef = useRef<number | null>(null)
+  const fittedCountRef = useRef(0)
+  const userMovedRef = useRef(false)
+  const selectedRef = useRef<string | null>(null)
   const routeDataRef = useRef('')
   const [mapLoaded, setMapLoaded] = useState(false)
 
@@ -77,10 +68,15 @@ export function HistoricalFleetMap({ visible, selected, timeMs, showAllRoutes, r
       setMapLoaded(true)
     })
     mapRef.current = map
+    const markUserMoved = () => { userMovedRef.current = true }
+    map.getContainer().addEventListener('pointerdown', markUserMoved)
+    map.getContainer().addEventListener('wheel', markUserMoved)
     const resize = new ResizeObserver(() => map.resize())
     resize.observe(containerRef.current)
     return () => {
       resize.disconnect()
+      map.getContainer().removeEventListener('pointerdown', markUserMoved)
+      map.getContainer().removeEventListener('wheel', markUserMoved)
       unbindMarkerZoom()
       routeOverlayRef.current?.remove()
       routeOverlayRef.current = null
@@ -114,21 +110,18 @@ export function HistoricalFleetMap({ visible, selected, timeMs, showAllRoutes, r
       pushLine(coordinates, selectedLine ? 'planned' : 'background', selectedLine ? '#d96f1c' : '#809fc7')
       if (!selectedLine) return
       for (const stop of stops) {
-        const marker = new maplibregl.Marker({ element: stopElement(stop.gps_confirmed) })
+        const marker = new maplibregl.Marker({ element: stopElement() })
           .setLngLat([stop.lon, stop.lat]).addTo(map)
-        attachTooltip(map, marker, `Плановая точка ${stop.stop_id} · ${stop.gps_confirmed ? 'GPS подтверждён' : 'GPS не подтверждён'}`)
+        attachTooltip(map, marker, `Плановая остановка · ${stopLabel(vehicle, stop.stop_id)}`)
         markersRef.current.push(marker)
       }
     }
 
-    if (showAllRoutes) {
-      for (const item of visible) if (item.vehicle.tr_id !== selected?.tr_id) drawRun(item.vehicle, false)
-    }
     if (selected) drawRun(selected, true)
     if (selected) {
       const run = currentRun(selected, timeMs)
       const since = run ? janMs(run.start_at) - 5 * 60_000 : timeMs - 2 * 60 * 60_000
-      const traveled = (receivedTrack ?? selected.telemetry).filter((point) =>
+      const traveled = selected.telemetry.filter((point) =>
         janMs(point.available_at) <= timeMs && janMs(point.event_time) >= since)
       let segment: MapPosition[] = []
       let previousTime = 0
@@ -165,39 +158,44 @@ export function HistoricalFleetMap({ visible, selected, timeMs, showAllRoutes, r
     }
 
     const points: MapPosition[] = []
-    for (const { vehicle, gps, status, late } of visible) {
+    for (const { vehicle, gps, status, late, forecast } of visible) {
       if (!gps) continue
       const point: MapPosition = [gps.lon, gps.lat]
       points.push(point)
       const picked = vehicle.tr_id === selected?.tr_id
-      const element = markerElement(status, picked, gps.heading, late)
-      element.setAttribute('aria-label', `ТС ${vehicle.tr_id}: ${statusLabel[status]}${late ? ', прогноз опоздания' : ''}`)
+      const speed = displaySpeedKmh(gps.speed)
+      const delaySeconds = late ? forecast?.predicted_delay_s : null
+      const element = markerElement(status, picked, gps.heading, { delaySeconds, speedKmh: speed })
+      element.setAttribute('aria-label', `ТС ${vehicle.tr_id}: ${statusLabel[status]}${late && forecast ? `, прогноз опоздания ${Math.round(forecast.predicted_delay_s)} секунд` : ''}${status === 'moving' && speed !== null ? `, ${Math.round(speed)} км/ч` : ''}`)
       element.addEventListener('click', () => onSelect(vehicle.tr_id))
       const marker = new maplibregl.Marker({ element }).setLngLat(point).addTo(map)
       attachTooltip(map, marker, `ТС ${vehicle.tr_id} · ${statusLabel[status]}${late ? ' · прогноз опоздания' : ''}`)
       markersRef.current.push(marker)
     }
-    if (!fittedRef.current && points.length) {
+    const selectedRun = selected ? currentRun(selected, timeMs) : null
+    if (!userMovedRef.current && !selectedRun && points.length > fittedCountRef.current) {
       fitMap(map, points, 45, 12)
-      fittedRef.current = true
+      fittedCountRef.current = points.length
     }
-    if (selected && selectedRef.current !== selected.tr_id) {
-      const firstSelection = selectedRef.current === null
-      selectedRef.current = selected.tr_id
+    const selectedKey = selected ? `${selected.tr_id}:${selectedRun?.run_id ?? ''}` : null
+    if (selected && selectedRef.current !== selectedKey) {
+      selectedRef.current = selectedKey
       const gps = visible.find((item) => item.vehicle.tr_id === selected.tr_id)?.gps
-      const run = currentRun(selected, timeMs)
-      if (!firstSelection && run) {
-        const ids = new Set(run.stop_ids)
+      if (selectedRun) {
+        const ids = new Set(selectedRun.stop_ids)
         const stops = selected.stops.filter((stop) => ids.has(stop.stop_id))
-        if (stops.length > 1) fitMap(map, stops.map((stop): MapPosition => [stop.lon, stop.lat]), 50, 13)
+        if (stops.length > 1) fitMap(map, [
+          ...stops.map((stop): MapPosition => [stop.lon, stop.lat]),
+          ...(gps ? [[gps.lon, gps.lat] as MapPosition] : []),
+        ], 50, 13)
         else if (gps) map.easeTo({ center: [gps.lon, gps.lat] })
-      } else if (gps) map.easeTo({ center: [gps.lon, gps.lat] })
+      } else if (gps && fittedCountRef.current === 0) map.easeTo({ center: [gps.lon, gps.lat] })
     }
     return () => {
       markersRef.current.forEach((marker) => marker.remove())
       markersRef.current = []
     }
-  }, [visible, selected, timeMs, showAllRoutes, receivedTrack, onSelect, mapLoaded])
+  }, [visible, selected, timeMs, onSelect, mapLoaded])
 
-  return <div aria-label="Карта январского транспорта и подтверждённых маршрутов" className="historical-map" ref={containerRef} role="application" />
+  return <div aria-label="Карта транспорта" className="historical-map" ref={containerRef} role="application" />
 }

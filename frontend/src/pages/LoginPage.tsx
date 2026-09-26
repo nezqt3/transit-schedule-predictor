@@ -34,7 +34,7 @@ export function LoginPage() {
       setError(
         caught instanceof ApiError && caught.status === 401
           ? 'Неверный логин или пароль'
-          : 'Не удалось связаться с Backend',
+          : 'Не удалось связаться с сервером',
       )
     } finally {
       setIsSubmitting(false)
