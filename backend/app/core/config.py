@@ -17,12 +17,22 @@ class Settings(BaseSettings):
 
     ml_service_url: str = "http://ml:8001"
     ml_request_timeout_s: float = 5.0
+    ml_max_in_flight: int = 8
 
     ndtp_host: str = "0.0.0.0"
     ndtp_port: int = 9201
 
     runtime_schedule_path: str = "data/raw/validate/schedule_plan.csv"
     runtime_traffic_path: str = "data/raw/validate/traffic.csv"
+    runtime_points_path: str | None = None
+    source_timezone: str = "Europe/Moscow"
+    prediction_interval_s: float = 30.0
+    risk_medium_delay_s: float = 60.0
+    risk_high_delay_s: float = 120.0
+    risk_medium_probability: float = 0.25
+    risk_high_probability: float = 0.60
+    demo_units: str = ""
+    demo_initial_delay_s: float = 180.0
     replay_schedule_path: str = "data/raw/test/schedule.csv"
     replay_traffic_path: str = "data/raw/test/traffic.csv"
     replay_labels_path: str = "data/raw/labels/labels_test.csv"

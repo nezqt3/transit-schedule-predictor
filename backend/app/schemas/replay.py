@@ -40,8 +40,8 @@ class ReplayPoint(BaseModel):
     target_stop_id: int
     target_time_begin: datetime
     cur_dev_s: float
-    actual_delay_s: float
-    actual_at: datetime
+    actual_delay_s: float | None = None
+    actual_at: datetime | None = None
     lat: float
     lon: float
 
@@ -59,6 +59,12 @@ class ReplayPrediction(BaseModel):
     predicted_delay_s: float
     baseline_delay_s: float
     model_version: str
+
+
+class ReplayOutcome(BaseModel):
+    sample_id: str
+    actual_delay_s: float
+    actual_at: datetime
 
 
 class ReplayRun(BaseModel):

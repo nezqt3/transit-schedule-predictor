@@ -78,6 +78,13 @@ a { color: var(--accent); }
 .fleet-row__speed { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .fleet-row__speed small { font-size: 11px; font-weight: 500; color: var(--text-muted); }
 .fleet-row__arrow { flex: none; color: #54749f; }
+.forecast-risk { flex: none; padding: 3px 5px; border-radius: 4px; font-size: 10px; font-weight: 800; }
+.forecast-risk--low { color: #08734e; background: #dff7e9; }
+.forecast-risk--medium { color: #935800; background: #fff0c8; }
+.forecast-risk--high { color: #b22339; background: #ffe2e7; }
+.risk-text--low { color: #08734e; }
+.risk-text--medium { color: #935800; }
+.risk-text--high { color: #b22339; }
 
 .vehicle-details { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 20px 18px; background: #fff; scrollbar-width: thin; }
 .vehicle-details--empty { display: flex; flex-direction: column; gap: 6px; color: var(--text-muted); }
@@ -98,6 +105,11 @@ a { color: var(--accent); }
 .vehicle-details__section-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
 .vehicle-details__section-head strong { font-size: 13px; }
 .vehicle-details__section-head small { color: var(--text-muted); }
+.incident-card { display: grid; gap: 5px; margin: 12px 0; padding: 12px; border: 1px solid #ead49d; border-left: 4px solid #ca8a04; border-radius: 7px; background: #fffaf0; font-size: 12px; }
+.incident-card--high { border-color: #efb6be; border-left-color: #c52b3e; background: #fff2f3; }
+.incident-card strong { font-size: 13px; }
+.incident-card small { color: #657589; }
+.incident-card p { margin: 4px 0 0; font-weight: 650; }
 
 .dispatch-map-area { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .details-panel, .historical-details-panel { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: visible; border-left: 1px solid var(--border); background: white; }
@@ -133,6 +145,8 @@ a { color: var(--accent); }
 .vehicle-marker--unknown { background: #6f829d; border-radius: 50%; }
 .vehicle-marker--selected { outline: 4px solid #fdbd46; outline-offset: 2px; z-index: 2; }
 .vehicle-marker--late { box-shadow: 0 0 0 4px #c52b3e, 0 2px 10px #16355365; }
+.vehicle-marker--risk-medium { box-shadow: 0 0 0 4px #e9a928, 0 2px 10px #16355365; }
+.vehicle-marker--risk-low { box-shadow: 0 0 0 3px #31a875, 0 2px 10px #16355365; }
 .vehicle-marker__glyph { display: grid; place-items: center; }
 .vehicle-marker__badge { --badge-scale: var(--map-speed-badge-scale, 1); position: absolute; top: 50%; left: calc(var(--map-marker-edge, 38px) + 6px); display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 5px 7px; transform: translateY(-50%) scale(var(--badge-scale)); transform-origin: left center; border: 1px solid #d8e2f0; border-radius: 6px; background: #fff; box-shadow: 0 2px 8px #12305235; color: #3d587a; pointer-events: none; white-space: nowrap; }
 .vehicle-marker__badge--late { --badge-scale: var(--map-delay-badge-scale, 1); border-color: #eaa9b1; box-shadow: 0 2px 9px #9c263743; }

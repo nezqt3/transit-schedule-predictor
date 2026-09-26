@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Request
 from app.core.config import settings
 from app.schemas.replay import (
     ReplayFleet,
+    ReplayOutcome,
     ReplayPrediction,
     ReplayScenario,
     ReplayStreamStatus,
@@ -34,7 +35,18 @@ async def list_replay_vehicles(request: Request) -> list[ReplayVehicle]:
 @router.get("/fleet", response_model=ReplayFleet,
             summary="Общая январская шкала, GPS и проверенные рейсы")
 async def get_replay_fleet(request: Request) -> ReplayFleet:
-    return _dataset(request).fleet()
+    return _dataset(request).public_fleet()
+
+
+@router.get("/outcomes", response_model=list[ReplayOutcome],
+            summary="Факты прибытия, уже наступившие к моменту replay")
+async def get_replay_outcomes(as_of: datetime, request: Request) -> list[ReplayOutcome]:
+    status = await get_replay_stream_status(request)
+    if status.state not in {"running", "paused", "completed"} or status.source_at is None:
+        return []
+    to_utc = request.app.state.runtime_lookup.to_utc
+    observed_until = min(to_utc(as_of), to_utc(status.source_at))
+    return _dataset(request).outcomes(observed_until)
 
 
 @router.get("/stream-status", response_model=ReplayStreamStatus,
@@ -67,7 +79,15 @@ async def get_replay_scenario(tr_id: int, request: Request) -> ReplayScenario:
     scenario = _dataset(request).scenario(tr_id)
     if scenario is None:
         raise HTTPException(status_code=404, detail="replay vehicle not found")
-    return scenario
+    safe = scenario.model_copy(deep=True)
+    for point in safe.points:
+        point.actual_delay_s = None
+        point.actual_at = None
+    for stop in safe.stops:
+        stop.gps_confirmed = False
+        stop.gps_distance_m = None
+        stop.gps_confirmed_at = None
+    return safe
 
 
 @router.post("/predict/{sample_id}", response_model=ReplayPrediction,

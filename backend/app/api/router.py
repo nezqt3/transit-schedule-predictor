@@ -3,6 +3,8 @@ from fastapi import APIRouter, Depends
 from app.api.auth import router as auth_router
 from app.api.dependencies import get_current_user
 from app.api.health import router as health_router
+from app.api.incidents import router as incidents_router
+from app.api.metrics import router as metrics_router
 from app.api.predictions import predict_from_buffer
 from app.api.predictions import router as predictions_router
 from app.api.replay import router as replay_router
@@ -29,6 +31,18 @@ protected_router.include_router(
     predictions_router,
     prefix="/predictions",
     tags=["Predictions"],
+)
+
+protected_router.include_router(
+    incidents_router,
+    prefix="/incidents",
+    tags=["Incidents"],
+)
+
+protected_router.include_router(
+    metrics_router,
+    prefix="/metrics",
+    tags=["Metrics"],
 )
 
 protected_router.add_api_route(

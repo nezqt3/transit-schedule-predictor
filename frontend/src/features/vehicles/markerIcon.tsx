@@ -24,6 +24,7 @@ const mapStatusIcons = {
 type MarkerDetails = {
   delaySeconds?: number | null
   speedKmh?: number | null
+  risk?: 'low' | 'medium' | 'high' | null
 }
 
 function delayLabel(seconds: number): string {
@@ -34,15 +35,15 @@ function delayLabel(seconds: number): string {
 }
 
 export function markerElement(status: VehicleStatus, selected: boolean, heading: number | null,
-  { delaySeconds, speedKmh }: MarkerDetails = {}) {
+  { delaySeconds, speedKmh, risk }: MarkerDetails = {}) {
   const Icon = mapStatusIcons[status]
   const rotation = status === 'moving' && heading !== null ? `transform:rotate(${heading}deg)` : ''
-  const late = delaySeconds !== null && delaySeconds !== undefined && Number.isFinite(delaySeconds) && delaySeconds >= 120
+  const late = risk === 'high' || (risk === undefined && delaySeconds !== null && delaySeconds !== undefined && Number.isFinite(delaySeconds) && delaySeconds >= 120)
   const showSpeed = status === 'moving' && speedKmh !== null && speedKmh !== undefined && Number.isFinite(speedKmh) && speedKmh >= 0 && speedKmh <= 120
   const element = document.createElement('button')
   element.className = `vehicle-marker-wrap${selected ? ' vehicle-marker-wrap--selected' : ''}${late ? ' vehicle-marker-wrap--late' : ''}${late || showSpeed ? ' vehicle-marker-wrap--with-badge' : ''}`
   element.type = 'button'
-  element.innerHTML = `<span class="vehicle-marker vehicle-marker--${status}${selected ? ' vehicle-marker--selected' : ''}${late ? ' vehicle-marker--late' : ''}"><span class="vehicle-marker__glyph" style="${rotation}">${renderToStaticMarkup(<Icon size={20} strokeWidth={2.8} />)}</span></span>`
+  element.innerHTML = `<span class="vehicle-marker vehicle-marker--${status}${selected ? ' vehicle-marker--selected' : ''}${late ? ' vehicle-marker--late' : ''}${risk ? ` vehicle-marker--risk-${risk}` : ''}"><span class="vehicle-marker__glyph" style="${rotation}">${renderToStaticMarkup(<Icon size={20} strokeWidth={2.8} />)}</span></span>`
   if (late || showSpeed) {
     const badge = document.createElement('span')
     badge.className = `vehicle-marker__badge${late ? ' vehicle-marker__badge--late' : ''}`

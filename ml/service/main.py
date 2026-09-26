@@ -22,6 +22,7 @@ async def lifespan(app: FastAPI):
     elif settings.model_name == "lightgbm_plan":
         app.state.predictor = LightGBMPlanPredictor(
             Path(settings.artifacts_dir), Path(settings.schedule_plan_path),
+            settings.source_timezone,
         )
     elif settings.model_name == "catboost":
         app.state.predictor = Predictor(
@@ -38,8 +39,14 @@ app = FastAPI(title="Transport Delay ML", version="1.0", lifespan=lifespan)
 
 
 @app.get("/health", response_model=HealthResponse)
-def health() -> HealthResponse:
-    return HealthResponse(status="ok", model=settings.model_name)
+def health(request: Request) -> HealthResponse:
+    metadata = request.app.state.predictor.metadata
+    return HealthResponse(
+        status="ok", model=settings.model_name,
+        model_version=metadata["model_version"],
+        model_artifact_sha256=metadata.get("model_artifact_sha256"),
+        risk_model_version=metadata.get("risk_model_version"),
+    )
 
 
 @app.post("/predict", response_model=PredictResponse)
@@ -47,7 +54,7 @@ def predict(payload: PredictRequest, request: Request) -> PredictResponse:
     predictor: BaselinePredictor | Predictor | LightGBMPlanPredictor = (
         request.app.state.predictor
     )
-    prediction = predictor.predict(
+    inputs = dict(
         tr_id=payload.tr_id,
         T=payload.T,
         cur_dev_s=payload.cur_dev_s,
@@ -59,8 +66,16 @@ def predict(payload: PredictRequest, request: Request) -> PredictResponse:
         },
         telemetry=[point.model_dump(exclude_none=True) for point in payload.telemetry],
     )
+    if isinstance(predictor, LightGBMPlanPredictor):
+        inputs["planned_stops"] = [stop.model_dump(mode="json")
+                                    for stop in payload.planned_stops]
+    prediction = predictor.predict(**inputs)
     logger.info("prediction generated for tr_id=%s", payload.tr_id)
     return PredictResponse(
         prediction=prediction, model=settings.model_name,
         model_version=predictor.metadata["model_version"],
+        model_artifact_sha256=predictor.metadata.get("model_artifact_sha256"),
+        p_late=(predictor.predict_risk(prediction)
+                if isinstance(predictor, LightGBMPlanPredictor) else None),
+        risk_model_version=predictor.metadata.get("risk_model_version"),
     )

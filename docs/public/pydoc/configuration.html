@@ -14,8 +14,8 @@
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=5929fcd5"></script>
-      <script src="_static/doctools.js?v=fd6eb6e6"></script>
-      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -88,11 +88,35 @@
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ML_SERVICE_URL</span></code></p></td>
 <td><p>URL ML inference service</p></td>
 </tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ML_MAX_IN_FLIGHT</span></code></p></td>
+<td><p>Максимум одновременных запросов в ML; остальные ждут в backend</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ML_WORKERS</span></code></p></td>
+<td><p>Число CPU-процессов ML в Compose</p></td>
+</tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NDTP_HOST</span></code>, <code class="docutils literal notranslate"><span class="pre">NDTP_PORT</span></code></p></td>
 <td><p>TCP listener телеметрии</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">RUNTIME_SCHEDULE_PATH</span></code></p></td>
-<td><p>Файл расписания runtime lookup</p></td>
+<td><p>Плановое расписание, только поля <code class="docutils literal notranslate"><span class="pre">tr_id</span></code>, <code class="docutils literal notranslate"><span class="pre">tt_action_item_id</span></code>, <code class="docutils literal notranslate"><span class="pre">time_begin</span></code>, <code class="docutils literal notranslate"><span class="pre">geom</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">RUNTIME_TRAFFIC_PATH</span></code></p></td>
+<td><p>Явное соответствие <code class="docutils literal notranslate"><span class="pre">tr_id</span></code> и NDTP <code class="docutils literal notranslate"><span class="pre">unit_id</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">RUNTIME_POINTS_PATH</span></code></p></td>
+<td><p>Опубликованные входные точки <code class="docutils literal notranslate"><span class="pre">cur_dev_s</span></code> для исторического NDTP</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SOURCE_TIMEZONE</span></code></p></td>
+<td><p>Зона CSV без UTC-offset; по умолчанию <code class="docutils literal notranslate"><span class="pre">Europe/Moscow</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">PREDICTION_INTERVAL_S</span></code></p></td>
+<td><p>Минимальный логический интервал запросов ML на терминал</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">RISK_MEDIUM_PROBABILITY</span></code>, <code class="docutils literal notranslate"><span class="pre">RISK_HIGH_PROBABILITY</span></code></p></td>
+<td><p>Пороги риска при калиброванной <code class="docutils literal notranslate"><span class="pre">p_late</span></code>; без неё используются пороги задержки</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DEMO_UNITS</span></code>, <code class="docutils literal notranslate"><span class="pre">DEMO_INITIAL_DELAY_S</span></code></p></td>
+<td><p>Явно синтетический план для терминалов эмулятора организаторов</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AUTH_BOOTSTRAP_USERNAME</span></code>, <code class="docutils literal notranslate"><span class="pre">AUTH_BOOTSTRAP_PASSWORD</span></code></p></td>
 <td><p>Данные для однократного создания первого диспетчера в PostgreSQL</p></td>
@@ -111,6 +135,11 @@
 </tr>
 </tbody>
 </table>
+<p>Стандартный Compose монтирует план и файл соответствия терминалов; он не
+монтирует <code class="docutils literal notranslate"><span class="pre">points.csv</span></code> и test-метки. Дополнительный
+<code class="docutils literal notranslate"><span class="pre">docker-compose.replay.yml</span></code> включает их только для ретроспективной диагностики.
+<code class="docutils literal notranslate"><span class="pre">docker-compose.benchmark.yml</span></code> подставляет отдельный синтетический план для
+нагрузочного прогона.</p>
 </section>
 
 

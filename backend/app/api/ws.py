@@ -1,6 +1,8 @@
 """Live telemetry events for the dispatcher dashboard."""
 
 import asyncio
+from datetime import datetime, timezone
+from uuid import uuid4
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -29,16 +31,19 @@ async def vehicle_stream(websocket: WebSocket) -> None:
     try:
         await websocket.send_json({
             "type": "vehicle_snapshot",
+            "event_id": str(uuid4()),
+            "emitted_at": datetime.now(timezone.utc).isoformat(),
             "data": [event.model_dump(mode="json") for event in telemetry.list_latest()],
         })
         while True:
             try:
                 event = await asyncio.wait_for(queue.get(), timeout=20)
-                await websocket.send_json({
-                    "type": "vehicle_update", "data": event.model_dump(mode="json"),
-                })
+                await websocket.send_json(event)
             except TimeoutError:
-                await websocket.send_json({"type": "heartbeat"})
+                await websocket.send_json({
+                    "type": "heartbeat", "event_id": str(uuid4()),
+                    "emitted_at": datetime.now(timezone.utc).isoformat(),
+                })
     except (WebSocketDisconnect, RuntimeError, OSError):
         pass
     finally:

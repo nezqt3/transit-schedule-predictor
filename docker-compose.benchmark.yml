@@ -1,0 +1,9 @@
+# Synthetic 100-vehicle load profile. Generate files with scripts/benchmark_ndtp.py --prepare.
+services:
+  backend:
+    environment:
+      RUNTIME_SCHEDULE_PATH: /app/benchmark/benchmark_schedule.csv
+      RUNTIME_TRAFFIC_PATH: /app/benchmark/benchmark_mapping.csv
+      RUNTIME_POINTS_PATH: ""
+    volumes:
+      - ./data/processed/benchmark:/app/benchmark:ro

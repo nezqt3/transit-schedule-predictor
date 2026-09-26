@@ -13,8 +13,8 @@
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
-      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
-      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -72,12 +72,12 @@
            <div itemprop="articleBody">
              
   <h1>Source code for app.ndtp.parser</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Бинарный парсер протокола NDTP.</span>
+<span></span><span class="sd">"""Бинарный парсер протокола NDTP.</span>
 
 <span class="sd">Каждый кадр NDTP: [NPL 15 байт][NPH 10 байт][тело].</span>
 <span class="sd">Все поля little-endian. Здесь живёт ВСЁ знание о протоколе: наружу модуль</span>
 <span class="sd">отдаёт только normalized-объекты из app.ndtp.schemas.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">struct</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
@@ -103,15 +103,15 @@
 <span class="n">_CELL_STRUCTS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="c1"># timestamp, longitude, latitude, extra_dop, bat_voltage,</span>
     <span class="c1"># speed_avg, speed_max, course, track, altitude, nsat, pdop</span>
-    <span class="n">CELL_NAV00</span><span class="p">:</span> <span class="s2">&quot;&lt;IIIBBHHHHHBB&quot;</span><span class="p">,</span>
+    <span class="n">CELL_NAV00</span><span class="p">:</span> <span class="s2">"&lt;IIIBBHHHHHBB"</span><span class="p">,</span>
     <span class="c1"># an_in0..3, di_in, di_out, di0..3_counter, odometer, csq, gprs_state,</span>
     <span class="c1"># accel_energy, ext_volt</span>
-    <span class="n">CELL_INT_SENSOR02</span><span class="p">:</span> <span class="s2">&quot;&lt;HHHHBBHHHHIBBBb&quot;</span><span class="p">,</span>
-    <span class="n">CELL_USI08</span><span class="p">:</span> <span class="s2">&quot;&lt;BHHB&quot;</span><span class="p">,</span>
+    <span class="n">CELL_INT_SENSOR02</span><span class="p">:</span> <span class="s2">"&lt;HHHHBBHHHHIBBBb"</span><span class="p">,</span>
+    <span class="n">CELL_USI08</span><span class="p">:</span> <span class="s2">"&lt;BHHB"</span><span class="p">,</span>
     <span class="c1"># sec_flag_status, all_time_engine, all_track, all_fuel_consum,</span>
     <span class="c1"># fuel_level, speed_turn_engine, t_engine, speed, pressure_axis(5), flag_alarm</span>
-    <span class="n">CELL_CAN10</span><span class="p">:</span> <span class="s2">&quot;&lt;IIIIHHhB5HI&quot;</span><span class="p">,</span>
-    <span class="n">CELL_TERMO16</span><span class="p">:</span> <span class="s2">&quot;&lt;Ii&quot;</span><span class="p">,</span>
+    <span class="n">CELL_CAN10</span><span class="p">:</span> <span class="s2">"&lt;IIIIHHhB5HI"</span><span class="p">,</span>
+    <span class="n">CELL_TERMO16</span><span class="p">:</span> <span class="s2">"&lt;Ii"</span><span class="p">,</span>
 <span class="p">}</span>
 
 <span class="n">CELL_SIZES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
@@ -119,15 +119,21 @@
     <span class="k">for</span> <span class="n">cell_type</span><span class="p">,</span> <span class="n">fmt</span> <span class="ow">in</span> <span class="n">_CELL_STRUCTS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
 <span class="p">}</span>
 
-<span class="c1"># Типы, которые мы умеем пропускать целиком (размер известен из спеки),</span>
-<span class="c1"># но не декодируем: не нужны для прогноза задержки.</span>
-<span class="n">SKIPPABLE_CELL_SIZES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">15</span><span class="p">:</span> <span class="mi">50</span><span class="p">}</span>
+<span class="c1"># Остальные фиксированные ячейки из каталога официального эмулятора v1.0.</span>
+<span class="c1"># Размеры проверены по отправленным им пакетам. Без них один датчик дверей,</span>
+<span class="c1"># пассажиропотока и т. п. приводил к потере всего навигационного пакета.</span>
+<span class="n">SKIPPABLE_CELL_SIZES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mi">3</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">4</span><span class="p">:</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">7</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">:</span> <span class="mi">40</span><span class="p">,</span>
+    <span class="mi">12</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">13</span><span class="p">:</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">:</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">15</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">17</span><span class="p">:</span> <span class="mi">46</span><span class="p">,</span>
+    <span class="mi">18</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">19</span><span class="p">:</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">20</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">21</span><span class="p">:</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">22</span><span class="p">:</span> <span class="mi">24</span><span class="p">,</span>
+    <span class="mi">23</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">100</span><span class="p">:</span> <span class="mi">44</span><span class="p">,</span>
+<span class="p">}</span>
 
 
 <div class="viewcode-block" id="NdtParseError">
 <a class="viewcode-back" href="../../../api.html#app.ndtp.parser.NdtParseError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">NdtParseError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Невалидный или неподдерживаемый NDTP-пакет.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">"""Невалидный или неподдерживаемый NDTP-пакет."""</span></div>
 
 
 
@@ -247,7 +253,7 @@
 <div class="viewcode-block" id="crc16_modbus">
 <a class="viewcode-back" href="../../../api.html#app.ndtp.parser.crc16_modbus">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">crc16_modbus</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;CRC-16/Modbus (poly 0xA001, init 0xFFFF).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""CRC-16/Modbus (poly 0xA001, init 0xFFFF)."""</span>
     <span class="n">crc</span> <span class="o">=</span> <span class="mh">0xFFFF</span>
     <span class="k">for</span> <span class="n">byte</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
         <span class="n">crc</span> <span class="o">^=</span> <span class="n">byte</span>
@@ -263,33 +269,33 @@
 <div class="viewcode-block" id="parse_npl">
 <a class="viewcode-back" href="../../../api.html#app.ndtp.parser.parse_npl">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_npl</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NplHeader</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Распаковать 15-байтный заголовок NPL и проверить CRC.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Распаковать 15-байтный заголовок NPL и проверить CRC."""</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">NPL_SIZE</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;NPL короче </span><span class="si">{</span><span class="n">NPL_SIZE</span><span class="si">}</span><span class="s2"> байт&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"NPL короче </span><span class="si">{</span><span class="n">NPL_SIZE</span><span class="si">}</span><span class="s2"> байт"</span><span class="p">)</span>
 
-    <span class="n">signature</span><span class="p">,</span> <span class="n">data_size</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack_from</span><span class="p">(</span><span class="s2">&quot;&lt;HH&quot;</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">signature</span><span class="p">,</span> <span class="n">data_size</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack_from</span><span class="p">(</span><span class="s2">"&lt;HH"</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">signature</span> <span class="o">!=</span> <span class="n">NPL_SIGNATURE</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;неверная сигнатура NPL: 0x</span><span class="si">{</span><span class="n">signature</span><span class="si">:</span><span class="s2">04X</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"неверная сигнатура NPL: 0x</span><span class="si">{</span><span class="n">signature</span><span class="si">:</span><span class="s2">04X</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-    <span class="n">flags</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack_from</span><span class="p">(</span><span class="s2">&quot;&lt;H&quot;</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="mi">4</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">crc_stored</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack_from</span><span class="p">(</span><span class="s2">&quot;&lt;H&quot;</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="mi">6</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack_from</span><span class="p">(</span><span class="s2">"&lt;H"</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="mi">4</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">crc_stored</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack_from</span><span class="p">(</span><span class="s2">"&lt;H"</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="mi">6</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">packet_type</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span>
     <span class="c1"># packed layout: 0..1 signature, 2..3 dataSize, 4..5 flags, 6..7 crc,</span>
     <span class="c1"># 8 type, 9..12 peerAddress, 13..14 requestId</span>
-    <span class="n">peer_address</span><span class="p">,</span> <span class="n">request_id</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack_from</span><span class="p">(</span><span class="s2">&quot;&lt;IH&quot;</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span>
+    <span class="n">peer_address</span><span class="p">,</span> <span class="n">request_id</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack_from</span><span class="p">(</span><span class="s2">"&lt;IH"</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span>
 
     <span class="n">npl_and_body</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="n">NPL_SIZE</span> <span class="p">:</span> <span class="n">NPL_SIZE</span> <span class="o">+</span> <span class="n">data_size</span><span class="p">]</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">npl_and_body</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">data_size</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="s2">&quot;усечённый кадр: не хватает данных тела&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="s2">"усечённый кадр: не хватает данных тела"</span><span class="p">)</span>
 
     <span class="n">crc_enabled</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="mh">0x02</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">crc_enabled</span><span class="p">:</span>
         <span class="c1"># в NPL значение кладётся со свапнутыми байтами</span>
-        <span class="n">expected</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s2">&quot;&lt;H&quot;</span><span class="p">,</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s2">&quot;&gt;H&quot;</span><span class="p">,</span> <span class="n">crc_stored</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">expected</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s2">"&lt;H"</span><span class="p">,</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s2">"&gt;H"</span><span class="p">,</span> <span class="n">crc_stored</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">actual</span> <span class="o">=</span> <span class="n">crc16_modbus</span><span class="p">(</span><span class="n">npl_and_body</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">expected</span> <span class="o">!=</span> <span class="n">actual</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;CRC NPL не совпал: 0x</span><span class="si">{</span><span class="n">expected</span><span class="si">:</span><span class="s2">04X</span><span class="si">}</span><span class="s2"> != 0x</span><span class="si">{</span><span class="n">actual</span><span class="si">:</span><span class="s2">04X</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"CRC NPL не совпал: 0x</span><span class="si">{</span><span class="n">expected</span><span class="si">:</span><span class="s2">04X</span><span class="si">}</span><span class="s2"> != 0x</span><span class="si">{</span><span class="n">actual</span><span class="si">:</span><span class="s2">04X</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">NplHeader</span><span class="p">(</span>
@@ -307,11 +313,11 @@
 <div class="viewcode-block" id="parse_nph">
 <a class="viewcode-back" href="../../../api.html#app.ndtp.parser.parse_nph">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_nph</span><span class="p">(</span><span class="n">body</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NphHeader</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Распаковать 10-байтный заголовок NPH.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Распаковать 10-байтный заголовок NPH."""</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">NPH_SIZE</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;NPH короче </span><span class="si">{</span><span class="n">NPH_SIZE</span><span class="si">}</span><span class="s2"> байт&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"NPH короче </span><span class="si">{</span><span class="n">NPH_SIZE</span><span class="si">}</span><span class="s2"> байт"</span><span class="p">)</span>
     <span class="n">service_id</span><span class="p">,</span> <span class="n">packet_type</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="n">request_id</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack_from</span><span class="p">(</span>
-        <span class="s2">&quot;&lt;HHHI&quot;</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="s2">"&lt;HHHI"</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="mi">0</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">NphHeader</span><span class="p">(</span>
         <span class="n">service_id</span><span class="o">=</span><span class="n">service_id</span><span class="p">,</span>
@@ -325,16 +331,16 @@
 <div class="viewcode-block" id="parse_handshake">
 <a class="viewcode-back" href="../../../api.html#app.ndtp.parser.parse_handshake">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_handshake</span><span class="p">(</span><span class="n">nph_body</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HandshakeRequest</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Тело NPH_SGC_CONN_REQUEST: 18 байт.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Тело NPH_SGC_CONN_REQUEST: 18 байт."""</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">nph_body</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">NPH_SIZE</span> <span class="o">+</span> <span class="mi">18</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="s2">&quot;усечённое тело handshake&quot;</span><span class="p">)</span>
-    <span class="p">(</span><span class="n">_proto_high</span><span class="p">,</span> <span class="n">_proto_low</span><span class="p">,</span> <span class="n">_flags</span><span class="p">,</span> <span class="n">peer_address</span><span class="p">,</span> <span class="n">_max_size</span><span class="p">,</span> <span class="n">_reserved</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">struct</span><span class="o">.</span><span class="n">unpack_from</span><span class="p">(</span><span class="s2">&quot;&lt;HHHIII&quot;</span><span class="p">,</span> <span class="n">nph_body</span><span class="p">,</span> <span class="n">NPH_SIZE</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="s2">"усечённое тело handshake"</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">proto_high</span><span class="p">,</span> <span class="n">proto_low</span><span class="p">,</span> <span class="n">_flags</span><span class="p">,</span> <span class="n">peer_address</span><span class="p">,</span> <span class="n">_max_size</span><span class="p">,</span> <span class="n">_reserved</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">struct</span><span class="o">.</span><span class="n">unpack_from</span><span class="p">(</span><span class="s2">"&lt;HHHIII"</span><span class="p">,</span> <span class="n">nph_body</span><span class="p">,</span> <span class="n">NPH_SIZE</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">HandshakeRequest</span><span class="p">(</span>
         <span class="n">peer_address</span><span class="o">=</span><span class="n">peer_address</span><span class="p">,</span>
-        <span class="n">proto_major</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
-        <span class="n">proto_minor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">proto_major</span><span class="o">=</span><span class="n">proto_high</span><span class="p">,</span>
+        <span class="n">proto_minor</span><span class="o">=</span><span class="n">proto_low</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
@@ -342,14 +348,14 @@
 <div class="viewcode-block" id="decode_cell">
 <a class="viewcode-back" href="../../../api.html#app.ndtp.parser.decode_cell">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">decode_cell</span><span class="p">(</span><span class="n">cell_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Декодировать известную ячейку; None — если тип поддерживаем, но не нужен.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Декодировать известную ячейку; None — если тип поддерживаем, но не нужен."""</span>
     <span class="n">fmt</span> <span class="o">=</span> <span class="n">_CELL_STRUCTS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cell_type</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">fmt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;неизвестный тип ячейки: </span><span class="si">{</span><span class="n">cell_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"неизвестный тип ячейки: </span><span class="si">{</span><span class="n">cell_type</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">expected</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">calcsize</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">expected</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;ячейка </span><span class="si">{</span><span class="n">cell_type</span><span class="si">}</span><span class="s2">: expected </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2"> bytes, got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">"ячейка </span><span class="si">{</span><span class="n">cell_type</span><span class="si">}</span><span class="s2">: expected </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2"> bytes, got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="n">values</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack_from</span><span class="p">(</span><span class="n">fmt</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 
@@ -414,14 +420,14 @@
     <span class="k">if</span> <span class="n">cell_type</span> <span class="o">==</span> <span class="n">CELL_TERMO16</span><span class="p">:</span>
         <span class="n">status</span><span class="p">,</span> <span class="n">temp</span> <span class="o">=</span> <span class="n">values</span>
         <span class="k">return</span> <span class="n">Termo16</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span> <span class="n">temperature_c</span><span class="o">=</span><span class="n">temp</span><span class="p">)</span>
-    <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;неизвестный тип ячейки: </span><span class="si">{</span><span class="n">cell_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+    <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"неизвестный тип ячейки: </span><span class="si">{</span><span class="n">cell_type</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="parse_realtime">
 <a class="viewcode-back" href="../../../api.html#app.ndtp.parser.parse_realtime">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_realtime</span><span class="p">(</span><span class="n">npl</span><span class="p">:</span> <span class="n">NplHeader</span><span class="p">,</span> <span class="n">nph_body</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RealtimePacket</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Разобрать тело NPH_SND_REALTIME на ячейки.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Разобрать тело NPH_SND_REALTIME на ячейки."""</span>
     <span class="n">parse_nph</span><span class="p">(</span><span class="n">nph_body</span><span class="p">)</span>
     <span class="n">offset</span> <span class="o">=</span> <span class="n">NPH_SIZE</span>
     <span class="n">end</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">nph_body</span><span class="p">)</span>
@@ -430,27 +436,27 @@
 
     <span class="k">while</span> <span class="n">offset</span> <span class="o">&lt;</span> <span class="n">end</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">end</span> <span class="o">-</span> <span class="n">offset</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="s2">&quot;усечённый заголовок ячейки&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="s2">"усечённый заголовок ячейки"</span><span class="p">)</span>
         <span class="n">cell_type</span><span class="p">,</span> <span class="n">number</span> <span class="o">=</span> <span class="n">nph_body</span><span class="p">[</span><span class="n">offset</span><span class="p">],</span> <span class="n">nph_body</span><span class="p">[</span><span class="n">offset</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
         <span class="n">offset</span> <span class="o">+=</span> <span class="mi">2</span>
         <span class="n">expected_count</span> <span class="o">=</span> <span class="n">seen_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cell_type</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">number</span> <span class="o">!=</span> <span class="n">expected_count</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;ячейка </span><span class="si">{</span><span class="n">cell_type</span><span class="si">}</span><span class="s2">: unexpected number </span><span class="si">{</span><span class="n">number</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"ячейка </span><span class="si">{</span><span class="n">cell_type</span><span class="si">}</span><span class="s2">: unexpected number </span><span class="si">{</span><span class="n">number</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
         <span class="n">seen_counts</span><span class="p">[</span><span class="n">cell_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">expected_count</span> <span class="o">+</span> <span class="mi">1</span>
 
         <span class="n">size</span> <span class="o">=</span> <span class="n">CELL_SIZES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cell_type</span><span class="p">)</span> <span class="ow">or</span> <span class="n">SKIPPABLE_CELL_SIZES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cell_type</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;неизвестный тип ячейки: </span><span class="si">{</span><span class="n">cell_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"неизвестный тип ячейки: </span><span class="si">{</span><span class="n">cell_type</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="n">nph_body</span><span class="p">[</span><span class="n">offset</span> <span class="p">:</span> <span class="n">offset</span> <span class="o">+</span> <span class="n">size</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">size</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;усечённое тело ячейки </span><span class="si">{</span><span class="n">cell_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"усечённое тело ячейки </span><span class="si">{</span><span class="n">cell_type</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">offset</span> <span class="o">+=</span> <span class="n">size</span>
 
         <span class="k">if</span> <span class="n">cell_type</span> <span class="ow">in</span> <span class="n">_CELL_STRUCTS</span><span class="p">:</span>
             <span class="n">decoded</span> <span class="o">=</span> <span class="n">decode_cell</span><span class="p">(</span><span class="n">cell_type</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
-            <span class="n">key</span> <span class="o">=</span> <span class="n">cell_type</span> <span class="k">if</span> <span class="n">cell_type</span> <span class="o">==</span> <span class="n">CELL_NAV00</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cell_type</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">number</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">cell_type</span> <span class="k">if</span> <span class="n">cell_type</span> <span class="o">==</span> <span class="n">CELL_NAV00</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cell_type</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">number</span><span class="si">}</span><span class="s2">"</span>
             <span class="n">cells</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">decoded</span>
 
     <span class="k">return</span> <span class="n">RealtimePacket</span><span class="p">(</span>
@@ -464,22 +470,22 @@
 <div class="viewcode-block" id="parse_packet">
 <a class="viewcode-back" href="../../../api.html#app.ndtp.parser.parse_packet">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_packet</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">NplHeader</span><span class="p">,</span> <span class="n">HandshakeRequest</span> <span class="o">|</span> <span class="n">RealtimePacket</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Полный разбор одного кадра NDTP в типизированную структуру.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Полный разбор одного кадра NDTP в типизированную структуру."""</span>
     <span class="n">npl</span> <span class="o">=</span> <span class="n">parse_npl</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
     <span class="n">nph_body</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="n">NPL_SIZE</span> <span class="p">:</span> <span class="n">NPL_SIZE</span> <span class="o">+</span> <span class="n">npl</span><span class="o">.</span><span class="n">data_size</span><span class="p">]</span>
     <span class="n">nph</span> <span class="o">=</span> <span class="n">parse_nph</span><span class="p">(</span><span class="n">nph_body</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">nph</span><span class="o">.</span><span class="n">service_id</span> <span class="o">==</span> <span class="n">SERVICE_GENERIC_CONTROLS</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">nph</span><span class="o">.</span><span class="n">packet_type</span> <span class="o">!=</span> <span class="n">NPH_TYPE_CONN_REQUEST</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;неподдерживаемый SGC type: </span><span class="si">{</span><span class="n">nph</span><span class="o">.</span><span class="n">packet_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"неподдерживаемый SGC type: </span><span class="si">{</span><span class="n">nph</span><span class="o">.</span><span class="n">packet_type</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">npl</span><span class="p">,</span> <span class="n">parse_handshake</span><span class="p">(</span><span class="n">nph_body</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">nph</span><span class="o">.</span><span class="n">service_id</span> <span class="o">==</span> <span class="n">SERVICE_NAVDATA</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">nph</span><span class="o">.</span><span class="n">packet_type</span> <span class="o">!=</span> <span class="n">NPH_TYPE_REALTIME</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;неподдерживаемый NAVDATA type: </span><span class="si">{</span><span class="n">nph</span><span class="o">.</span><span class="n">packet_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"неподдерживаемый NAVDATA type: </span><span class="si">{</span><span class="n">nph</span><span class="o">.</span><span class="n">packet_type</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">npl</span><span class="p">,</span> <span class="n">parse_realtime</span><span class="p">(</span><span class="n">npl</span><span class="p">,</span> <span class="n">nph_body</span><span class="p">)</span>
 
-    <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;неподдерживаемый serviceId: </span><span class="si">{</span><span class="n">nph</span><span class="o">.</span><span class="n">service_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+    <span class="k">raise</span> <span class="n">NdtParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"неподдерживаемый serviceId: </span><span class="si">{</span><span class="n">nph</span><span class="o">.</span><span class="n">service_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
 
 
 
@@ -492,11 +498,11 @@
 <div class="viewcode-block" id="build_npl">
 <a class="viewcode-back" href="../../../api.html#app.ndtp.parser.build_npl">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_npl</span><span class="p">(</span><span class="n">data_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">peer_address</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Собрать 15-байтный NPL с корректным CRC по NPH+телу.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Собрать 15-байтный NPL с корректным CRC по NPH+телу."""</span>
     <span class="n">crc</span> <span class="o">=</span> <span class="n">crc16_modbus</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
-    <span class="n">swapped</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s2">&quot;&lt;H&quot;</span><span class="p">,</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s2">&quot;&gt;H&quot;</span><span class="p">,</span> <span class="n">crc</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">swapped</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s2">"&lt;H"</span><span class="p">,</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s2">"&gt;H"</span><span class="p">,</span> <span class="n">crc</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span>
-        <span class="s2">&quot;&lt;HHHHBIH&quot;</span><span class="p">,</span>
+        <span class="s2">"&lt;HHHHBIH"</span><span class="p">,</span>
         <span class="n">NPL_SIGNATURE</span><span class="p">,</span>
         <span class="n">data_size</span><span class="p">,</span>
         <span class="mh">0x0002</span><span class="p">,</span>  <span class="c1"># flags: crc enabled</span>
@@ -511,7 +517,7 @@
 <div class="viewcode-block" id="build_nph">
 <a class="viewcode-back" href="../../../api.html#app.ndtp.parser.build_nph">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_nph</span><span class="p">(</span><span class="n">service_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">packet_type</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">request_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s2">&quot;&lt;HHHI&quot;</span><span class="p">,</span> <span class="n">service_id</span><span class="p">,</span> <span class="n">packet_type</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">request_id</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s2">"&lt;HHHI"</span><span class="p">,</span> <span class="n">service_id</span><span class="p">,</span> <span class="n">packet_type</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">request_id</span><span class="p">)</span></div>
 
 
 
@@ -519,7 +525,7 @@
 <a class="viewcode-back" href="../../../api.html#app.ndtp.parser.build_handshake">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_handshake</span><span class="p">(</span><span class="n">unit_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">request_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
     <span class="n">body</span> <span class="o">=</span> <span class="n">build_nph</span><span class="p">(</span><span class="n">SERVICE_GENERIC_CONTROLS</span><span class="p">,</span> <span class="n">NPH_TYPE_CONN_REQUEST</span><span class="p">,</span> <span class="n">request_id</span><span class="p">)</span>
-    <span class="n">body</span> <span class="o">+=</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s2">&quot;&lt;HHHIII&quot;</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">unit_id</span><span class="p">,</span> <span class="mi">65535</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">body</span> <span class="o">+=</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s2">"&lt;HHHIII"</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">unit_id</span><span class="p">,</span> <span class="mi">65535</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="n">npl</span> <span class="o">=</span> <span class="n">build_npl</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">),</span> <span class="n">unit_id</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">npl</span> <span class="o">+</span> <span class="n">body</span></div>
 
@@ -536,7 +542,7 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
     <span class="n">extra_dop</span> <span class="o">=</span> <span class="mh">0xE0</span>  <span class="c1"># координаты валидны, N/E</span>
     <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span>
-        <span class="s2">&quot;&lt;IIIBBHHHHHBB&quot;</span><span class="p">,</span>
+        <span class="s2">"&lt;IIIBBHHHHHBB"</span><span class="p">,</span>
         <span class="n">timestamp</span><span class="p">,</span>
         <span class="nb">int</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">longitude</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e7</span><span class="p">),</span>
         <span class="nb">int</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">latitude</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e7</span><span class="p">),</span>

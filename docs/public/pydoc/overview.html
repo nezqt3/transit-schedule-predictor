@@ -14,8 +14,8 @@
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=5929fcd5"></script>
-      <script src="_static/doctools.js?v=fd6eb6e6"></script>
-      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -80,14 +80,25 @@
   <section id="id1">
 <h1>Архитектура<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
 <p>Поток данных Backend:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>NDTP TCP -&gt; parser -&gt; TelemetryService -&gt; Prediction Service -&gt; ML Service
-                           |
-                           +-&gt; REST API -&gt; Dashboard
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>NDTP TCP -&gt; parser -&gt; TelemetryService -&gt; RuntimePrediction -&gt; ML Service
+                           |                    |
+                           |                    +-&gt; IncidentStore
+                           +-&gt; REST / WebSocket -&gt; Dashboard
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">app.ndtp</span></code> изолирует бинарный протокол. <code class="docutils literal notranslate"><span class="pre">TelemetryService</span></code> хранит
-ограниченную in-memory историю для демо. Prediction Service не загружает
-модель, а обращается к отдельному ML Service.</p>
+ограниченную in-memory историю. <code class="docutils literal notranslate"><span class="pre">RuntimePrediction</span></code> сопоставляет терминал с
+рейсом, выбирает первую остановку в <code class="docutils literal notranslate"><span class="pre">(T+10</span> <span class="pre">мин,</span> <span class="pre">T+15</span> <span class="pre">мин]</span></code> и вызывает
+отдельный ML Service. Для старого NDTP-потока используется время самого
+пакета; ускорение replay меняет темп передачи, но не это логическое время.
+Timestamp без зоны в исходных CSV интерпретируется в <code class="docutils literal notranslate"><span class="pre">SOURCE_TIMEZONE</span></code>
+(<code class="docutils literal notranslate"><span class="pre">Europe/Moscow</span></code> по умолчанию), а внутри backend приводится к UTC.</p>
+<p>Текущий <code class="docutils literal notranslate"><span class="pre">cur_dev_s</span></code> берётся из уже опубликованной входной точки только в
+историческом режиме или вычисляется по подтверждённой GPS-остановке. Если
+источник недоступен, прогноз не подменяется нулём. Отдельный режим эмулятора
+использует явно синтетический план и помечает результат как <code class="docutils literal notranslate"><span class="pre">demo</span></code>.</p>
+<p>Прогнозы и инциденты хранятся в памяти backend. PostgreSQL хранит данные
+авторизации; потеря БД отключает вход, backend продолжает принимать NDTP.</p>
 <section id="id2">
 <h2>Публичные маршруты<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
 <ul class="simple">
@@ -96,7 +107,9 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/api/v1/auth/logout</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">/docs</span></code>, <code class="docutils literal notranslate"><span class="pre">/redoc</span></code>, <code class="docutils literal notranslate"><span class="pre">/openapi.json</span></code></p></li>
 </ul>
-<p>Маршруты vehicles, predictions и <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/api/v1/auth/me</span></code> требуют сессию.</p>
+<p>Маршруты <code class="docutils literal notranslate"><span class="pre">vehicles</span></code>, <code class="docutils literal notranslate"><span class="pre">predictions</span></code>, <code class="docutils literal notranslate"><span class="pre">incidents</span></code>, <code class="docutils literal notranslate"><span class="pre">metrics</span></code>, <code class="docutils literal notranslate"><span class="pre">replay</span></code>
+и <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/api/v1/auth/me</span></code> требуют сессию. <code class="docutils literal notranslate"><span class="pre">WS</span> <span class="pre">/api/v1/ws</span></code> отправляет
+<code class="docutils literal notranslate"><span class="pre">vehicle_update</span></code>, <code class="docutils literal notranslate"><span class="pre">prediction_update</span></code>, <code class="docutils literal notranslate"><span class="pre">incident</span></code> и <code class="docutils literal notranslate"><span class="pre">heartbeat</span></code>.</p>
 </section>
 </section>
 

@@ -4,10 +4,12 @@
 app.state, NDTP-сервер пишет в него, API читает.
 """
 
+import logging
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.config import settings
 from app.core.security import decode_access_token
@@ -16,6 +18,7 @@ from app.services.auth import AuthService
 from app.services.telemetry import TelemetryService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token", auto_error=False)
+logger = logging.getLogger(__name__)
 
 
 def get_telemetry_service(request: Request) -> TelemetryService:
@@ -54,7 +57,14 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     username, token_role = identity
-    user = await auth_service.get_current_user(username)
+    try:
+        user = await auth_service.get_current_user(username)
+    except (SQLAlchemyError, OSError, TimeoutError) as exc:
+        logger.warning("authentication storage unavailable: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="authentication storage is unavailable",
+        ) from exc
     if user is None or user.role != token_role:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

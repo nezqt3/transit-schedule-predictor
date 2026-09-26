@@ -41,10 +41,19 @@ frontend/coverage/
 .pnpm-store/
 
 # Data & model artifacts (large, never commit)
+# Previously tracked raw files remain until the team has a verified external source.
+data/raw/
 ml/artifacts/*
 !ml/artifacts/.gitkeep
 !ml/artifacts/README.md
+!ml/artifacts/release_manifest.json
+!ml/artifacts/lightgbm_plan_metadata.json
+!ml/artifacts/lightgbm_plan_direct.txt
+!ml/artifacts/lightgbm_plan_residual.txt
+!ml/artifacts/risk_calibration.json
 data/processed/*_features.parquet
+data/processed/benchmark/
+data/processed/replay_speed_comparison.json
 data/submissions/submission.csv
 
 # Emulator archives
@@ -54,3 +63,4 @@ emulator/ndtp-telemetry-emulator.tar
 
 # Sphinx doctree cache (built HTML in docs/public is committed on purpose)
 docs/public/pydoc/.doctrees/
+docs/public/pydoc/.buildinfo.bak

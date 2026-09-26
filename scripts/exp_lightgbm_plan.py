@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import argparse
 import sys
 from pathlib import Path
 
@@ -51,6 +52,10 @@ def predict_pair(models: list[lgb.LGBMRegressor], categories: list[str],
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--release", action="store_true",
+                        help="Write the selected pure LightGBM submission without a Torch artifact")
+    args = parser.parse_args()
     train, _, train_features = load_part("train")
     test, test_base, test_features = load_part("test")
     validate, validate_base, validate_features = load_part("validate")
@@ -77,18 +82,24 @@ def main() -> None:
     (artifacts / "lightgbm_plan_metadata.json").write_text(json.dumps({
         "features": ALL_FEATURES, "categories": categories, "train_rows": len(train),
     }, indent=2), encoding="utf-8")
-    torch = TorchTabularRegressor.load(artifacts / "torch_tabular.pt")
-    test_blend = 0.58 * test_pred + 0.42 * torch.predict(test_base)
-    validate_blend = 0.58 * validate_pred + 0.42 * torch.predict(validate_base)
     pure_output = ordered_submission(validate, validate_pred,
                                      "lightgbm_plan_submission.csv")
-    output = ordered_submission(validate, validate_blend,
-                                "lightgbm_plan_torch42_submission.csv")
+    if args.release:
+        output = ordered_submission(validate, validate_pred,
+                                    "final_submission.csv")
+        test_blend_mae = None
+    else:
+        torch = TorchTabularRegressor.load(artifacts / "torch_tabular.pt")
+        test_blend = 0.58 * test_pred + 0.42 * torch.predict(test_base)
+        validate_blend = 0.58 * validate_pred + 0.42 * torch.predict(validate_base)
+        output = ordered_submission(validate, validate_blend,
+                                    "lightgbm_plan_torch42_submission.csv")
+        test_blend_mae = float(np.abs(test_blend - test["target_delay_s"].to_numpy(float)).mean())
     report = {
         "folds": folds,
         "cv_mae": sum(x["n"] * x["mae"] for x in folds) / sum(x["n"] for x in folds),
         "test_mae": float(np.abs(test_pred - test["target_delay_s"].to_numpy(float)).mean()),
-        "test_blend_mae": float(np.abs(test_blend - test["target_delay_s"].to_numpy(float)).mean()),
+        "test_blend_mae": test_blend_mae,
         "pure_submission": str(pure_output),
         "submission": str(output),
     }

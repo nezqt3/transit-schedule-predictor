@@ -1,0 +1,285 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app.services.runtime_lookup &mdash; Transport Delay Predictor  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Transport Delay Predictor
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Руководство:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../overview.html">Архитектура</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../authentication.html">Авторизация</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../configuration.html">Конфигурация</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">Backend API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Transport Delay Predictor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">app.services.runtime_lookup</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for app.services.runtime_lookup</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Read-only mapping from NDTP terminals to planned stops, without actual arrivals."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">,</span> <span class="n">timezone</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">zoneinfo</span><span class="w"> </span><span class="kn">import</span> <span class="n">ZoneInfo</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.ndtp.schemas</span><span class="w"> </span><span class="kn">import</span> <span class="n">TelemetryEvent</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">POINT</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"POINT\s*\(\s*([-+\d.eE]+)\s+([-+\d.eE]+)\s*\)"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="RuntimeLookup">
+<a class="viewcode-back" href="../../../api.html#app.services.runtime_lookup.RuntimeLookup">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RuntimeLookup</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Select the first planned stop in the competition horizon for a terminal."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schedule_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">traffic_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                 <span class="n">source_timezone</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Europe/Moscow"</span><span class="p">,</span>
+                 <span class="n">points_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">demo_units</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+                 <span class="n">demo_initial_delay_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">180</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stops</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plans</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vehicles_by_unit</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">point_hints</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">demo_tr_by_unit</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()):</span> <span class="mi">9_000_000</span> <span class="o">+</span> <span class="n">index</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">demo_units</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">))</span> <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">demo_tr_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">demo_tr_by_unit</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">demo_anchor</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">demo_initial_delay_s</span> <span class="o">=</span> <span class="n">demo_initial_delay_s</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source_timezone</span> <span class="o">=</span> <span class="n">ZoneInfo</span><span class="p">(</span><span class="n">source_timezone</span><span class="p">)</span>
+        <span class="n">schedule</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">schedule_path</span><span class="p">)</span>
+        <span class="n">traffic</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">traffic_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">schedule</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">with</span> <span class="n">schedule</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+                <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+                <span class="n">required</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"tr_id"</span><span class="p">,</span> <span class="s2">"tt_action_item_id"</span><span class="p">,</span> <span class="s2">"time_begin"</span><span class="p">,</span> <span class="s2">"geom"</span><span class="p">}</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">required</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">fieldnames</span> <span class="ow">or</span> <span class="p">[]):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"runtime schedule is missing plan columns"</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">reader</span><span class="p">:</span>
+                    <span class="n">match</span> <span class="o">=</span> <span class="n">POINT</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"geom"</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="n">planned</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_utc</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"time_begin"</span><span class="p">]))</span>
+                    <span class="n">stop</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="s2">"tr_id"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"tr_id"</span><span class="p">]),</span>
+                        <span class="s2">"target_stop_id"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"tt_action_item_id"</span><span class="p">]),</span>
+                        <span class="s2">"stop_lon"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
+                        <span class="s2">"stop_lat"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span>
+                        <span class="s2">"target_time_begin"</span><span class="p">:</span> <span class="n">planned</span><span class="p">,</span>
+                        <span class="s2">"address"</span><span class="p">:</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"building_address"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="p">}</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">stops</span><span class="p">[</span><span class="n">stop</span><span class="p">[</span><span class="s2">"target_stop_id"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">stop</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">plans</span><span class="p">[</span><span class="n">stop</span><span class="p">[</span><span class="s2">"tr_id"</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stop</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">plan</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plans</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="n">plan</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">stop</span><span class="p">:</span> <span class="p">(</span><span class="n">stop</span><span class="p">[</span><span class="s2">"target_time_begin"</span><span class="p">],</span> <span class="n">stop</span><span class="p">[</span><span class="s2">"target_stop_id"</span><span class="p">]))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"runtime schedule unavailable: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">schedule</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">traffic</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">with</span> <span class="n">traffic</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+                <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="p">{</span><span class="s2">"tr_id"</span><span class="p">,</span> <span class="s2">"unit_id"</span><span class="p">}</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">fieldnames</span> <span class="ow">or</span> <span class="p">[]):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"runtime traffic is missing tr_id/unit_id"</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">reader</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"unit_id"</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tr_id"</span><span class="p">):</span>
+                        <span class="k">continue</span>
+                    <span class="n">tr_id</span><span class="p">,</span> <span class="n">unit_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"tr_id"</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"unit_id"</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">tr_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plans</span><span class="p">:</span>
+                        <span class="n">previous</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vehicles_by_unit</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">unit_id</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">previous</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">previous</span> <span class="o">!=</span> <span class="n">tr_id</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ambiguous unit mapping: </span><span class="si">{</span><span class="n">unit_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">[</span><span class="n">tr_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">unit_id</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">vehicles_by_unit</span><span class="p">[</span><span class="n">unit_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr_id</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"runtime unit mapping unavailable: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">traffic</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">points_path</span> <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">points_path</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">with</span> <span class="n">Path</span><span class="p">(</span><span class="n">points_path</span><span class="p">)</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+                <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+                <span class="n">required</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"tr_id"</span><span class="p">,</span> <span class="s2">"T"</span><span class="p">,</span> <span class="s2">"target_stop_id"</span><span class="p">,</span> <span class="s2">"cur_dev_s"</span><span class="p">}</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">required</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">fieldnames</span> <span class="ow">or</span> <span class="p">[]):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"runtime points are missing causal input columns"</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">reader</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">point_hints</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"tr_id"</span><span class="p">])]</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                        <span class="s2">"T"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_utc</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"T"</span><span class="p">])),</span>
+                        <span class="s2">"target_stop_id"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"target_stop_id"</span><span class="p">]),</span>
+                        <span class="s2">"cur_dev_s"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"cur_dev_s"</span><span class="p">]),</span>
+                    <span class="p">})</span>
+            <span class="k">for</span> <span class="n">hints</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">point_hints</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="n">hints</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">point</span><span class="p">:</span> <span class="n">point</span><span class="p">[</span><span class="s2">"T"</span><span class="p">])</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"runtime lookups: </span><span class="si">%d</span><span class="s2"> stops, </span><span class="si">%d</span><span class="s2"> mapped vehicles"</span><span class="p">,</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stops</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vehicles_by_unit</span><span class="p">))</span>
+
+<div class="viewcode-block" id="RuntimeLookup.to_utc">
+<a class="viewcode-back" href="../../../api.html#app.services.runtime_lookup.RuntimeLookup.to_utc">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_utc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">datetime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Interpret source-naive timestamps in the configured source timezone."""</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">source_timezone</span><span class="p">)</span> <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">astimezone</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RuntimeLookup.target_for">
+<a class="viewcode-back" href="../../../api.html#app.services.runtime_lookup.RuntimeLookup.target_for">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">target_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tr_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">prediction_time</span><span class="p">:</span> <span class="n">datetime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_utc</span><span class="p">(</span><span class="n">prediction_time</span><span class="p">)</span>
+        <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">t</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span> <span class="n">t</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">next</span><span class="p">((</span><span class="n">stop</span> <span class="k">for</span> <span class="n">stop</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plans</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tr_id</span><span class="p">,</span> <span class="p">())</span>
+                     <span class="k">if</span> <span class="n">lower</span> <span class="o">&lt;</span> <span class="n">stop</span><span class="p">[</span><span class="s2">"target_time_begin"</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">upper</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RuntimeLookup.prior_stops">
+<a class="viewcode-back" href="../../../api.html#app.services.runtime_lookup.RuntimeLookup.prior_stops">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prior_stops</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tr_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">prediction_time</span><span class="p">:</span> <span class="n">datetime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_utc</span><span class="p">(</span><span class="n">prediction_time</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">stop</span> <span class="k">for</span> <span class="n">stop</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plans</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tr_id</span><span class="p">,</span> <span class="p">())</span>
+                <span class="k">if</span> <span class="n">stop</span><span class="p">[</span><span class="s2">"target_time_begin"</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">t</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="RuntimeLookup.point_hint">
+<a class="viewcode-back" href="../../../api.html#app.services.runtime_lookup.RuntimeLookup.point_hint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">point_hint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tr_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">prediction_time</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span>
+                   <span class="n">target_stop_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Use a supplied competition input only after its prediction time."""</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_utc</span><span class="p">(</span><span class="n">prediction_time</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">point_hints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tr_id</span><span class="p">,</span> <span class="p">())):</span>
+            <span class="k">if</span> <span class="n">point</span><span class="p">[</span><span class="s2">"T"</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">t</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="n">point</span><span class="p">[</span><span class="s2">"T"</span><span class="p">])</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="mi">30</span> <span class="ow">and</span> <span class="p">(</span>
+                    <span class="n">point</span><span class="p">[</span><span class="s2">"target_stop_id"</span><span class="p">]</span> <span class="o">==</span> <span class="n">target_stop_id</span>
+                <span class="p">):</span>
+                    <span class="k">return</span> <span class="n">point</span><span class="p">[</span><span class="s2">"cur_dev_s"</span><span class="p">]</span>
+                <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="RuntimeLookup.register_demo">
+<a class="viewcode-back" href="../../../api.html#app.services.runtime_lookup.RuntimeLookup.register_demo">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">register_demo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">TelemetryEvent</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create a visibly synthetic plan for a configured official emulator unit."""</span>
+        <span class="n">tr_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">demo_tr_by_unit</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">unit_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tr_id</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">event</span><span class="o">.</span><span class="n">nav</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">event</span><span class="o">.</span><span class="n">nav</span><span class="o">.</span><span class="n">coordinates_valid</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">tr_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plans</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">tr_id</span>
+        <span class="n">anchor</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">received_at</span><span class="o">.</span><span class="n">astimezone</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">demo_anchor</span><span class="p">[</span><span class="n">tr_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">anchor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">units</span><span class="p">[</span><span class="n">tr_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">unit_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vehicles_by_unit</span><span class="p">[</span><span class="n">event</span><span class="o">.</span><span class="n">unit_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr_id</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">offset_min</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">13</span><span class="p">,</span> <span class="mi">134</span><span class="p">,</span> <span class="mi">5</span><span class="p">))):</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"tr_id"</span><span class="p">:</span> <span class="n">tr_id</span><span class="p">,</span>
+                <span class="s2">"target_stop_id"</span><span class="p">:</span> <span class="n">tr_id</span> <span class="o">*</span> <span class="mi">1000</span> <span class="o">+</span> <span class="n">index</span><span class="p">,</span>
+                <span class="s2">"stop_lon"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">nav</span><span class="o">.</span><span class="n">longitude</span> <span class="o">+</span> <span class="n">index</span> <span class="o">*</span> <span class="mf">0.001</span><span class="p">,</span>
+                <span class="s2">"stop_lat"</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">nav</span><span class="o">.</span><span class="n">latitude</span><span class="p">,</span>
+                <span class="s2">"target_time_begin"</span><span class="p">:</span> <span class="n">anchor</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="n">offset_min</span><span class="p">),</span>
+                <span class="s2">"address"</span><span class="p">:</span> <span class="s2">"Демонстрационный план эмулятора"</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stops</span><span class="p">[</span><span class="n">stop</span><span class="p">[</span><span class="s2">"target_stop_id"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">stop</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plans</span><span class="p">[</span><span class="n">tr_id</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stop</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"synthetic demo plan created for unit_id=</span><span class="si">%s</span><span class="s2"> tr_id=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+                       <span class="n">event</span><span class="o">.</span><span class="n">unit_id</span><span class="p">,</span> <span class="n">tr_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tr_id</span></div>
+
+
+<div class="viewcode-block" id="RuntimeLookup.demo_current_delay">
+<a class="viewcode-back" href="../../../api.html#app.services.runtime_lookup.RuntimeLookup.demo_current_delay">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">demo_current_delay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tr_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">prediction_time</span><span class="p">:</span> <span class="n">datetime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">anchor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">demo_anchor</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tr_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">anchor</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_utc</span><span class="p">(</span><span class="n">prediction_time</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">anchor</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">demo_initial_delay_s</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

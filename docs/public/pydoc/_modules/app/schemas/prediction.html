@@ -13,8 +13,8 @@
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
-      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
-      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -82,40 +82,40 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">PredictionRequest</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
     <span class="n">tr_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="o">...</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Идентификатор транспортного средства&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Идентификатор транспортного средства"</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="o">...</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Момент построения прогноза T&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Момент построения прогноза T"</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">unit_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;NDTP terminal ID, if different from tr_id&quot;</span><span class="p">)</span>
+    <span class="n">unit_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"NDTP terminal ID, if different from tr_id"</span><span class="p">)</span>
 
-    <span class="n">target_stop_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ID целевой остановки&quot;</span><span class="p">)</span>
-    <span class="n">target_time_begin</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Плановое время прибытия&quot;</span><span class="p">)</span>
-    <span class="n">stop_lat</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Широта целевой остановки&quot;</span><span class="p">)</span>
-    <span class="n">stop_lon</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Долгота целевой остановки&quot;</span><span class="p">)</span>
+    <span class="n">target_stop_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"ID целевой остановки"</span><span class="p">)</span>
+    <span class="n">target_time_begin</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Плановое время прибытия"</span><span class="p">)</span>
+    <span class="n">stop_lat</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Широта целевой остановки"</span><span class="p">)</span>
+    <span class="n">stop_lon</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Долгота целевой остановки"</span><span class="p">)</span>
 
     <span class="n">lat</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="o">...</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Широта транспортного средства&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Широта транспортного средства"</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">lon</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="o">...</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Долгота транспортного средства&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Долгота транспортного средства"</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">speed</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="o">...</span><span class="p">,</span>
         <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Текущая скорость в км/ч&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Текущая скорость в км/ч"</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">cur_dev_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="o">...</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Текущее отклонение от расписания в секундах&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Текущее отклонение от расписания в секундах"</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
@@ -127,10 +127,14 @@
 
     <span class="n">prediction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="o">...</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Прогноз задержки через 10–15 минут, сек&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Прогноз задержки через 10–15 минут, сек"</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">model_version</span><span class="p">:</span> <span class="nb">str</span></div>
+    <span class="n">model_version</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">model_artifact_sha256</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">p_late</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">risk_model_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
 
@@ -140,11 +144,36 @@
     <span class="n">tr_id</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">unit_id</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">prediction_time</span><span class="p">:</span> <span class="n">datetime</span>
+    <span class="n">input_event_time</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">input_received_at</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">target_stop_id</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">target_time</span><span class="p">:</span> <span class="n">datetime</span>
     <span class="n">current_delay_s</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">predicted_delay_s</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">model_version</span><span class="p">:</span> <span class="nb">str</span></div>
+    <span class="n">model_version</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">model_artifact_sha256</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">produced_at</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">predicted_arrival</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">current_delay_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"point_input"</span>
+    <span class="n">last_confirmed_stop_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">last_confirmed_at</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"manual"</span>
+    <span class="n">p_late</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">risk_model_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">risk</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"low"</span>
+    <span class="n">risk_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"threshold"</span>
+    <span class="n">freshness</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"fresh"</span></div>
+
+
+
+<div class="viewcode-block" id="PredictionStatus">
+<a class="viewcode-back" href="../../../api.html#app.schemas.prediction.PredictionStatus">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PredictionStatus</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">unit_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">tr_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">code</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">updated_at</span><span class="p">:</span> <span class="n">datetime</span></div>
 
 </pre></div>
 

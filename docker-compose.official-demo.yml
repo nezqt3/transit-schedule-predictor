@@ -1,0 +1,7 @@
+# Explicitly synthetic stop plans for the organiser's telemetry-only emulator.
+services:
+  backend:
+    environment:
+      DEMO_UNITS: ${DEMO_UNITS:-1166336,1166789}
+      DEMO_INITIAL_DELAY_S: ${DEMO_INITIAL_DELAY_S:-1000}
+      RUNTIME_POINTS_PATH: ""

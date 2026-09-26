@@ -14,9 +14,10 @@ class Settings(BaseSettings):
     ml_service_port: int = 8001
 
     artifacts_dir: str = "artifacts"
-    model_name: str = "baseline"
+    model_name: str = "lightgbm_plan"
     model_version: str = "1.0"
     schedule_plan_path: str = "data/raw/validate/schedule_plan.csv"
+    source_timezone: str = "Europe/Moscow"
 
     log_level: str = "INFO"
 

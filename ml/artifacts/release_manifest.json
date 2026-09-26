@@ -1,0 +1,31 @@
+{
+  "model": "lightgbm_plan",
+  "model_version": "lightgbm-plan-2026-09-26",
+  "training_command": "python scripts/exp_lightgbm_plan.py --release",
+  "feature_metadata": "lightgbm_plan_metadata.json",
+  "verified_runtime": {
+    "python": "3.12.10",
+    "lightgbm": "4.7.0",
+    "pandas": "3.0.6",
+    "numpy": "2.5.3"
+  },
+  "submission": "data/submissions/final_submission.csv",
+  "submission_format": "sample_id;prediction",
+  "train_rows": 4434,
+  "test_rows": 353,
+  "train_temporal_cv_mae_s": 76.45028004731039,
+  "test_mae_s": 58.603345521191955,
+  "test_baseline_cur_dev_mae_s": 93.359773,
+  "official_platform_score": 1.0,
+  "official_platform_score_name": "score 1",
+  "official_platform_score_source": "user-reported LightGBM result, 2026-09-27",
+  "official_platform_score_evidence": null,
+  "sha256": {
+    "lightgbm_plan_metadata.json": "07714081af9d4c9411c16f294c2ca2a0ca327abe775eb6302d7c2a0b17284f97",
+    "lightgbm_plan_direct.txt": "23a9665d6dc305171383d18d31358b3a422e13a8a3cf689c92ea824e4794b432",
+    "lightgbm_plan_residual.txt": "07becedc513926e50aa27349d98b71834e4d3b02d65a79d4247090281ecc5773",
+    "risk_calibration.json": "e7ae612efe52e39a90080c671fd66f8253c34cd0c3a7427e630a79f52377d83f",
+    "schedule_plan.csv": "c9b561743a5cb83616941b02b47c5aded89e75218d93c13a282a2e8c790787c8",
+    "final_submission.csv": "54533ea0a36cff8e548bf78e31bb13c54a036f54a2cd861e8c4fcb3c88d831ce"
+  }
+}

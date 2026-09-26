@@ -6,8 +6,9 @@
 """
 
 import asyncio
+import uuid
 from collections import OrderedDict, deque
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from threading import RLock
 
 from app.ndtp.schemas import TelemetryEvent
@@ -22,11 +23,26 @@ class TelemetryService:
         self._max_units = max_units
         self._max_points = max_points
         self._lock = RLock()
-        self._subscribers: set[asyncio.Queue[TelemetryEvent]] = set()
+        self._subscribers: set[asyncio.Queue[dict]] = set()
+        self.accepted_packets = 0
+        self.ignored_packets = 0
+        self.ws_dropped_events = 0
+        self.subscriber_queue_peak = 0
 
-    def record(self, event: TelemetryEvent) -> None:
+    def record(self, event: TelemetryEvent) -> bool:
         """Сохранить последнее событие устройства."""
         with self._lock:
+            previous = self._latest.get(event.unit_id)
+            if previous is not None and previous.nav is not None and event.nav is None:
+                merged = previous.model_copy(update={
+                    "can": event.can, "received_at": event.received_at,
+                })
+                self._latest[event.unit_id] = merged
+                self.publish("vehicle_update", merged.model_dump(mode="json"))
+                return False
+            if previous is not None and event.event_time <= previous.event_time:
+                self.ignored_packets += 1
+                return False
             self._latest.pop(event.unit_id, None)
             self._latest[event.unit_id] = event
             points = self._history.pop(event.unit_id, deque(maxlen=self._max_points))
@@ -38,10 +54,9 @@ class TelemetryService:
             if len(self._latest) > self._max_units:
                 evicted, _ = self._latest.popitem(last=False)
                 self._history.pop(evicted, None)
-            for queue in self._subscribers:
-                if queue.full():
-                    queue.get_nowait()
-                queue.put_nowait(event)
+            self.accepted_packets += 1
+        self.publish("vehicle_update", event.model_dump(mode="json"))
+        return True
 
     async def handle_event(self, event: TelemetryEvent) -> None:
         """Callback для NDTP-сервера."""
@@ -64,13 +79,29 @@ class TelemetryService:
         with self._lock:
             return len(self._latest)
 
-    def subscribe(self) -> asyncio.Queue[TelemetryEvent]:
+    def publish(self, event_type: str, data: dict) -> None:
+        """Fan out one bounded real-time event without blocking NDTP."""
+        message = {
+            "type": event_type,
+            "event_id": str(uuid.uuid4()),
+            "emitted_at": datetime.now(timezone.utc).isoformat(),
+            "data": data,
+        }
+        with self._lock:
+            for queue in self._subscribers:
+                if queue.full():
+                    queue.get_nowait()
+                    self.ws_dropped_events += 1
+                queue.put_nowait(message)
+                self.subscriber_queue_peak = max(self.subscriber_queue_peak, queue.qsize())
+
+    def subscribe(self) -> asyncio.Queue[dict]:
         """Subscribe to bounded live updates without blocking the NDTP receiver."""
-        queue: asyncio.Queue[TelemetryEvent] = asyncio.Queue(maxsize=100)
+        queue: asyncio.Queue[dict] = asyncio.Queue(maxsize=100)
         with self._lock:
             self._subscribers.add(queue)
         return queue
 
-    def unsubscribe(self, queue: asyncio.Queue[TelemetryEvent]) -> None:
+    def unsubscribe(self, queue: asyncio.Queue[dict]) -> None:
         with self._lock:
             self._subscribers.discard(queue)

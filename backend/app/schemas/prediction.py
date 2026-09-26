@@ -52,14 +52,40 @@ class PredictionResponse(BaseModel):
     )
 
     model_version: str
+    model: str | None = None
+    model_artifact_sha256: str | None = None
+    p_late: float | None = None
+    risk_model_version: str | None = None
 
 
 class StoredPrediction(BaseModel):
     tr_id: int
     unit_id: int
     prediction_time: datetime
+    input_event_time: datetime | None = None
+    input_received_at: datetime | None = None
     target_stop_id: int
     target_time: datetime
     current_delay_s: float
     predicted_delay_s: float
     model_version: str
+    model: str | None = None
+    model_artifact_sha256: str | None = None
+    produced_at: datetime | None = None
+    predicted_arrival: datetime | None = None
+    current_delay_source: str = "point_input"
+    last_confirmed_stop_id: int | None = None
+    last_confirmed_at: datetime | None = None
+    source: str = "manual"
+    p_late: float | None = None
+    risk_model_version: str | None = None
+    risk: str = "low"
+    risk_source: str = "threshold"
+    freshness: str = "fresh"
+
+
+class PredictionStatus(BaseModel):
+    unit_id: int
+    tr_id: int | None = None
+    code: str
+    updated_at: datetime

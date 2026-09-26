@@ -14,7 +14,9 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY src ./src
 COPY service ./service
-COPY artifacts ./artifacts
+COPY artifacts/lightgbm_plan_direct.txt artifacts/lightgbm_plan_residual.txt \
+     artifacts/lightgbm_plan_metadata.json artifacts/risk_calibration.json \
+     artifacts/release_manifest.json ./artifacts/
 
 ENV ARTIFACTS_DIR=/app/artifacts
 

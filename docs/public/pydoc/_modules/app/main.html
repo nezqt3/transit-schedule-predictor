@@ -13,8 +13,8 @@
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
-      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
-      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -72,7 +72,8 @@
            <div itemprop="articleBody">
              
   <h1>Source code for app.main</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">asynccontextmanager</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">httpx</span>
@@ -83,9 +84,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">app.ndtp.server</span><span class="w"> </span><span class="kn">import</span> <span class="n">NdtServer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">app.repositories.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">AuthRepository</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">app.services.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">AuthService</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.services.incident</span><span class="w"> </span><span class="kn">import</span> <span class="n">IncidentStore</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">app.services.prediction</span><span class="w"> </span><span class="kn">import</span> <span class="n">PredictionStore</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">app.services.replay</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReplayDataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">app.services.runtime_lookup</span><span class="w"> </span><span class="kn">import</span> <span class="n">RuntimeLookup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.services.runtime_prediction</span><span class="w"> </span><span class="kn">import</span> <span class="n">RuntimePrediction</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">app.services.telemetry</span><span class="w"> </span><span class="kn">import</span> <span class="n">TelemetryService</span>
 
 
@@ -97,9 +100,17 @@
     <span class="n">telemetry</span> <span class="o">=</span> <span class="n">TelemetryService</span><span class="p">()</span>
     <span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">telemetry</span> <span class="o">=</span> <span class="n">telemetry</span>
     <span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">predictions</span> <span class="o">=</span> <span class="n">PredictionStore</span><span class="p">()</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">incidents</span> <span class="o">=</span> <span class="n">IncidentStore</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">risk_medium_delay_s</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">risk_high_delay_s</span><span class="p">,</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">risk_medium_probability</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">risk_high_probability</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">runtime_lookup</span> <span class="o">=</span> <span class="n">RuntimeLookup</span><span class="p">(</span>
         <span class="n">settings</span><span class="o">.</span><span class="n">runtime_schedule_path</span><span class="p">,</span>
         <span class="n">settings</span><span class="o">.</span><span class="n">runtime_traffic_path</span><span class="p">,</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">source_timezone</span><span class="p">,</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">runtime_points_path</span><span class="p">,</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">demo_units</span><span class="p">,</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">demo_initial_delay_s</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">replay</span> <span class="o">=</span> <span class="n">ReplayDataset</span><span class="p">(</span>
@@ -108,11 +119,17 @@
             <span class="n">settings</span><span class="o">.</span><span class="n">replay_labels_path</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;historical replay unavailable&quot;</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">"historical replay unavailable"</span><span class="p">)</span>
         <span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">replay</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">ml_client</span> <span class="o">=</span> <span class="n">httpx</span><span class="o">.</span><span class="n">AsyncClient</span><span class="p">(</span>
         <span class="n">timeout</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">ml_request_timeout_s</span><span class="p">,</span>
         <span class="n">trust_env</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">runtime_prediction</span> <span class="o">=</span> <span class="n">RuntimePrediction</span><span class="p">(</span>
+        <span class="n">telemetry</span><span class="o">=</span><span class="n">telemetry</span><span class="p">,</span> <span class="n">lookup</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">runtime_lookup</span><span class="p">,</span>
+        <span class="n">predictions</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">predictions</span><span class="p">,</span> <span class="n">incidents</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">incidents</span><span class="p">,</span>
+        <span class="n">ml_client</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">ml_client</span><span class="p">,</span> <span class="n">interval_s</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">prediction_interval_s</span><span class="p">,</span>
+        <span class="n">max_in_flight</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">ml_max_in_flight</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">auth_repository</span> <span class="o">=</span> <span class="n">AuthRepository</span><span class="p">(</span>
@@ -131,16 +148,39 @@
         <span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">auth_available</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="n">created</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s2">&quot;Created bootstrap dispatcher account </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="s2">"Created bootstrap dispatcher account </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
                 <span class="n">settings</span><span class="o">.</span><span class="n">auth_bootstrap_username</span><span class="p">,</span>
             <span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
-            <span class="s2">&quot;Authentication database is unavailable; login is disabled&quot;</span>
+            <span class="s2">"Authentication database is unavailable; login is disabled"</span>
         <span class="p">)</span>
 
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">retry_authentication</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">auth_available</span><span class="p">:</span>
+            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">await</span> <span class="n">auth_repository</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+                <span class="k">await</span> <span class="n">auth_service</span><span class="o">.</span><span class="n">bootstrap</span><span class="p">(</span>
+                    <span class="n">settings</span><span class="o">.</span><span class="n">auth_bootstrap_username</span><span class="p">,</span>
+                    <span class="n">settings</span><span class="o">.</span><span class="n">auth_bootstrap_password</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">auth_available</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Authentication database restored"</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">"Authentication database still unavailable"</span>
+                <span class="p">)</span>
+
+    <span class="n">auth_retry_task</span> <span class="o">=</span> <span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">retry_authentication</span><span class="p">())</span>
+                       <span class="k">if</span> <span class="ow">not</span> <span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">auth_available</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_ndtp_event</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+            <span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">runtime_prediction</span><span class="o">.</span><span class="n">on_event</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+
     <span class="n">ndtp_server</span> <span class="o">=</span> <span class="n">NdtServer</span><span class="p">(</span>
-        <span class="n">on_event</span><span class="o">=</span><span class="n">telemetry</span><span class="o">.</span><span class="n">handle_event</span><span class="p">,</span>
+        <span class="n">on_event</span><span class="o">=</span><span class="n">on_ndtp_event</span><span class="p">,</span>
         <span class="n">host</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">ndtp_host</span><span class="p">,</span>
         <span class="n">port</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">ndtp_port</span><span class="p">,</span>
     <span class="p">)</span>
@@ -150,56 +190,64 @@
         <span class="c1"># NDTP-порт может быть занят в локальной разработке —</span>
         <span class="c1"># REST-часть должна жить без телеметрии.</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
-            <span class="s2">&quot;NDTP server failed to start on </span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">"NDTP server failed to start on </span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
             <span class="n">settings</span><span class="o">.</span><span class="n">ndtp_host</span><span class="p">,</span>
             <span class="n">settings</span><span class="o">.</span><span class="n">ndtp_port</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">ndtp_server</span> <span class="o">=</span> <span class="n">ndtp_server</span>
 
-    <span class="c1"># Здесь потом запускаем:</span>
-    <span class="c1"># - подключения к БД</span>
-
     <span class="k">yield</span>
 
     <span class="c1"># shutdown</span>
     <span class="k">await</span> <span class="n">ndtp_server</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+    <span class="k">await</span> <span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">runtime_prediction</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
     <span class="k">await</span> <span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">ml_client</span><span class="o">.</span><span class="n">aclose</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">auth_retry_task</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">auth_retry_task</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">auth_retry_task</span><span class="p">,</span> <span class="n">return_exceptions</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">await</span> <span class="n">auth_repository</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
 
 
 <span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">(</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Transport Delay Predictor API&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Transport Delay Predictor API"</span><span class="p">,</span>
     <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-        <span class="s2">&quot;Backend API системы раннего прогнозирования задержек &quot;</span>
-        <span class="s2">&quot;наземного транспорта.</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;1. Получите токен через `POST /api/v1/auth/token`.</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;2. В Swagger UI нажмите **Authorize** и введите учётные данные.</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;3. Health check остаётся публичным; telemetry и prediction API защищены.&quot;</span>
+        <span class="s2">"Backend API системы раннего прогнозирования задержек "</span>
+        <span class="s2">"наземного транспорта.</span><span class="se">\n\n</span><span class="s2">"</span>
+        <span class="s2">"1. Получите токен через `POST /api/v1/auth/token`.</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"2. В Swagger UI нажмите **Authorize** и введите учётные данные.</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"3. Health check остаётся публичным; telemetry и prediction API защищены."</span>
     <span class="p">),</span>
-    <span class="n">version</span><span class="o">=</span><span class="s2">&quot;0.2.0&quot;</span><span class="p">,</span>
+    <span class="n">version</span><span class="o">=</span><span class="s2">"0.2.0"</span><span class="p">,</span>
     <span class="n">openapi_tags</span><span class="o">=</span><span class="p">[</span>
-        <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Health&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Публичная проверка готовности Backend.&quot;</span><span class="p">},</span>
-        <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Authentication&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Вход и сведения о текущем диспетчере.&quot;</span><span class="p">},</span>
-        <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Vehicles&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Актуальная NDTP-телеметрия транспорта.&quot;</span><span class="p">},</span>
-        <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Predictions&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Прогноз отклонения на горизонте 10–15 минут.&quot;</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Health"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Публичная проверка готовности Backend."</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Authentication"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Вход и сведения о текущем диспетчере."</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Vehicles"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Актуальная NDTP-телеметрия транспорта."</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Predictions"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Прогноз отклонения на горизонте 10–15 минут."</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Incidents"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Актуальные и завершённые инциденты диспетчера."</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Metrics"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Счётчики приёма NDTP и задержки прогнозирования."</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Historical replay"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Диагностический просмотр архивного набора."</span><span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"What-if analysis"</span><span class="p">,</span>
+            <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Оценка диспетчерских сценариев без изменения рабочего состояния."</span><span class="p">,</span>
+        <span class="p">},</span>
     <span class="p">],</span>
 
     <span class="c1"># Swagger UI</span>
-    <span class="n">docs_url</span><span class="o">=</span><span class="s2">&quot;/docs&quot;</span><span class="p">,</span>
+    <span class="n">docs_url</span><span class="o">=</span><span class="s2">"/docs"</span><span class="p">,</span>
 
     <span class="c1"># ReDoc</span>
-    <span class="n">redoc_url</span><span class="o">=</span><span class="s2">&quot;/redoc&quot;</span><span class="p">,</span>
+    <span class="n">redoc_url</span><span class="o">=</span><span class="s2">"/redoc"</span><span class="p">,</span>
 
     <span class="c1"># OpenAPI JSON</span>
-    <span class="n">openapi_url</span><span class="o">=</span><span class="s2">&quot;/openapi.json&quot;</span><span class="p">,</span>
+    <span class="n">openapi_url</span><span class="o">=</span><span class="s2">"/openapi.json"</span><span class="p">,</span>
 
     <span class="n">lifespan</span><span class="o">=</span><span class="n">lifespan</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span>
     <span class="n">api_router</span><span class="p">,</span>
-    <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;/api/v1&quot;</span><span class="p">,</span>
+    <span class="n">prefix</span><span class="o">=</span><span class="s2">"/api/v1"</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 
