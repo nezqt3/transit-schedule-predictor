@@ -1,12 +1,14 @@
 import { LocateFixed, ZoomIn, ZoomOut } from 'lucide-react'
-import L, { type LatLngTuple, type Map as LeafletMap } from 'leaflet'
-import { useCallback, useEffect, useRef } from 'react'
-import 'leaflet/dist/leaflet.css'
+import * as maplibregl from 'maplibre-gl'
+import type { Map, Marker } from 'maplibre-gl'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import 'maplibre-gl/dist/maplibre-gl.css'
 
+import { addLine, bindMarkerZoom, fitMap, mapStyle, type MapPosition } from '@/lib/map/maplibre'
 import { eventTimeMs, hasValidPosition, speedKmh } from '@/lib/telemetry/readEvent'
 import { statusLabel, vehicleStatus } from '@/lib/telemetry/vehicleStatus'
 import type { TelemetryEvent } from '@/types/api'
-import { markerIcon } from './markerIcon'
+import { markerElement } from './markerIcon'
 
 type VehicleMapProps = {
   events: readonly TelemetryEvent[]
@@ -15,65 +17,63 @@ type VehicleMapProps = {
   onSelect: (unitId: number) => void
 }
 
-const DEFAULT_CENTER: LatLngTuple = [55.7512, 37.6184]
-function coordinates(event: TelemetryEvent): LatLngTuple | null {
+const DEFAULT_CENTER: MapPosition = [37.6184, 55.7512]
+
+function coordinates(event: TelemetryEvent): MapPosition | null {
   if (!hasValidPosition(event) || !event.nav) return null
   const { latitude, longitude } = event.nav
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null
   if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return null
-  return [latitude, longitude]
+  return [longitude, latitude]
 }
 
 export function VehicleMap({ events, selectedHistory, selectedUnitId, onSelect }: VehicleMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<LeafletMap | null>(null)
-  const layerRef = useRef<L.LayerGroup | null>(null)
+  const mapRef = useRef<Map | null>(null)
+  const markersRef = useRef<Marker[]>([])
   const fittedCountRef = useRef(0)
   const userMovedRef = useRef(false)
   const centeredUnitRef = useRef<number | null>(null)
+  const [mapLoaded, setMapLoaded] = useState(false)
 
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
-    const map = L.map(container, { zoomControl: false, minZoom: 3 }).setView(DEFAULT_CENTER, 11)
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19,
-    }).addTo(map)
-    const layer = L.layerGroup().addTo(map)
+    const map = new maplibregl.Map({ container, style: mapStyle, center: DEFAULT_CENTER, zoom: 11, minZoom: 3 })
+    const unbindMarkerZoom = bindMarkerZoom(map)
+    map.on('load', () => setMapLoaded(true))
     map.on('dragstart', () => { userMovedRef.current = true })
     mapRef.current = map
-    layerRef.current = layer
-    const resize = new ResizeObserver(() => map.invalidateSize())
+    const resize = new ResizeObserver(() => map.resize())
     resize.observe(container)
     return () => {
       resize.disconnect()
+      unbindMarkerZoom()
+      markersRef.current = []
       mapRef.current = null
-      layerRef.current = null
       map.remove()
     }
   }, [])
 
   useEffect(() => {
     const map = mapRef.current
-    const layer = layerRef.current
-    if (!map || !layer) return
-    layer.clearLayers()
-    const now = Date.now()
+    if (!map || !mapLoaded) return
+    markersRef.current.forEach((marker) => marker.remove())
+    markersRef.current = []
+    const cleanups: Array<() => void> = []
     const trace = selectedHistory
       .filter((event) => event.unit_id === selectedUnitId)
       .map((event) => ({ point: coordinates(event), time: eventTimeMs(event) }))
-      .filter((sample): sample is { point: LatLngTuple; time: number } => sample.point !== null)
+      .filter((sample): sample is { point: MapPosition; time: number } => sample.point !== null)
       .sort((a, b) => a.time - b.time)
-    let segment: LatLngTuple[] = []
+    let segment: MapPosition[] = []
     let previous: (typeof trace)[number] | null = null
     const drawSegment = () => {
-      if (segment.length > 1) L.polyline(segment, { color: '#1766ce', weight: 4, opacity: 0.85 })
-        .bindTooltip('GPS-след принятых NDTP-пакетов').addTo(layer)
+      cleanups.push(addLine(map, segment, { color: '#1766ce', width: 4, opacity: 0.85 }))
     }
     for (const sample of trace) {
       if (previous && (sample.time - previous.time > 3 * 60_000 ||
-        L.latLng(previous.point).distanceTo(L.latLng(sample.point)) > 5_000)) {
+        new maplibregl.LngLat(...previous.point).distanceTo(new maplibregl.LngLat(...sample.point)) > 5_000)) {
         drawSegment()
         segment = []
       }
@@ -81,33 +81,34 @@ export function VehicleMap({ events, selectedHistory, selectedUnitId, onSelect }
       previous = sample
     }
     drawSegment()
-    const points: LatLngTuple[] = []
+
+    const points: MapPosition[] = []
+    const now = Date.now()
     for (const event of events) {
       const point = coordinates(event)
       if (!point) continue
       points.push(point)
       const status = vehicleStatus(event, now)
-      const marker = L.marker(point, {
-        icon: markerIcon(status, event.unit_id === selectedUnitId, event.nav?.course ?? null),
-        alt: `Терминал ${event.unit_id}: ${statusLabel[status]}`,
-        keyboard: true,
-        zIndexOffset: event.unit_id === selectedUnitId ? 1000 : 0,
-      })
       const speed = speedKmh(event)
-      marker.bindTooltip(
-        `<strong>#${event.unit_id}</strong><span>${statusLabel[status]}${speed === null ? '' : ` · ${speed.toFixed(0)} км/ч`}</span>`,
-        { className: 'vehicle-tooltip', direction: 'right', offset: [15, 0], permanent: true },
-      )
-      marker.on('click', () => onSelect(event.unit_id))
-      marker.addTo(layer)
-      marker.getElement()?.setAttribute('aria-label', `Терминал ${event.unit_id}: ${statusLabel[status]}`)
+      const element = markerElement(status, event.unit_id === selectedUnitId, event.nav?.course ?? null)
+      element.setAttribute('aria-label', `Терминал ${event.unit_id}: ${statusLabel[status]}`)
+      element.addEventListener('click', () => onSelect(event.unit_id))
+      const tooltip = document.createElement('span')
+      tooltip.className = 'vehicle-tooltip'
+      tooltip.innerHTML = `<strong>#${event.unit_id}</strong><span>${statusLabel[status]}${speed === null ? '' : ` · ${speed.toFixed(0)} км/ч`}</span>`
+      element.append(tooltip)
+      markersRef.current.push(new maplibregl.Marker({ element, anchor: 'center' }).setLngLat(point).addTo(map))
     }
     if (!userMovedRef.current && points.length > fittedCountRef.current) {
       fittedCountRef.current = points.length
-      if (points.length === 1) map.setView(points[0]!, 13)
-      else map.fitBounds(L.latLngBounds(points), { padding: [60, 60], maxZoom: 13 })
+      fitMap(map, points, 60, 13)
     }
-  }, [events, selectedHistory, selectedUnitId, onSelect])
+    return () => {
+      cleanups.forEach((cleanup) => cleanup())
+      markersRef.current.forEach((marker) => marker.remove())
+      markersRef.current = []
+    }
+  }, [events, selectedHistory, selectedUnitId, onSelect, mapLoaded])
 
   useEffect(() => {
     if (selectedUnitId === centeredUnitRef.current) return
@@ -115,17 +116,16 @@ export function VehicleMap({ events, selectedHistory, selectedUnitId, onSelect }
     const point = selected && coordinates(selected)
     if (point && mapRef.current) {
       centeredUnitRef.current = selectedUnitId
-      mapRef.current.panTo(point, { animate: true })
+      mapRef.current.easeTo({ center: point })
     }
   }, [events, selectedUnitId])
 
   const fitAll = useCallback(() => {
-    const points = events.map(coordinates).filter((point): point is LatLngTuple => point !== null)
+    const points = events.map(coordinates).filter((point): point is MapPosition => point !== null)
     const map = mapRef.current
     if (!map || points.length === 0) return
     fittedCountRef.current = points.length
-    if (points.length === 1) map.setView(points[0]!, 13)
-    else map.fitBounds(L.latLngBounds(points), { padding: [60, 60], maxZoom: 13 })
+    fitMap(map, points, 60, 13)
   }, [events])
 
   return (

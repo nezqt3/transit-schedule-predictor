@@ -1,73 +1,103 @@
-import L, { type LatLngTuple, type Map as LeafletMap } from 'leaflet'
-import { useEffect, useRef } from 'react'
-import 'leaflet/dist/leaflet.css'
+import * as maplibregl from 'maplibre-gl'
+import type { Map, Marker } from 'maplibre-gl'
+import { useEffect, useRef, useState } from 'react'
+import 'maplibre-gl/dist/maplibre-gl.css'
 
+import { addLine, bindMarkerZoom, fitMap, mapStyle, textElement, type MapPosition } from '@/lib/map/maplibre'
 import type { ReplayScenario } from '@/types/replay'
 
 type Props = { scenario: ReplayScenario; timeMs: number }
 
+function circleElement(size: number, color: string, fill: string, opacity: number) {
+  const element = document.createElement('span')
+  element.className = 'map-circle-marker'
+  Object.assign(element.style, {
+    width: `${size * 2}px`, height: `${size * 2}px`, borderColor: color,
+    background: fill, opacity: String(opacity),
+  })
+  return element
+}
+
+function tooltipMarker(map: Map, marker: Marker, label: string) {
+  const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 10 })
+    .setDOMContent(textElement(label, 'map-hover-tooltip'))
+  const element = marker.getElement()
+  element.addEventListener('mouseenter', () => popup.setLngLat(marker.getLngLat()).addTo(map))
+  element.addEventListener('mouseleave', () => popup.remove())
+}
+
 export function ReplayMap({ scenario, timeMs }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<LeafletMap | null>(null)
-  const plannedRef = useRef<L.LayerGroup | null>(null)
-  const activeRef = useRef<L.LayerGroup | null>(null)
+  const mapRef = useRef<Map | null>(null)
+  const plannedMarkersRef = useRef<Marker[]>([])
+  const activeMarkerRef = useRef<Marker | null>(null)
+  const [mapLoaded, setMapLoaded] = useState(false)
 
   useEffect(() => {
     if (!containerRef.current) return
-    const map = L.map(containerRef.current, { zoomControl: true }).setView([55.75, 37.62], 11)
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors', maxZoom: 19,
-    }).addTo(map)
+    const map = new maplibregl.Map({ container: containerRef.current, style: mapStyle, center: [37.62, 55.75], zoom: 11 })
+    const unbindMarkerZoom = bindMarkerZoom(map)
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
+    map.on('load', () => setMapLoaded(true))
     mapRef.current = map
-    plannedRef.current = L.layerGroup().addTo(map)
-    activeRef.current = L.layerGroup().addTo(map)
-    const resize = new ResizeObserver(() => map.invalidateSize())
+    const resize = new ResizeObserver(() => map.resize())
     resize.observe(containerRef.current)
     return () => {
       resize.disconnect()
+      unbindMarkerZoom()
       mapRef.current = null
-      plannedRef.current = null
-      activeRef.current = null
       map.remove()
     }
   }, [])
 
   useEffect(() => {
     const map = mapRef.current
-    const layer = plannedRef.current
-    if (!map || !layer) return
-    layer.clearLayers()
+    if (!map || !mapLoaded) return
+    plannedMarkersRef.current.forEach((marker) => marker.remove())
+    plannedMarkersRef.current = []
     const targetIds = new Set(scenario.points.map((point) => point.target_stop_id))
-    const bounds: LatLngTuple[] = []
+    const bounds: MapPosition[] = []
     for (const stop of scenario.stops) {
-      const position: LatLngTuple = [stop.lat, stop.lon]
+      const position: MapPosition = [stop.lon, stop.lat]
       bounds.push(position)
       const target = targetIds.has(stop.stop_id)
-      L.circleMarker(position, {
-        radius: target ? 5 : 2.5,
-        color: target ? '#d76b31' : '#6b8ead',
-        weight: target ? 2 : 1,
-        fillOpacity: target ? 0.8 : 0.45,
-      }).bindTooltip(`Остановка ${stop.stop_id} · ${new Date(stop.planned_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`)
-        .addTo(layer)
+      const marker = new maplibregl.Marker({
+        element: circleElement(target ? 5 : 2.5, target ? '#d76b31' : '#6b8ead', target ? '#d76b31' : '#6b8ead', target ? 0.8 : 0.45),
+      }).setLngLat(position).addTo(map)
+      tooltipMarker(map, marker, `Остановка ${stop.stop_id} · ${new Date(stop.planned_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`)
+      plannedMarkersRef.current.push(marker)
     }
-    if (bounds.length > 0) map.fitBounds(L.latLngBounds(bounds), { padding: [36, 36], maxZoom: 12 })
-  }, [scenario])
+    const removeRoute = addLine(map, bounds, {
+      color: '#1766ce', width: 4, opacity: 0.95, casingColor: '#ffffff', casingWidth: 2,
+    })
+    fitMap(map, bounds, 36, 12)
+    return () => {
+      removeRoute()
+      plannedMarkersRef.current.forEach((marker) => marker.remove())
+      plannedMarkersRef.current = []
+    }
+  }, [scenario, mapLoaded])
 
   useEffect(() => {
-    const layer = activeRef.current
-    if (!layer) return
-    layer.clearLayers()
+    const map = mapRef.current
+    if (!map || !mapLoaded) return
+    activeMarkerRef.current?.remove()
+    activeMarkerRef.current = null
     const visible = scenario.telemetry.filter((point) => Date.parse(point.available_at) <= timeMs)
     if (visible.length === 0) return
-    const path: LatLngTuple[] = visible.map((point) => [point.lat, point.lon])
-    L.polyline(path, { color: '#1459c7', weight: 3, opacity: 0.82 }).addTo(layer)
+    const path: MapPosition[] = visible.map((point) => [point.lon, point.lat])
+    const removeLine = addLine(map, path, { color: '#1459c7', width: 3, opacity: 0.82 })
     const last = visible[visible.length - 1]!
-    L.circleMarker([last.lat, last.lon], {
-      radius: 9, color: '#fff', weight: 3, fillColor: '#1459c7', fillOpacity: 1,
-    }).bindTooltip(`Терминал ${scenario.vehicle.unit_id} · ${new Date(last.event_time).toLocaleTimeString('ru-RU')}`)
-      .addTo(layer)
-  }, [scenario, timeMs])
+    const marker = new maplibregl.Marker({ element: circleElement(9, '#fff', '#1459c7', 1) })
+      .setLngLat([last.lon, last.lat]).addTo(map)
+    tooltipMarker(map, marker, `Терминал ${scenario.vehicle.unit_id} · ${new Date(last.event_time).toLocaleTimeString('ru-RU')}`)
+    activeMarkerRef.current = marker
+    return () => {
+      removeLine()
+      marker.remove()
+      if (activeMarkerRef.current === marker) activeMarkerRef.current = null
+    }
+  }, [scenario, timeMs, mapLoaded])
 
   return <div aria-label="Историческая GPS-траектория и плановые остановки" className="replay-map" ref={containerRef} role="application" />
 }

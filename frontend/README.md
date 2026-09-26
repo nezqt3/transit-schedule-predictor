@@ -2,7 +2,7 @@
 
 Диспетчерский дашборд: показывает последние NDTP-позиции на интерактивной карте, очередь внимания и историю выбранного терминала.
 
-**Стек:** React 19 · TypeScript · Vite 8 · pnpm · react-router 7 · TanStack Query 5 · zustand 5 · axios · Leaflet · recharts · date-fns · lucide-react.
+**Стек:** React 19 · TypeScript · Vite 8 · pnpm · react-router 7 · TanStack Query 5 · zustand 5 · axios · MapLibre GL · recharts · date-fns · lucide-react.
 Линтеры и UI-фреймворки сознательно не подключены — стили это один CSS с токенами (`src/styles/tokens.css`).
 
 ## Структура
@@ -66,7 +66,7 @@ BuildKit cache mount) собирает статику, дальше `nginxinc/ng
 Фронт читает начальное состояние через `GET /api/v1/vehicles`, а последующие
 NDTP-события получает по `WS /api/v1/ws`. REST-опрос с интервалом
 `VITE_POLL_INTERVAL_MS` остаётся резервным при разрыве соединения.
-Карта использует тайлы OpenStreetMap с видимой атрибуцией.
+Карты работают на MapLibre GL. По умолчанию используется стандартная растровая подложка OpenStreetMap с видимой атрибуцией; векторный стиль можно подключить через `VITE_MAP_STYLE_URL`.
 История выбранного терминала берётся из буфера backend через
 `GET /api/v1/vehicles/{unit_id}/history`. `unit_id` — ID NDTP-терминала, не номер маршрута.
 Маркеры показывают движение, остановку, устаревшие координаты и тревожные флаги;

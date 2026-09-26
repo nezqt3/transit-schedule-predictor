@@ -20,6 +20,11 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
     },
+    optimizeDeps: {
+      // MapLibre loads its dedicated ESM Web Worker at runtime. Keeping the
+      // package out of Vite's dependency bundle preserves that worker URL.
+      exclude: ['maplibre-gl'],
+    },
     server: {
       allowedHosts: true,
       host: true,
