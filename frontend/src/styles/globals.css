@@ -290,7 +290,6 @@ a { color: var(--accent); }
 .historical-stats strong { color: #183b67; font-size: 14px; font-variant-numeric: tabular-nums; }
 .historical-map-wrap { position: relative; flex: 1; min-height: 200px; background: #e7eef6; }
 .historical-map { position: absolute; inset: 0; }
-.historical-map-fit { position: absolute; top: 12px; right: 12px; z-index: 500; border: 1px solid #c6d5e7; border-radius: 5px; padding: 7px 10px; background: #fffffff2; box-shadow: 0 1px 8px #132e5127; color: #245687; font-size: 11px; font-weight: 700; }
 .historical-map-legend { position: absolute; z-index: 500; bottom: 12px; left: 12px; display: flex; flex-wrap: wrap; gap: 9px; max-width: calc(100% - 24px); padding: 7px 9px; border: 1px solid #dce6f2; border-radius: 5px; background: #ffffffed; color: #4b688b; font-size: 11px; }
 .historical-map-legend span { display: inline-flex; align-items: center; gap: 3px; }
 .historical-map-legend span:nth-child(2) { color: #bd2c3d; }

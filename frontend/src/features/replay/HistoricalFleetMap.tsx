@@ -199,13 +199,5 @@ export function HistoricalFleetMap({ visible, selected, timeMs, showAllRoutes, r
     }
   }, [visible, selected, timeMs, showAllRoutes, receivedTrack, onSelect, mapLoaded])
 
-  const fitFleet = () => {
-    const points = visible.flatMap((item): MapPosition[] => item.gps ? [[item.gps.lon, item.gps.lat]] : [])
-    if (mapRef.current && points.length) fitMap(mapRef.current, points, 45, 12)
-  }
-
-  return <>
-    <div aria-label="Карта январского транспорта и подтверждённых маршрутов" className="historical-map" ref={containerRef} role="application" />
-    <button className="historical-map-fit" onClick={fitFleet} type="button">Весь парк</button>
-  </>
+  return <div aria-label="Карта январского транспорта и подтверждённых маршрутов" className="historical-map" ref={containerRef} role="application" />
 }
