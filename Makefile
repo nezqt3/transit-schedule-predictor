@@ -1,6 +1,6 @@
 .PHONY: up down build logs test docs features train submit run-online \
 	fe-install fe-dev fe-build fe-check fe-preview fe-clean \
-	up-frontend up-frontend-dev
+	up-frontend up-frontend-dev up-dataset-replay logs-dataset-replay
 
 up:
 	docker compose up -d
@@ -29,6 +29,12 @@ submit:
 
 run-online:
 	docker compose up --build ml backend
+
+up-dataset-replay:
+	docker compose --profile replay up -d --build backend dataset-replay
+
+logs-dataset-replay:
+	docker compose --profile replay logs -f dataset-replay
 
 lint:
 	cd backend && ruff check .
