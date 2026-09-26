@@ -1,5 +1,5 @@
-import { AlertTriangle, MapPin, Pause, Play, RotateCcw } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { AlertTriangle, ChevronLeft, ChevronRight, MapPin, Pause, Play, RotateCcw } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { Link } from 'react-router-dom'
 
 import { predictReplayPoint, useReplayFleet, useReplayStreamStatus } from './api'
@@ -26,10 +26,28 @@ export function HistoricalFleetDashboard() {
   const [speed, setSpeed] = useState(600)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [showAllRoutes, setShowAllRoutes] = useState(false)
+  const [sidebarWidth, setSidebarWidth] = useState(390)
+  const [detailsOpen, setDetailsOpen] = useState(true)
   const [predictions, setPredictions] = useState<Record<string, ReplayPrediction>>({})
   const [failures, setFailures] = useState<Record<string, string>>({})
   const requested = useRef(new Set<string>())
   const inFlight = useRef(0)
+
+  const resizeSidebar = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    const onMove = (moveEvent: PointerEvent) => {
+      const maximum = Math.min(620, Math.max(280, window.innerWidth * .48))
+      setSidebarWidth(Math.min(maximum, Math.max(280, moveEvent.clientX)))
+    }
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      document.body.classList.remove('is-resizing-sidebar')
+    }
+    document.body.classList.add('is-resizing-sidebar')
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
 
   const startMs = fleet ? janMs(fleet.start_at) : 0
   const endMs = fleet ? janMs(fleet.end_at) : 0
@@ -153,7 +171,7 @@ export function HistoricalFleetDashboard() {
   if (isError || !fleet) return <div className="historical-loading">Не удалось загрузить январские данные из backend.</div>
 
   return (
-    <div className="historical-dashboard">
+    <div className={`historical-dashboard${detailsOpen ? '' : ' historical-dashboard--details-collapsed'}`} style={{ '--sidebar-width': `${sidebarWidth}px` } as CSSProperties}>
       <aside className="historical-sidebar">
         <div className="historical-sidebar__head">
           <span className="eyebrow">6 января 2026 · запись</span>
@@ -174,7 +192,16 @@ export function HistoricalFleetDashboard() {
           })}
           {!visible.length && <p className="fleet-list__message">{followNdtp ? 'Пока нет подходящих январских NDTP-пакетов в Backend.' : 'В это время свежих GPS-пакетов нет. Переместите ползунок.'}</p>}
         </div>
-        <section className="historical-details">
+      </aside>
+
+      <div aria-label="Изменить ширину списка транспорта" aria-valuemax={620} aria-valuemin={280} aria-valuenow={sidebarWidth} className="sidebar-resizer" onDoubleClick={() => setSidebarWidth(sidebarWidth === 280 ? 620 : 280)} onPointerDown={resizeSidebar} role="separator" title="Перетащите, чтобы изменить ширину списка. Двойной щелчок — минимум/максимум." />
+
+      <aside className="historical-details-panel">
+        <button aria-expanded={detailsOpen} className="details-panel__toggle" onClick={() => setDetailsOpen(!detailsOpen)} title={detailsOpen ? 'Свернуть статистику' : 'Развернуть статистику'} type="button">
+          {detailsOpen ? <ChevronRight size={21} strokeWidth={2.5} /> : <ChevronLeft size={21} strokeWidth={2.5} />}
+          <span className="sr-only">{detailsOpen ? 'Свернуть статистику' : 'Развернуть статистику'}</span>
+        </button>
+        {detailsOpen && <section className="historical-details">
           <span className="eyebrow">Выбранный транспорт</span>
           <h2>{selected ? `ТС ${selected.tr_id}` : 'Выберите машину'}</h2>
           {selected && <>
@@ -191,7 +218,7 @@ export function HistoricalFleetDashboard() {
             {selectedRun && <details className="historical-all-stops"><summary>Весь рейс · {runStops.length} точек</summary><div>{runStops.map((stop) => <div key={stop.stop_id}><span>{janClock(stop.planned_at)}</span><span>{stop.address ?? `Точка #${stop.stop_id}`}</span><b>{stop.gps_confirmed ? '●' : '○'}</b></div>)}</div></details>}
             {recentStops.length > 0 && <div className="historical-results"><strong>Прогноз / факт на остановках</strong>{recentStops.map((point) => <div key={point.sample_id}><span>#{point.target_stop_id}</span><span>{janClock(point.target_time_begin)}</span><b>{predictions[point.sample_id] ? signed(predictions[point.sample_id]!.predicted_delay_s) : '…'} / {signed(point.actual_delay_s)}</b></div>)}<Link to={`/replay?tr_id=${selected.tr_id}`}>Все точки и ошибки →</Link></div>}
           </>}
-        </section>
+        </section>}
       </aside>
 
       <main className="historical-main">
