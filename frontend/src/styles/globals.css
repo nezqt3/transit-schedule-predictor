@@ -37,8 +37,13 @@ a { color: var(--accent); }
 .topbar__logout { display: flex; align-items: center; gap: 7px; padding: 0 22px; border: 0; border-left: 1px solid #ffffff38; color: white; background: transparent; font-weight: 600; }
 .topbar__logout:hover { background: #ffffff18; }
 
-.dispatch-screen { display: grid; grid-template-columns: 390px minmax(0, 1fr); height: 100%; min-height: 0; background: white; }
+.dispatch-screen { display: grid; grid-template-columns: var(--sidebar-width, 390px) 7px minmax(0, 1fr) 350px; height: 100%; min-height: 0; background: white; }
+.dispatch-screen--details-collapsed { grid-template-columns: var(--sidebar-width, 390px) 7px minmax(0, 1fr) 0; }
 .dispatch-sidebar { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: white; border-right: 1px solid var(--border); z-index: 600; }
+.sidebar-resizer { position: relative; z-index: 650; width: 7px; cursor: col-resize; touch-action: none; background: #edf3fa; border-right: 1px solid #d3dfed; border-left: 1px solid #d3dfed; }
+.sidebar-resizer::after { content: ''; position: absolute; top: 50%; left: 2px; width: 2px; height: 38px; transform: translateY(-50%); border-radius: 2px; background: #91a8c5; }
+.sidebar-resizer:hover, .sidebar-resizer:focus-visible { background: #dce9f8; }
+.is-resizing-sidebar, .is-resizing-sidebar * { cursor: col-resize !important; user-select: none !important; }
 .dispatch-sidebar__toolbar { padding: 18px 24px 14px; flex: none; border-bottom: 1px solid var(--border); }
 .dispatch-sidebar__heading { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
 .dispatch-sidebar__heading h1 { font-size: 21px; line-height: 1.2; margin: 0; letter-spacing: -.035em; }
@@ -69,7 +74,7 @@ a { color: var(--accent); }
 .fleet-row__speed small { font-size: 11px; font-weight: 500; color: var(--text-muted); }
 .fleet-row__arrow { flex: none; color: #54749f; }
 
-.vehicle-details { flex: 0 1 44%; min-height: 294px; overflow-y: auto; padding: 12px 24px 14px; border-top: 2px solid var(--border); background: #fff; scrollbar-width: thin; }
+.vehicle-details { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 20px 18px; background: #fff; scrollbar-width: thin; }
 .vehicle-details--empty { display: flex; flex-direction: column; gap: 6px; color: var(--text-muted); }
 .vehicle-details--empty strong { font-size: 17px; color: var(--text); }
 .vehicle-details__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
@@ -96,6 +101,11 @@ a { color: var(--accent); }
 .vehicle-details__source-note { margin: 7px 0 0; color: var(--text-muted); font-size: 11px; }
 
 .dispatch-map-area { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.details-panel, .historical-details-panel { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: visible; border-left: 1px solid var(--border); background: white; }
+.details-panel__toggle { position: absolute; top: 50%; left: -18px; z-index: 750; display: grid; width: 36px; height: 36px; padding: 0; transform: translateY(-50%); place-items: center; border: 1px solid #cbd9e9; border-radius: 50%; background: white; color: #315d91; box-shadow: 0 2px 10px #17375f30; }
+.details-panel__toggle:hover { color: var(--accent); border-color: #91b4df; background: #f7faff; }
+.details-panel__toggle svg { display: block; }
+.dispatch-screen--details-collapsed .details-panel__toggle, .historical-dashboard--details-collapsed .details-panel__toggle { left: -46px; }
 .dispatch-map-area__meta { display: flex; align-items: center; justify-content: space-between; min-height: 48px; flex: none; gap: 12px; padding: 0 22px; background: #f8fbff; border-bottom: 1px solid var(--border); color: #526d91; font-size: 12px; }
 .fleet-stats { display: flex; gap: 22px; flex-wrap: wrap; }
 .fleet-stats span { white-space: nowrap; }
@@ -222,12 +232,13 @@ a { color: var(--accent); }
 .dashboard-source-switch button.dashboard-source-switch__active { background: var(--accent); color: white; border-color: var(--accent); }
 .dashboard-source-content { flex: 1; min-height: 0; }
 .historical-loading { display: grid; place-items: center; height: 100%; color: #527091; background: #f6f9fd; }
-.historical-dashboard { display: grid; grid-template-columns: 390px minmax(0, 1fr); height: 100%; min-height: 0; background: white; }
+.historical-dashboard { display: grid; grid-template-columns: var(--sidebar-width, 390px) 7px minmax(0, 1fr) 350px; height: 100%; min-height: 0; background: white; }
+.historical-dashboard--details-collapsed { grid-template-columns: var(--sidebar-width, 390px) 7px minmax(0, 1fr) 0; }
 .historical-sidebar { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--border); }
 .historical-sidebar__head { padding: 15px 20px 13px; border-bottom: 1px solid var(--border); }
 .historical-sidebar__head h1 { margin: 3px 0; font-size: 21px; line-height: 1.2; }
 .historical-sidebar__head p { margin: 0; color: #607b9c; font-size: 12px; }
-.historical-fleet-list { flex: 1 1 45%; min-height: 130px; overflow-y: auto; }
+.historical-fleet-list { flex: 1; min-height: 130px; overflow-y: auto; }
 .historical-vehicle { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 54px; padding: 8px 14px 8px 20px; text-align: left; border: 0; border-bottom: 1px solid #e5ebf4; background: white; color: var(--text); }
 .historical-vehicle:hover { background: #f3f7fe; }
 .historical-vehicle--selected { background: #e9f2ff; box-shadow: inset 4px 0 0 var(--accent); }
@@ -236,7 +247,8 @@ a { color: var(--accent); }
 .historical-vehicle__text strong { font-size: 13px; }
 .historical-vehicle__text small { color: #607a99; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .historical-vehicle__value { white-space: nowrap; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.historical-details { flex: 0 1 48%; min-height: 260px; overflow-y: auto; padding: 13px 20px 18px; border-top: 2px solid var(--border); }
+.historical-details-panel { grid-column: 4; grid-row: 1; }
+.historical-details { flex: 1; min-height: 0; overflow-y: auto; padding: 13px 20px 18px; }
 .historical-details h2 { margin: 2px 0 0; font-size: 21px; }
 .historical-details p { margin: 0 0 9px; color: #607b9c; font-size: 12px; }
 .historical-fact { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid #e5ebf4; font-size: 12px; }
@@ -260,7 +272,7 @@ a { color: var(--accent); }
 .historical-results > div { display: flex; gap: 7px; padding: 3px 0; font-size: 11px; font-variant-numeric: tabular-nums; color: #5a7595; }
 .historical-results > div b { margin-left: auto; color: var(--text); }
 .historical-results > a { display: inline-block; margin-top: 5px; font-size: 11px; font-weight: 700; text-decoration: none; }
-.historical-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.historical-main { display: flex; grid-column: 3; grid-row: 1; flex-direction: column; min-width: 0; min-height: 0; }
 .historical-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 15px; border-bottom: 1px solid var(--border); background: #f8fbff; flex-wrap: wrap; }
 .historical-toolbar__title { display: flex; flex-direction: column; margin-right: auto; line-height: 1.1; }
 .historical-toolbar__title strong { font-size: 21px; font-variant-numeric: tabular-nums; color: var(--accent); }
@@ -287,7 +299,8 @@ a { color: var(--accent); }
 @media (max-width: 1100px) {
   .fleet-map .vehicle-tooltip { display: none; }
   .topbar__brand { min-width: 300px; font-size: 21px; padding: 0 20px; }
-  .dispatch-screen { grid-template-columns: 300px minmax(0, 1fr); }
+  .dispatch-screen { grid-template-columns: var(--sidebar-width, 300px) 7px minmax(0, 1fr) 310px; }
+  .dispatch-screen--details-collapsed { grid-template-columns: var(--sidebar-width, 300px) 7px minmax(0, 1fr) 0; }
   .dispatch-sidebar__toolbar, .vehicle-details { padding-left: 16px; padding-right: 16px; }
   .fleet-row { padding-left: 16px; gap: 9px; }
   .fleet-list__group { padding-left: 16px; }
@@ -295,7 +308,8 @@ a { color: var(--accent); }
   .fleet-stats { gap: 12px; }
   .replay-main { grid-template-columns: 1fr; }
   .replay-map-wrap { min-height: 360px; }
-  .historical-dashboard { grid-template-columns: 300px minmax(0, 1fr); }
+  .historical-dashboard { grid-template-columns: var(--sidebar-width, 300px) 7px minmax(0, 1fr) 310px; }
+  .historical-dashboard--details-collapsed { grid-template-columns: var(--sidebar-width, 300px) 7px minmax(0, 1fr) 0; }
   .historical-stats { gap: 8px; }
 }
 @media (max-width: 700px) {
@@ -305,9 +319,13 @@ a { color: var(--accent); }
   .topbar__link { min-width: 58px; padding: 0 9px; font-size: 0; }
   .topbar__link svg { width: 21px; height: 21px; }
   .dispatch-screen { display: flex; flex-direction: column; overflow-y: auto; }
+  .sidebar-resizer { display: none; }
   .dispatch-map-area { order: -1; height: 57vh; min-height: 380px; flex: none; }
   .dispatch-sidebar { min-height: 500px; overflow: visible; border-right: 0; }
   .fleet-list { min-height: 180px; max-height: 300px; flex: none; }
+  .details-panel, .historical-details-panel { overflow: visible; border-top: 1px solid var(--border); border-left: 0; }
+  .details-panel__toggle { top: 22px; left: 10px; }
+  .dispatch-screen--details-collapsed .details-panel__toggle, .historical-dashboard--details-collapsed .details-panel__toggle { left: 10px; }
   .vehicle-details { min-height: 250px; max-height: 400px; flex: none; }
   .dispatch-map-area__meta { padding: 5px 12px; align-items: flex-start; }
   .poll-status { display: none; }
@@ -325,7 +343,8 @@ a { color: var(--accent); }
   .historical-main { order: -1; height: 62vh; min-height: 460px; flex: none; }
   .historical-sidebar { min-height: 470px; border-right: 0; }
   .historical-fleet-list { max-height: 220px; min-height: 100px; }
-  .historical-details { min-height: 220px; }
+  .historical-details-panel { order: 1; }
+  .historical-details { min-height: 220px; max-height: 400px; }
   .historical-toolbar { gap: 5px; }
   .historical-toolbar__routes { display: none !important; }
   .historical-stats { font-size: 10px; }

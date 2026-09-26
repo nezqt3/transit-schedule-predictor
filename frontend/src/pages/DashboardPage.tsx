@@ -1,5 +1,5 @@
-import { AlertTriangle, ArrowRight, ChevronDown, ChevronUp, Clock3, MapPinOff, Navigation2, Search, Square, WifiOff } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { AlertTriangle, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock3, MapPinOff, Navigation2, Search, Square, WifiOff } from 'lucide-react'
+import { useEffect, useMemo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 
 import { useVehicleHistory } from '@/features/vehicles/api'
 import { usePredictions } from '@/features/predictions/api'
@@ -114,7 +114,25 @@ function LiveDashboard() {
   const selectUnit = useTelemetryStore((state) => state.selectUnit)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<FleetFilter>('all')
+  const [sidebarWidth, setSidebarWidth] = useState(390)
+  const [detailsOpen, setDetailsOpen] = useState(true)
   const now = Date.now()
+
+  const resizeSidebar = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    const onMove = (moveEvent: PointerEvent) => {
+      const maximum = Math.min(620, Math.max(280, window.innerWidth * .48))
+      setSidebarWidth(Math.min(maximum, Math.max(280, moveEvent.clientX)))
+    }
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      document.body.classList.remove('is-resizing-sidebar')
+    }
+    document.body.classList.add('is-resizing-sidebar')
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
 
   const filtered = useMemo(() => events.filter((event) => {
     const matchesSearch = String(event.unit_id).includes(query.trim())
@@ -143,7 +161,7 @@ function LiveDashboard() {
     now - Date.parse(event.received_at) < 60_000)
 
   return (
-    <div className="dispatch-screen">
+    <div className={`dispatch-screen${detailsOpen ? '' : ' dispatch-screen--details-collapsed'}`} style={{ '--sidebar-width': `${sidebarWidth}px` } as CSSProperties}>
       <aside aria-label="Список терминалов" className="dispatch-sidebar">
         <div className="dispatch-sidebar__toolbar">
           <div className="dispatch-sidebar__heading"><h1>Терминалы</h1><span>{isPending || isError ? '—' : events.length}</span></div>
@@ -160,8 +178,9 @@ function LiveDashboard() {
             </>
           )}
         </div>
-        <VehicleDetails event={selectedEvent} prediction={selectedPrediction} />
       </aside>
+
+      <div aria-label="Изменить ширину списка терминалов" aria-valuemax={620} aria-valuemin={280} aria-valuenow={sidebarWidth} className="sidebar-resizer" onDoubleClick={() => setSidebarWidth(sidebarWidth === 280 ? 620 : 280)} onPointerDown={resizeSidebar} role="separator" title="Перетащите, чтобы изменить ширину списка. Двойной щелчок — минимум/максимум." />
 
       <main className="dispatch-map-area">
         <div className="dispatch-map-area__meta">
@@ -179,6 +198,14 @@ function LiveDashboard() {
           <div className="map-legend"><span><Navigation2 size={14} /> Движется</span><span><Square size={13} /> Стоит</span><span><Clock3 size={14} /> Устарели</span><span className="map-legend__track">— GPS-след</span><span><AlertTriangle size={14} /> Тревога</span></div>
         </div>
       </main>
+
+      <aside className="details-panel">
+        <button aria-expanded={detailsOpen} className="details-panel__toggle" onClick={() => setDetailsOpen(!detailsOpen)} title={detailsOpen ? 'Свернуть статистику' : 'Развернуть статистику'} type="button">
+          {detailsOpen ? <ChevronRight size={21} strokeWidth={2.5} /> : <ChevronLeft size={21} strokeWidth={2.5} />}
+          <span className="sr-only">{detailsOpen ? 'Свернуть статистику' : 'Развернуть статистику'}</span>
+        </button>
+        {detailsOpen && <VehicleDetails event={selectedEvent} prediction={selectedPrediction} />}
+      </aside>
     </div>
   )
 }
