@@ -61,7 +61,6 @@ export type ReplayFleetItem = {
   late: boolean
 }
 
-// Fleet positions are sampled into 45-second buckets for playback.
 const REPLAY_STALE_AFTER_MS = 2 * 60_000
 const REPLAY_ON_LINE_AFTER_MS = 15 * 60_000
 

@@ -209,18 +209,18 @@ class ReplayDataset:
         bounds = []
         for tr_id in sorted(self.units):
             rows = self.traffic.get(tr_id, [])
-            sampled: dict[int, ReplayTelemetry] = {}
+            telemetry = []
             for row in rows:
                 available = max(row["event_time"], row["receive_time"])
                 bounds.append(available)
-                sampled[int(available.timestamp()) // 45] = ReplayTelemetry(
+                telemetry.append(ReplayTelemetry(
                     available_at=available, event_time=row["event_time"],
                     lat=row["lat"], lon=row["lon"], speed=row["speed"],
                     heading=row["heading"],
-                )
+                ))
             vehicles.append(ReplayFleetVehicle(
                 tr_id=tr_id, unit_id=self.units[tr_id],
-                telemetry=sorted(sampled.values(), key=lambda point: point.available_at),
+                telemetry=sorted(telemetry, key=lambda point: point.available_at),
                 stops=self.stops.get(tr_id, []), runs=self._runs(tr_id),
                 points=self.points.get(tr_id, []),
             ))
@@ -247,17 +247,14 @@ class ReplayDataset:
             return None
         vehicle = next(vehicle for vehicle in self.vehicles() if vehicle.tr_id == tr_id)
         visible = []
-        by_bucket = {}
         for row in self.traffic[tr_id]:
             available = max(row["event_time"], row["receive_time"])
             if vehicle.start_at <= available <= vehicle.end_at:
-                bucket = int(available.timestamp()) // 30
-                by_bucket[bucket] = ReplayTelemetry(
+                visible.append(ReplayTelemetry(
                     available_at=available, event_time=row["event_time"],
                     lat=row["lat"], lon=row["lon"], speed=row["speed"],
                     heading=row["heading"],
-                )
-        visible.extend(by_bucket.values())
+                ))
         visible.sort(key=lambda row: row.available_at)
         stops = [stop for stop in self.stops[tr_id]
                  if vehicle.start_at <= stop.planned_at <= vehicle.end_at]
