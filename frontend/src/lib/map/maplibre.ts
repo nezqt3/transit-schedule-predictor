@@ -52,7 +52,12 @@ export function bindMarkerZoom(map: Map) {
   const update = () => {
     const zoom = map.getZoom()
     const scale = zoom >= 11 ? 1 : zoom >= 9 ? 0.82 : zoom >= 7 ? 0.62 : 0.45
+    const speedBadgeScale = Math.max(0.35, Math.min(1, 0.35 + (zoom - 6) * 0.13))
+    const delayBadgeScale = Math.max(0.65, scale)
     container.style.setProperty('--map-marker-scale', String(scale))
+    container.style.setProperty('--map-marker-edge', `${19 + 19 * scale}px`)
+    container.style.setProperty('--map-speed-badge-scale', String(speedBadgeScale))
+    container.style.setProperty('--map-delay-badge-scale', String(delayBadgeScale))
     container.classList.toggle('map-markers-hidden', zoom < 6)
   }
   update()

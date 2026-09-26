@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
 import { markerElement } from '@/features/vehicles/markerIcon'
-import { bindMarkerZoom, createRouteOverlay, fitMap, mapStyle, textElement, type MapLine, type MapPosition } from '@/lib/map/maplibre'
+import { bindMarkerZoom, createRouteOverlay, fitMap, mapStyle, type MapLine, type MapPosition } from '@/lib/map/maplibre'
 import { statusLabel } from '@/lib/telemetry/vehicleStatus'
 import type { ReplayFleetVehicle } from '@/types/replay'
 import { currentRun, displaySpeedKmh, janMs, stopLabel, type ReplayFleetItem } from './fleetClock'
@@ -27,22 +27,19 @@ type Props = {
   onSelect: (trId: number) => void
 }
 
-function stopElement() {
+function stopElement(label: string) {
   const element = document.createElement('span')
   element.className = 'map-circle-marker'
+  element.setAttribute('aria-label', label)
   Object.assign(element.style, {
     width: '8px', height: '8px', borderColor: '#d36b21',
     background: '#f29a42', opacity: '0.9',
   })
+  const tooltip = document.createElement('span')
+  tooltip.className = 'map-stop-tooltip'
+  tooltip.textContent = label
+  element.append(tooltip)
   return element
-}
-
-function attachTooltip(map: Map, marker: Marker, label: string) {
-  const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 10 })
-    .setDOMContent(textElement(label, 'map-hover-tooltip'))
-  const element = marker.getElement()
-  element.addEventListener('mouseenter', () => popup.setLngLat(marker.getLngLat()).addTo(map))
-  element.addEventListener('mouseleave', () => popup.remove())
 }
 
 export function HistoricalFleetMap({ visible, selected, timeMs, onSelect }: Props) {
@@ -88,8 +85,6 @@ export function HistoricalFleetMap({ visible, selected, timeMs, onSelect }: Prop
   useEffect(() => {
     const map = mapRef.current
     if (!map || !mapLoaded) return
-    markersRef.current.forEach((marker) => marker.remove())
-    markersRef.current = []
     const routeFeatures: RouteFeature[] = []
 
     const pushLine = (coordinates: MapPosition[], kind: RouteLineProperties['kind'], color: string) => {
@@ -110,9 +105,8 @@ export function HistoricalFleetMap({ visible, selected, timeMs, onSelect }: Prop
       pushLine(coordinates, selectedLine ? 'planned' : 'background', selectedLine ? '#d96f1c' : '#809fc7')
       if (!selectedLine) return
       for (const stop of stops) {
-        const marker = new maplibregl.Marker({ element: stopElement() })
+        const marker = new maplibregl.Marker({ element: stopElement(`Плановая остановка · ${stopLabel(vehicle, stop.stop_id)}`) })
           .setLngLat([stop.lon, stop.lat]).addTo(map)
-        attachTooltip(map, marker, `Плановая остановка · ${stopLabel(vehicle, stop.stop_id)}`)
         markersRef.current.push(marker)
       }
     }
@@ -168,8 +162,15 @@ export function HistoricalFleetMap({ visible, selected, timeMs, onSelect }: Prop
       const element = markerElement(status, picked, gps.heading, { delaySeconds, speedKmh: speed })
       element.setAttribute('aria-label', `ТС ${vehicle.tr_id}: ${statusLabel[status]}${late && forecast ? `, прогноз опоздания ${Math.round(forecast.predicted_delay_s)} секунд` : ''}${status === 'moving' && speed !== null ? `, ${Math.round(speed)} км/ч` : ''}`)
       element.addEventListener('click', () => onSelect(vehicle.tr_id))
+      const tooltip = document.createElement('span')
+      tooltip.className = 'vehicle-tooltip'
+      const title = document.createElement('strong')
+      title.textContent = `ТС ${vehicle.tr_id}`
+      const detail = document.createElement('span')
+      detail.textContent = `${statusLabel[status]}${late ? ' · прогноз опоздания' : ''}`
+      tooltip.append(title, detail)
+      element.append(tooltip)
       const marker = new maplibregl.Marker({ element }).setLngLat(point).addTo(map)
-      attachTooltip(map, marker, `ТС ${vehicle.tr_id} · ${statusLabel[status]}${late ? ' · прогноз опоздания' : ''}`)
       markersRef.current.push(marker)
     }
     const selectedRun = selected ? currentRun(selected, timeMs) : null
