@@ -1,0 +1,12 @@
+# Optional retrospective dashboard: mounts test labels only in this diagnostic mode.
+services:
+  backend:
+    environment:
+      REPLAY_SCHEDULE_PATH: /app/replay_data/schedule.csv
+      REPLAY_TRAFFIC_PATH: /app/replay_data/traffic.csv
+      REPLAY_LABELS_PATH: /app/replay_labels.csv
+      RUNTIME_POINTS_PATH: /app/runtime_data/points.csv
+    volumes:
+      - ./data/raw/validate/points.csv:/app/runtime_data/points.csv:ro
+      - ./data/raw/test:/app/replay_data:ro
+      - ./data/raw/labels/labels_test.csv:/app/replay_labels.csv:ro

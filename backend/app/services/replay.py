@@ -13,11 +13,13 @@ from bisect import bisect_left, bisect_right
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from app.schemas.replay import (
     ReplayFleet,
     ReplayFleetVehicle,
     ReplayPoint,
+    ReplayOutcome,
     ReplayRun,
     ReplayScenario,
     ReplayStop,
@@ -231,13 +233,39 @@ class ReplayDataset:
         )
         return self._fleet
 
+    def public_fleet(self) -> ReplayFleet:
+        """Return plan and GPS without future outcomes or retrospective GPS verdicts."""
+        fleet = self.fleet().model_copy(deep=True)
+        for vehicle in fleet.vehicles:
+            for point in vehicle.points:
+                point.actual_delay_s = None
+                point.actual_at = None
+            for stop in vehicle.stops:
+                stop.gps_confirmed = False
+                stop.gps_distance_m = None
+                stop.gps_confirmed_at = None
+            for run in vehicle.runs:
+                run.confirmed_stops = 0
+                run.valid = len(run.stop_ids) >= 8
+        return fleet
+
+    def outcomes(self, as_of: datetime) -> list[ReplayOutcome]:
+        """Release only outcomes that have occurred by the requested replay clock."""
+        source_now = (as_of.astimezone(ZoneInfo("Europe/Moscow")).replace(tzinfo=None)
+                      if as_of.tzinfo else as_of)
+        return [ReplayOutcome(sample_id=point.sample_id,
+                              actual_delay_s=point.actual_delay_s,
+                              actual_at=point.actual_at)
+                for points in self.points.values() for point in points
+                if point.actual_at is not None and point.actual_at <= source_now]
+
     def vehicles(self) -> list[ReplayVehicle]:
         result = []
         for tr_id, points in self.points.items():
             result.append(ReplayVehicle(
                 tr_id=tr_id, unit_id=self.units[tr_id], samples=len(points),
                 start_at=points[0].T - timedelta(minutes=30),
-                end_at=max(point.actual_at for point in points) + timedelta(minutes=2),
+                end_at=max(point.target_time_begin for point in points) + timedelta(minutes=2),
             ))
         return sorted(result, key=lambda vehicle: (-vehicle.samples, vehicle.tr_id))
 

@@ -20,5 +20,7 @@ export const queryKeys = {
   health: ['health'] as const,
   vehicles: ['vehicles'] as const,
   predictions: ['predictions'] as const,
+  predictionStatuses: ['prediction-statuses'] as const,
+  incidents: ['incidents'] as const,
   vehicleHistory: (unitId: number) => ['vehicles', unitId, 'history'] as const,
 }

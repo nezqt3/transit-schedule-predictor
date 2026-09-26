@@ -1,15 +1,22 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, HTTPException, Request
 
 from app.schemas.prediction import (
     PredictionRequest,
     PredictionResponse,
+    PredictionStatus,
     StoredPrediction,
 )
 from app.services.prediction import predict_delay
 
 router = APIRouter()
+
+
+@router.get("/statuses", response_model=list[PredictionStatus],
+            summary="Причины отсутствия актуального прогноза")
+async def prediction_statuses(http_request: Request) -> list[PredictionStatus]:
+    return http_request.app.state.runtime_prediction.statuses()
 
 
 @router.get("", response_model=list[StoredPrediction],
@@ -83,11 +90,23 @@ async def predict(
         current_delay_s=request.cur_dev_s,
         predicted_delay_s=result["prediction"],
         model_version=result["model_version"],
+        model=result.get("model"),
+        model_artifact_sha256=result.get("model_artifact_sha256"),
+        produced_at=datetime.now(timezone.utc),
+        predicted_arrival=request.target_time_begin + timedelta(seconds=result["prediction"]),
+        p_late=result.get("p_late"),
+        risk_model_version=result.get("risk_model_version"),
+        risk=http_request.app.state.incidents.risk(result["prediction"], result.get("p_late")),
+        risk_source="calibrated_probability" if result.get("p_late") is not None else "threshold",
     ))
     return PredictionResponse(
         tr_id=request.tr_id,
         prediction=result["prediction"],
         model_version=result["model_version"],
+        model=result.get("model"),
+        model_artifact_sha256=result.get("model_artifact_sha256"),
+        p_late=result.get("p_late"),
+        risk_model_version=result.get("risk_model_version"),
     )
 
 
@@ -149,9 +168,23 @@ async def predict_from_buffer(
         current_delay_s=cur_dev_s,
         predicted_delay_s=result["prediction"],
         model_version=result["model_version"],
+        model=result.get("model"),
+        model_artifact_sha256=result.get("model_artifact_sha256"),
+        produced_at=datetime.now(timezone.utc),
+        predicted_arrival=(stop["target_time_begin"] if isinstance(stop["target_time_begin"], datetime)
+                           else datetime.fromisoformat(stop["target_time_begin"]))
+        + timedelta(seconds=result["prediction"]),
+        p_late=result.get("p_late"),
+        risk_model_version=result.get("risk_model_version"),
+        risk=http_request.app.state.incidents.risk(result["prediction"], result.get("p_late")),
+        risk_source="calibrated_probability" if result.get("p_late") is not None else "threshold",
     ))
     return PredictionResponse(
         tr_id=tr_id,
         prediction=result["prediction"],
         model_version=result["model_version"],
+        model=result.get("model"),
+        model_artifact_sha256=result.get("model_artifact_sha256"),
+        p_late=result.get("p_late"),
+        risk_model_version=result.get("risk_model_version"),
     )

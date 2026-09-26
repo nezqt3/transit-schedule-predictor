@@ -40,11 +40,32 @@ Predictions API
 .. automodule:: app.api.predictions
    :members:
 
+Incidents and Metrics
+---------------------
+
+.. automodule:: app.api.incidents
+   :members:
+
+.. automodule:: app.api.metrics
+   :members:
+
+.. automodule:: app.services.incident
+   :members:
+
+.. automodule:: app.services.runtime_prediction
+   :members:
+
+.. automodule:: app.services.runtime_lookup
+   :members:
+
 
 Schemas
 -------
 
 .. automodule:: app.schemas.prediction
+   :members:
+
+.. automodule:: app.schemas.metrics
    :members:
 
 .. automodule:: app.schemas.auth

@@ -13,8 +13,8 @@
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=5929fcd5"></script>
-      <script src="_static/doctools.js?v=fd6eb6e6"></script>
-      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="#" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -79,6 +79,7 @@
  | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
+ | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
@@ -91,12 +92,20 @@
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
  | <a href="#U"><strong>U</strong></a>
+ | <a href="#V"><strong>V</strong></a>
+ | <a href="#W"><strong>W</strong></a>
  
 </div>
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.schemas.metrics.NdtpMetrics.accepted_packets">accepted_packets (app.schemas.metrics.NdtpMetrics attribute)</a>
+</li>
       <li><a href="api.html#app.schemas.auth.TokenResponse.access_token">access_token (app.schemas.auth.TokenResponse attribute)</a>
+</li>
+      <li><a href="api.html#app.schemas.metrics.NdtpMetrics.active_connections">active_connections (app.schemas.metrics.NdtpMetrics attribute)</a>
+</li>
+      <li><a href="api.html#app.schemas.metrics.PredictionMetrics.active_tasks">active_tasks (app.schemas.metrics.PredictionMetrics attribute)</a>
 </li>
       <li><a href="api.html#app.ndtp.parser.Can10.alarm_flags">alarm_flags (app.ndtp.parser.Can10 attribute)</a>
 </li>
@@ -116,6 +125,20 @@
 
       <ul>
         <li><a href="api.html#module-app.api.health">module</a>
+</li>
+      </ul></li>
+      <li>
+    app.api.incidents
+
+      <ul>
+        <li><a href="api.html#module-app.api.incidents">module</a>
+</li>
+      </ul></li>
+      <li>
+    app.api.metrics
+
+      <ul>
+        <li><a href="api.html#module-app.api.metrics">module</a>
 </li>
       </ul></li>
       <li>
@@ -177,6 +200,13 @@
 </li>
       </ul></li>
       <li>
+    app.schemas.metrics
+
+      <ul>
+        <li><a href="api.html#module-app.schemas.metrics">module</a>
+</li>
+      </ul></li>
+      <li>
     app.schemas.prediction
 
       <ul>
@@ -188,6 +218,27 @@
 
       <ul>
         <li><a href="api.html#module-app.services.auth">module</a>
+</li>
+      </ul></li>
+      <li>
+    app.services.incident
+
+      <ul>
+        <li><a href="api.html#module-app.services.incident">module</a>
+</li>
+      </ul></li>
+      <li>
+    app.services.runtime_lookup
+
+      <ul>
+        <li><a href="api.html#module-app.services.runtime_lookup">module</a>
+</li>
+      </ul></li>
+      <li>
+    app.services.runtime_prediction
+
+      <ul>
+        <li><a href="api.html#module-app.services.runtime_prediction">module</a>
 </li>
       </ul></li>
       <li>
@@ -239,6 +290,10 @@
 </li>
       <li><a href="api.html#app.repositories.auth.AuthRepository.close">close() (app.repositories.auth.AuthRepository method)</a>
 </li>
+      <li><a href="api.html#app.schemas.prediction.PredictionStatus.code">code (app.schemas.prediction.PredictionStatus attribute)</a>
+</li>
+      <li><a href="api.html#app.schemas.metrics.NdtpMetrics.connections_total">connections_total (app.schemas.metrics.NdtpMetrics attribute)</a>
+</li>
       <li><a href="api.html#app.ndtp.parser.Nav00.coordinates_valid">coordinates_valid (app.ndtp.parser.Nav00 attribute)</a>
 </li>
       <li><a href="api.html#app.services.telemetry.TelemetryService.count">count() (app.services.telemetry.TelemetryService method)</a>
@@ -247,10 +302,10 @@
 </li>
       <li><a href="api.html#app.ndtp.parser.NplHeader.crc">crc (app.ndtp.parser.NplHeader attribute)</a>
 </li>
-      <li><a href="api.html#app.ndtp.parser.crc16_modbus">crc16_modbus() (in module app.ndtp.parser)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.ndtp.parser.crc16_modbus">crc16_modbus() (in module app.ndtp.parser)</a>
+</li>
       <li><a href="api.html#app.ndtp.parser.NplHeader.crc_enabled">crc_enabled (app.ndtp.parser.NplHeader attribute)</a>
 </li>
       <li><a href="api.html#app.core.security.create_access_token">create_access_token() (in module app.core.security)</a>
@@ -264,6 +319,8 @@
       <li><a href="api.html#app.schemas.prediction.PredictionRequest.cur_dev_s">cur_dev_s (app.schemas.prediction.PredictionRequest attribute)</a>
 </li>
       <li><a href="api.html#app.schemas.prediction.StoredPrediction.current_delay_s">current_delay_s (app.schemas.prediction.StoredPrediction attribute)</a>
+</li>
+      <li><a href="api.html#app.schemas.prediction.StoredPrediction.current_delay_source">current_delay_source (app.schemas.prediction.StoredPrediction attribute)</a>
 </li>
       <li><a href="api.html#app.schemas.auth.CurrentUser">CurrentUser (class in app.schemas.auth)</a>
 </li>
@@ -279,10 +336,12 @@
 </li>
       <li><a href="api.html#app.ndtp.parser.decode_cell">decode_cell() (in module app.ndtp.parser)</a>
 </li>
-      <li><a href="api.html#app.ndtp.parser.Usi08.det_status">det_status (app.ndtp.parser.Usi08 attribute)</a>
+      <li><a href="api.html#app.services.runtime_lookup.RuntimeLookup.demo_current_delay">demo_current_delay() (app.services.runtime_lookup.RuntimeLookup method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.ndtp.parser.Usi08.det_status">det_status (app.ndtp.parser.Usi08 attribute)</a>
+</li>
       <li><a href="api.html#app.ndtp.parser.IntSensor02.di0_counter">di0_counter (app.ndtp.parser.IntSensor02 attribute)</a>
 </li>
       <li><a href="api.html#app.ndtp.parser.IntSensor02.di1_counter">di1_counter (app.ndtp.parser.IntSensor02 attribute)</a>
@@ -305,7 +364,17 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#app.ndtp.parser.Can10.engine_temp_c">engine_temp_c (app.ndtp.parser.Can10 attribute)</a>
 </li>
+      <li><a href="api.html#app.services.incident.IncidentStore.evaluate">evaluate() (app.services.incident.IncidentStore method)</a>
+</li>
       <li><a href="api.html#app.schemas.auth.TokenResponse.expires_in">expires_in (app.schemas.auth.TokenResponse attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.schemas.prediction.StoredPrediction.freshness">freshness (app.schemas.prediction.StoredPrediction attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -313,14 +382,18 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.services.incident.IncidentStore.get">get() (app.services.incident.IncidentStore method)</a>
+</li>
       <li><a href="api.html#app.repositories.auth.AuthRepository.get_active_user">get_active_user() (app.repositories.auth.AuthRepository method)</a>
 </li>
       <li><a href="api.html#app.services.auth.AuthService.get_current_user">get_current_user() (app.services.auth.AuthService method)</a>
 </li>
-      <li><a href="api.html#app.services.telemetry.TelemetryService.get_latest">get_latest() (app.services.telemetry.TelemetryService method)</a>
+      <li><a href="api.html#app.api.incidents.get_incident">get_incident() (in module app.api.incidents)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.services.telemetry.TelemetryService.get_latest">get_latest() (app.services.telemetry.TelemetryService method)</a>
+</li>
       <li><a href="api.html#app.services.telemetry.TelemetryService.get_recent">get_recent() (app.services.telemetry.TelemetryService method)</a>
 </li>
       <li><a href="api.html#app.api.vehicles.get_vehicle">get_vehicle() (in module app.api.vehicles)</a>
@@ -349,12 +422,22 @@
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.schemas.metrics.NdtpMetrics.ignored_packets">ignored_packets (app.schemas.metrics.NdtpMetrics attribute)</a>
+</li>
+      <li><a href="api.html#app.services.incident.IncidentStore">IncidentStore (class in app.services.incident)</a>
+</li>
       <li><a href="api.html#app.repositories.auth.AuthRepository.initialize">initialize() (app.repositories.auth.AuthRepository method)</a>
 </li>
-      <li><a href="api.html#app.ndtp.parser.IntSensor02">IntSensor02 (class in app.ndtp.parser)</a>
+      <li><a href="api.html#app.schemas.prediction.StoredPrediction.input_event_time">input_event_time (app.schemas.prediction.StoredPrediction attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.schemas.prediction.StoredPrediction.input_received_at">input_received_at (app.schemas.prediction.StoredPrediction attribute)</a>
+</li>
+      <li><a href="api.html#app.ndtp.parser.IntSensor02">IntSensor02 (class in app.ndtp.parser)</a>
+</li>
+      <li><a href="api.html#app.schemas.metrics.NdtpMetrics.invalid_packets">invalid_packets (app.schemas.metrics.NdtpMetrics attribute)</a>
+</li>
       <li><a href="api.html#app.repositories.auth.AuthUser.is_active">is_active (app.repositories.auth.AuthUser attribute)</a>
 </li>
       <li><a href="api.html#app.ndtp.parser.NphHeader.is_request">is_request (app.ndtp.parser.NphHeader attribute)</a>
@@ -365,7 +448,13 @@
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.schemas.prediction.StoredPrediction.last_confirmed_at">last_confirmed_at (app.schemas.prediction.StoredPrediction attribute)</a>
+</li>
+      <li><a href="api.html#app.schemas.prediction.StoredPrediction.last_confirmed_stop_id">last_confirmed_stop_id (app.schemas.prediction.StoredPrediction attribute)</a>
+</li>
       <li><a href="api.html#app.schemas.prediction.PredictionRequest.lat">lat (app.schemas.prediction.PredictionRequest attribute)</a>
+</li>
+      <li><a href="api.html#app.schemas.metrics.PredictionMetrics.latency_samples">latency_samples (app.schemas.metrics.PredictionMetrics attribute)</a>
 </li>
       <li><a href="api.html#app.api.predictions.latest_prediction">latest_prediction() (in module app.api.predictions)</a>
 </li>
@@ -379,6 +468,10 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.services.incident.IncidentStore.list_all">list_all() (app.services.incident.IncidentStore method)</a>
+</li>
+      <li><a href="api.html#app.api.incidents.list_incidents">list_incidents() (in module app.api.incidents)</a>
+</li>
       <li><a href="api.html#app.services.telemetry.TelemetryService.list_latest">list_latest() (app.services.telemetry.TelemetryService method)</a>
 </li>
       <li><a href="api.html#app.api.predictions.list_predictions">list_predictions() (in module app.api.predictions)</a>
@@ -399,18 +492,56 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.api.metrics.metrics">metrics() (in module app.api.metrics)</a>
+</li>
+      <li><a href="api.html#app.schemas.metrics.MetricsResponse">MetricsResponse (class in app.schemas.metrics)</a>
+</li>
+      <li><a href="api.html#app.schemas.metrics.PredictionMetrics.ml_queue_wait_p50_s">ml_queue_wait_p50_s (app.schemas.metrics.PredictionMetrics attribute)</a>
+</li>
+      <li><a href="api.html#app.schemas.metrics.PredictionMetrics.ml_queue_wait_p95_s">ml_queue_wait_p95_s (app.schemas.metrics.PredictionMetrics attribute)</a>
+</li>
+      <li><a href="api.html#app.schemas.metrics.PredictionMetrics.ml_queue_wait_p99_s">ml_queue_wait_p99_s (app.schemas.metrics.PredictionMetrics attribute)</a>
+</li>
+      <li><a href="api.html#app.schemas.metrics.PredictionMetrics.ml_request_p50_s">ml_request_p50_s (app.schemas.metrics.PredictionMetrics attribute)</a>
+</li>
+      <li><a href="api.html#app.schemas.metrics.PredictionMetrics.ml_request_p95_s">ml_request_p95_s (app.schemas.metrics.PredictionMetrics attribute)</a>
+</li>
+      <li><a href="api.html#app.schemas.metrics.PredictionMetrics.ml_request_p99_s">ml_request_p99_s (app.schemas.metrics.PredictionMetrics attribute)</a>
+</li>
+      <li><a href="api.html#app.schemas.prediction.PredictionResponse.model">model (app.schemas.prediction.PredictionResponse attribute)</a>
+
+      <ul>
+        <li><a href="api.html#app.schemas.prediction.StoredPrediction.model">(app.schemas.prediction.StoredPrediction attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api.html#app.schemas.prediction.PredictionResponse.model_artifact_sha256">model_artifact_sha256 (app.schemas.prediction.PredictionResponse attribute)</a>
+
+      <ul>
+        <li><a href="api.html#app.schemas.prediction.StoredPrediction.model_artifact_sha256">(app.schemas.prediction.StoredPrediction attribute)</a>
+</li>
+      </ul></li>
       <li><a href="api.html#app.schemas.auth.CurrentUser.model_config">model_config (app.schemas.auth.CurrentUser attribute)</a>
 
       <ul>
         <li><a href="api.html#app.schemas.auth.TokenResponse.model_config">(app.schemas.auth.TokenResponse attribute)</a>
 </li>
+        <li><a href="api.html#app.schemas.metrics.MetricsResponse.model_config">(app.schemas.metrics.MetricsResponse attribute)</a>
+</li>
+        <li><a href="api.html#app.schemas.metrics.NdtpMetrics.model_config">(app.schemas.metrics.NdtpMetrics attribute)</a>
+</li>
+        <li><a href="api.html#app.schemas.metrics.PredictionMetrics.model_config">(app.schemas.metrics.PredictionMetrics attribute)</a>
+</li>
         <li><a href="api.html#app.schemas.prediction.PredictionRequest.model_config">(app.schemas.prediction.PredictionRequest attribute)</a>
 </li>
         <li><a href="api.html#app.schemas.prediction.PredictionResponse.model_config">(app.schemas.prediction.PredictionResponse attribute)</a>
 </li>
+        <li><a href="api.html#app.schemas.prediction.PredictionStatus.model_config">(app.schemas.prediction.PredictionStatus attribute)</a>
+</li>
         <li><a href="api.html#app.schemas.prediction.StoredPrediction.model_config">(app.schemas.prediction.StoredPrediction attribute)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#app.schemas.prediction.PredictionResponse.model_version">model_version (app.schemas.prediction.PredictionResponse attribute)</a>
 
       <ul>
@@ -424,6 +555,10 @@
         <li><a href="api.html#module-app.api.auth">app.api.auth</a>
 </li>
         <li><a href="api.html#module-app.api.health">app.api.health</a>
+</li>
+        <li><a href="api.html#module-app.api.incidents">app.api.incidents</a>
+</li>
+        <li><a href="api.html#module-app.api.metrics">app.api.metrics</a>
 </li>
         <li><a href="api.html#module-app.api.predictions">app.api.predictions</a>
 </li>
@@ -441,9 +576,17 @@
 </li>
         <li><a href="api.html#module-app.schemas.auth">app.schemas.auth</a>
 </li>
+        <li><a href="api.html#module-app.schemas.metrics">app.schemas.metrics</a>
+</li>
         <li><a href="api.html#module-app.schemas.prediction">app.schemas.prediction</a>
 </li>
         <li><a href="api.html#module-app.services.auth">app.services.auth</a>
+</li>
+        <li><a href="api.html#module-app.services.incident">app.services.incident</a>
+</li>
+        <li><a href="api.html#module-app.services.runtime_lookup">app.services.runtime_lookup</a>
+</li>
+        <li><a href="api.html#module-app.services.runtime_prediction">app.services.runtime_prediction</a>
 </li>
         <li><a href="api.html#module-app.services.telemetry">app.services.telemetry</a>
 </li>
@@ -456,10 +599,14 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#app.ndtp.parser.Nav00">Nav00 (class in app.ndtp.parser)</a>
 </li>
+      <li><a href="api.html#app.schemas.metrics.MetricsResponse.ndtp">ndtp (app.schemas.metrics.MetricsResponse attribute)</a>
+</li>
       <li><a href="api.html#app.ndtp.parser.NdtParseError">NdtParseError</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.schemas.metrics.NdtpMetrics">NdtpMetrics (class in app.schemas.metrics)</a>
+</li>
       <li><a href="api.html#app.ndtp.server.NdtServer">NdtServer (class in app.ndtp.server)</a>
 </li>
       <li><a href="api.html#app.ndtp.parser.NphHeader">NphHeader (class in app.ndtp.parser)</a>
@@ -478,12 +625,26 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#app.ndtp.parser.Can10.odometer_km">odometer_km (app.ndtp.parser.Can10 attribute)</a>
 </li>
+      <li><a href="api.html#app.services.runtime_prediction.RuntimePrediction.on_event">on_event() (app.services.runtime_prediction.RuntimePrediction method)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.schemas.prediction.PredictionResponse.p_late">p_late (app.schemas.prediction.PredictionResponse attribute)</a>
+
+      <ul>
+        <li><a href="api.html#app.schemas.prediction.StoredPrediction.p_late">(app.schemas.prediction.StoredPrediction attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api.html#app.schemas.metrics.PredictionMetrics.packet_to_publish_p50_s">packet_to_publish_p50_s (app.schemas.metrics.PredictionMetrics attribute)</a>
+</li>
+      <li><a href="api.html#app.schemas.metrics.PredictionMetrics.packet_to_publish_p95_s">packet_to_publish_p95_s (app.schemas.metrics.PredictionMetrics attribute)</a>
+</li>
+      <li><a href="api.html#app.schemas.metrics.PredictionMetrics.packet_to_publish_p99_s">packet_to_publish_p99_s (app.schemas.metrics.PredictionMetrics attribute)</a>
+</li>
       <li><a href="api.html#app.ndtp.parser.NphHeader.packet_type">packet_type (app.ndtp.parser.NphHeader attribute)</a>
 
       <ul>
@@ -500,9 +661,13 @@
 </li>
       <li><a href="api.html#app.ndtp.parser.parse_realtime">parse_realtime() (in module app.ndtp.parser)</a>
 </li>
+      <li><a href="api.html#app.schemas.metrics.NdtpMetrics.parsed_packets">parsed_packets (app.schemas.metrics.NdtpMetrics attribute)</a>
+</li>
       <li><a href="api.html#app.repositories.auth.AuthUser.password_hash">password_hash (app.repositories.auth.AuthUser attribute)</a>
 </li>
       <li><a href="api.html#app.ndtp.parser.Nav00.pdop">pdop (app.ndtp.parser.Nav00 attribute)</a>
+</li>
+      <li><a href="api.html#app.schemas.metrics.PredictionMetrics.peak_active_tasks">peak_active_tasks (app.schemas.metrics.PredictionMetrics attribute)</a>
 </li>
       <li><a href="api.html#app.ndtp.parser.HandshakeRequest.peer_address">peer_address (app.ndtp.parser.HandshakeRequest attribute)</a>
 
@@ -514,23 +679,43 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.services.runtime_lookup.RuntimeLookup.point_hint">point_hint() (app.services.runtime_lookup.RuntimeLookup method)</a>
+</li>
       <li><a href="api.html#app.api.predictions.predict">predict() (in module app.api.predictions)</a>
 </li>
       <li><a href="api.html#app.api.predictions.predict_from_buffer">predict_from_buffer() (in module app.api.predictions)</a>
 </li>
+      <li><a href="api.html#app.schemas.prediction.StoredPrediction.predicted_arrival">predicted_arrival (app.schemas.prediction.StoredPrediction attribute)</a>
+</li>
       <li><a href="api.html#app.schemas.prediction.StoredPrediction.predicted_delay_s">predicted_delay_s (app.schemas.prediction.StoredPrediction attribute)</a>
 </li>
-      <li><a href="api.html#app.schemas.prediction.PredictionResponse.prediction">prediction (app.schemas.prediction.PredictionResponse attribute)</a>
+      <li><a href="api.html#app.schemas.metrics.MetricsResponse.prediction">prediction (app.schemas.metrics.MetricsResponse attribute)</a>
+
+      <ul>
+        <li><a href="api.html#app.schemas.prediction.PredictionResponse.prediction">(app.schemas.prediction.PredictionResponse attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api.html#app.api.predictions.prediction_statuses">prediction_statuses() (in module app.api.predictions)</a>
 </li>
       <li><a href="api.html#app.schemas.prediction.StoredPrediction.prediction_time">prediction_time (app.schemas.prediction.StoredPrediction attribute)</a>
+</li>
+      <li><a href="api.html#app.schemas.metrics.PredictionMetrics">PredictionMetrics (class in app.schemas.metrics)</a>
 </li>
       <li><a href="api.html#app.schemas.prediction.PredictionRequest">PredictionRequest (class in app.schemas.prediction)</a>
 </li>
       <li><a href="api.html#app.schemas.prediction.PredictionResponse">PredictionResponse (class in app.schemas.prediction)</a>
 </li>
+      <li><a href="api.html#app.schemas.prediction.PredictionStatus">PredictionStatus (class in app.schemas.prediction)</a>
+</li>
+      <li><a href="api.html#app.services.runtime_lookup.RuntimeLookup.prior_stops">prior_stops() (app.services.runtime_lookup.RuntimeLookup method)</a>
+</li>
+      <li><a href="api.html#app.schemas.prediction.StoredPrediction.produced_at">produced_at (app.schemas.prediction.StoredPrediction attribute)</a>
+</li>
       <li><a href="api.html#app.ndtp.parser.HandshakeRequest.proto_major">proto_major (app.ndtp.parser.HandshakeRequest attribute)</a>
 </li>
       <li><a href="api.html#app.ndtp.parser.HandshakeRequest.proto_minor">proto_minor (app.ndtp.parser.HandshakeRequest attribute)</a>
+</li>
+      <li><a href="api.html#app.services.telemetry.TelemetryService.publish">publish() (app.services.telemetry.TelemetryService method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -544,6 +729,8 @@
 </li>
       <li><a href="api.html#app.services.telemetry.TelemetryService.record">record() (app.services.telemetry.TelemetryService method)</a>
 </li>
+      <li><a href="api.html#app.services.runtime_lookup.RuntimeLookup.register_demo">register_demo() (app.services.runtime_lookup.RuntimeLookup method)</a>
+</li>
       <li><a href="api.html#app.ndtp.parser.NphHeader.request_id">request_id (app.ndtp.parser.NphHeader attribute)</a>
 
       <ul>
@@ -552,14 +739,38 @@
         <li><a href="api.html#app.ndtp.parser.RealtimePacket.request_id">(app.ndtp.parser.RealtimePacket attribute)</a>
 </li>
       </ul></li>
+      <li><a href="api.html#app.schemas.metrics.PredictionMetrics.requests_failed">requests_failed (app.schemas.metrics.PredictionMetrics attribute)</a>
+</li>
+      <li><a href="api.html#app.schemas.metrics.PredictionMetrics.requests_started">requests_started (app.schemas.metrics.PredictionMetrics attribute)</a>
+</li>
+      <li><a href="api.html#app.schemas.metrics.PredictionMetrics.requests_succeeded">requests_succeeded (app.schemas.metrics.PredictionMetrics attribute)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.services.incident.IncidentStore.resolve_vehicle">resolve_vehicle() (app.services.incident.IncidentStore method)</a>
+</li>
+      <li><a href="api.html#app.schemas.prediction.StoredPrediction.risk">risk (app.schemas.prediction.StoredPrediction attribute)</a>
+</li>
+      <li><a href="api.html#app.services.incident.IncidentStore.risk">risk() (app.services.incident.IncidentStore method)</a>
+</li>
+      <li><a href="api.html#app.schemas.prediction.PredictionResponse.risk_model_version">risk_model_version (app.schemas.prediction.PredictionResponse attribute)</a>
+
+      <ul>
+        <li><a href="api.html#app.schemas.prediction.StoredPrediction.risk_model_version">(app.schemas.prediction.StoredPrediction attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api.html#app.schemas.prediction.StoredPrediction.risk_source">risk_source (app.schemas.prediction.StoredPrediction attribute)</a>
+</li>
       <li><a href="api.html#app.repositories.auth.AuthUser.role">role (app.repositories.auth.AuthUser attribute)</a>
 
       <ul>
         <li><a href="api.html#app.schemas.auth.CurrentUser.role">(app.schemas.auth.CurrentUser attribute)</a>
 </li>
       </ul></li>
+      <li><a href="api.html#app.services.runtime_lookup.RuntimeLookup">RuntimeLookup (class in app.services.runtime_lookup)</a>
+</li>
+      <li><a href="api.html#app.services.runtime_prediction.RuntimePrediction">RuntimePrediction (class in app.services.runtime_prediction)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -574,22 +785,32 @@
 </li>
       <li><a href="api.html#app.ndtp.parser.Nav00.sos">sos (app.ndtp.parser.Nav00 attribute)</a>
 </li>
+      <li><a href="api.html#app.schemas.prediction.StoredPrediction.source">source (app.schemas.prediction.StoredPrediction attribute)</a>
+</li>
       <li><a href="api.html#app.schemas.prediction.PredictionRequest.speed">speed (app.schemas.prediction.PredictionRequest attribute)</a>
 </li>
       <li><a href="api.html#app.ndtp.parser.Nav00.speed_avg">speed_avg (app.ndtp.parser.Nav00 attribute)</a>
 </li>
       <li><a href="api.html#app.ndtp.parser.Can10.speed_kmh">speed_kmh (app.ndtp.parser.Can10 attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#app.ndtp.parser.Nav00.speed_max">speed_max (app.ndtp.parser.Nav00 attribute)</a>
 </li>
       <li><a href="api.html#app.ndtp.server.NdtServer.start">start() (app.ndtp.server.NdtServer method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.services.runtime_prediction.RuntimePrediction.stats">stats() (app.services.runtime_prediction.RuntimePrediction method)</a>
+</li>
       <li><a href="api.html#app.ndtp.parser.Termo16.status">status (app.ndtp.parser.Termo16 attribute)</a>
 </li>
-      <li><a href="api.html#app.ndtp.server.NdtServer.stop">stop() (app.ndtp.server.NdtServer method)</a>
+      <li><a href="api.html#app.services.runtime_prediction.RuntimePrediction.statuses">statuses() (app.services.runtime_prediction.RuntimePrediction method)</a>
 </li>
+      <li><a href="api.html#app.ndtp.server.NdtServer.stop">stop() (app.ndtp.server.NdtServer method)</a>
+
+      <ul>
+        <li><a href="api.html#app.services.runtime_prediction.RuntimePrediction.stop">(app.services.runtime_prediction.RuntimePrediction method)</a>
+</li>
+      </ul></li>
       <li><a href="api.html#app.schemas.prediction.PredictionRequest.stop_lat">stop_lat (app.schemas.prediction.PredictionRequest attribute)</a>
 </li>
       <li><a href="api.html#app.schemas.prediction.PredictionRequest.stop_lon">stop_lon (app.schemas.prediction.PredictionRequest attribute)</a>
@@ -598,12 +819,16 @@
 </li>
       <li><a href="api.html#app.services.telemetry.TelemetryService.subscribe">subscribe() (app.services.telemetry.TelemetryService method)</a>
 </li>
+      <li><a href="api.html#app.schemas.metrics.NdtpMetrics.subscriber_queue_peak">subscriber_queue_peak (app.schemas.metrics.NdtpMetrics attribute)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.services.runtime_lookup.RuntimeLookup.target_for">target_for() (app.services.runtime_lookup.RuntimeLookup method)</a>
+</li>
       <li><a href="api.html#app.schemas.prediction.PredictionRequest.target_stop_id">target_stop_id (app.schemas.prediction.PredictionRequest attribute)</a>
 
       <ul>
@@ -630,6 +855,8 @@
         <li><a href="api.html#app.schemas.prediction.PredictionRequest.timestamp">(app.schemas.prediction.PredictionRequest attribute)</a>
 </li>
       </ul></li>
+      <li><a href="api.html#app.services.runtime_lookup.RuntimeLookup.to_utc">to_utc() (app.services.runtime_lookup.RuntimeLookup method)</a>
+</li>
       <li><a href="api.html#app.schemas.auth.TokenResponse.token_type">token_type (app.schemas.auth.TokenResponse attribute)</a>
 </li>
       <li><a href="api.html#app.schemas.auth.TokenResponse">TokenResponse (class in app.schemas.auth)</a>
@@ -638,6 +865,8 @@
 
       <ul>
         <li><a href="api.html#app.schemas.prediction.PredictionResponse.tr_id">(app.schemas.prediction.PredictionResponse attribute)</a>
+</li>
+        <li><a href="api.html#app.schemas.prediction.PredictionStatus.tr_id">(app.schemas.prediction.PredictionStatus attribute)</a>
 </li>
         <li><a href="api.html#app.schemas.prediction.StoredPrediction.tr_id">(app.schemas.prediction.StoredPrediction attribute)</a>
 </li>
@@ -653,6 +882,8 @@
       <li><a href="api.html#app.schemas.prediction.PredictionRequest.unit_id">unit_id (app.schemas.prediction.PredictionRequest attribute)</a>
 
       <ul>
+        <li><a href="api.html#app.schemas.prediction.PredictionStatus.unit_id">(app.schemas.prediction.PredictionStatus attribute)</a>
+</li>
         <li><a href="api.html#app.schemas.prediction.StoredPrediction.unit_id">(app.schemas.prediction.StoredPrediction attribute)</a>
 </li>
       </ul></li>
@@ -660,6 +891,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.schemas.prediction.PredictionStatus.updated_at">updated_at (app.schemas.prediction.PredictionStatus attribute)</a>
+</li>
       <li><a href="api.html#app.repositories.auth.AuthUser.username">username (app.repositories.auth.AuthUser attribute)</a>
 
       <ul>
@@ -667,6 +900,22 @@
 </li>
       </ul></li>
       <li><a href="api.html#app.ndtp.parser.Usi08">Usi08 (class in app.ndtp.parser)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.schemas.metrics.NdtpMetrics.vehicles">vehicles (app.schemas.metrics.NdtpMetrics attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="W">W</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#app.schemas.metrics.NdtpMetrics.ws_dropped_events">ws_dropped_events (app.schemas.metrics.NdtpMetrics attribute)</a>
 </li>
   </ul></td>
 </tr></table>

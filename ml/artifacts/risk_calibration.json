@@ -1,0 +1,60 @@
+{
+  "event": "target_delay_s >= 120",
+  "version": "risk-late-120-2026-09-27",
+  "source_model_version": "lightgbm-plan-2026-09-26",
+  "source_model_artifact_sha256": "23a9665d6dc305171383d18d31358b3a422e13a8a3cf689c92ea824e4794b432",
+  "coefficient": 0.017618627837027966,
+  "intercept": -2.414475842636775,
+  "train_oof_rows": 2885,
+  "train_oof_brier": 0.1188417367001812,
+  "test_rows": 353,
+  "test_brier": 0.10102723629828729,
+  "test_constant_prevalence_brier": 0.18471743403218358,
+  "test_bins": [
+    {
+      "range": [
+        0.0,
+        0.2
+      ],
+      "n": 217,
+      "mean_probability": 0.08912689138209907,
+      "observed_fraction": 0.03225806451612903
+    },
+    {
+      "range": [
+        0.2,
+        0.4
+      ],
+      "n": 80,
+      "mean_probability": 0.28327337198739183,
+      "observed_fraction": 0.4
+    },
+    {
+      "range": [
+        0.4,
+        0.6
+      ],
+      "n": 20,
+      "mean_probability": 0.4896986949724619,
+      "observed_fraction": 0.7
+    },
+    {
+      "range": [
+        0.6,
+        0.8
+      ],
+      "n": 11,
+      "mean_probability": 0.6802098113311977,
+      "observed_fraction": 0.8181818181818182
+    },
+    {
+      "range": [
+        0.8,
+        1.0
+      ],
+      "n": 25,
+      "mean_probability": 0.908307549486302,
+      "observed_fraction": 0.96
+    }
+  ]
+}

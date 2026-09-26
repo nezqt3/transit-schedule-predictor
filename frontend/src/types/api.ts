@@ -35,6 +35,8 @@ export type TelemetryEvent = {
 export type TelemetryStreamMessage =
   | { type: 'vehicle_snapshot'; data: TelemetryEvent[] }
   | { type: 'vehicle_update'; data: TelemetryEvent }
+  | { type: 'prediction_update'; data: StoredPrediction }
+  | { type: 'incident'; data: Incident }
   | { type: 'heartbeat' }
 
 /** Зеркалирует backend/app/schemas/prediction.py. */
@@ -58,11 +60,53 @@ export type StoredPrediction = {
   tr_id: number
   unit_id: number
   prediction_time: string
+  input_event_time?: string | null
+  input_received_at?: string | null
   target_stop_id: number
   target_time: string
   current_delay_s: number
   predicted_delay_s: number
   model_version: string
+  model?: string | null
+  model_artifact_sha256?: string | null
+  produced_at?: string | null
+  predicted_arrival?: string | null
+  current_delay_source?: string
+  last_confirmed_stop_id?: number | null
+  last_confirmed_at?: string | null
+  source?: 'live' | 'replay' | 'manual' | 'demo'
+  p_late?: number | null
+  risk_model_version?: string | null
+  risk?: 'low' | 'medium' | 'high'
+  risk_source?: string
+  freshness?: 'fresh' | 'stale' | 'unavailable'
+}
+
+export type PredictionStatus = {
+  unit_id: number
+  tr_id: number | null
+  code: string
+  updated_at: string
+}
+
+export type Incident = {
+  incident_id: string
+  tr_id: number
+  unit_id: number
+  target_stop_id: number
+  target_time: string
+  previous_stop_id: number | null
+  segment: string
+  predicted_delay_s: number
+  p_late: number | null
+  risk: 'medium' | 'high'
+  risk_source: string
+  cause: string
+  evidence: string
+  recommendation: string
+  status: 'active' | 'resolved'
+  created_at: string
+  updated_at: string
 }
 
 export type WhatIfVehicle = {

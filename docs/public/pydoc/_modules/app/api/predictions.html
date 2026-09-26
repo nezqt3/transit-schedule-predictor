@@ -13,8 +13,8 @@
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
-      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
-      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -72,13 +72,14 @@
            <div itemprop="articleBody">
              
   <h1>Source code for app.api.predictions</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">,</span> <span class="n">timezone</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIRouter</span><span class="p">,</span> <span class="n">HTTPException</span><span class="p">,</span> <span class="n">Request</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">app.schemas.prediction</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">PredictionRequest</span><span class="p">,</span>
     <span class="n">PredictionResponse</span><span class="p">,</span>
+    <span class="n">PredictionStatus</span><span class="p">,</span>
     <span class="n">StoredPrediction</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">app.services.prediction</span><span class="w"> </span><span class="kn">import</span> <span class="n">predict_delay</span>
@@ -86,10 +87,19 @@
 <span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">()</span>
 
 
+<div class="viewcode-block" id="prediction_statuses">
+<a class="viewcode-back" href="../../../api.html#app.api.predictions.prediction_statuses">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/statuses"</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="nb">list</span><span class="p">[</span><span class="n">PredictionStatus</span><span class="p">],</span>
+            <span class="n">summary</span><span class="o">=</span><span class="s2">"Причины отсутствия актуального прогноза"</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">prediction_statuses</span><span class="p">(</span><span class="n">http_request</span><span class="p">:</span> <span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">PredictionStatus</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">http_request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">runtime_prediction</span><span class="o">.</span><span class="n">statuses</span><span class="p">()</span></div>
+
+
+
 <div class="viewcode-block" id="list_predictions">
 <a class="viewcode-back" href="../../../api.html#app.api.predictions.list_predictions">[docs]</a>
-<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="nb">list</span><span class="p">[</span><span class="n">StoredPrediction</span><span class="p">],</span>
-            <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;Последние прогнозы по транспортным средствам&quot;</span><span class="p">)</span>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="nb">list</span><span class="p">[</span><span class="n">StoredPrediction</span><span class="p">],</span>
+            <span class="n">summary</span><span class="o">=</span><span class="s2">"Последние прогнозы по транспортным средствам"</span><span class="p">)</span>
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">list_predictions</span><span class="p">(</span><span class="n">http_request</span><span class="p">:</span> <span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">StoredPrediction</span><span class="p">]:</span>
     <span class="k">return</span> <span class="n">http_request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">predictions</span><span class="o">.</span><span class="n">list_latest</span><span class="p">()</span></div>
 
@@ -97,12 +107,12 @@
 
 <div class="viewcode-block" id="latest_prediction">
 <a class="viewcode-back" href="../../../api.html#app.api.predictions.latest_prediction">[docs]</a>
-<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{tr_id}</span><span class="s2">/latest&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">StoredPrediction</span><span class="p">,</span>
-            <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;Последний прогноз транспортного средства&quot;</span><span class="p">)</span>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/</span><span class="si">{tr_id}</span><span class="s2">/latest"</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">StoredPrediction</span><span class="p">,</span>
+            <span class="n">summary</span><span class="o">=</span><span class="s2">"Последний прогноз транспортного средства"</span><span class="p">)</span>
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">latest_prediction</span><span class="p">(</span><span class="n">tr_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">http_request</span><span class="p">:</span> <span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StoredPrediction</span><span class="p">:</span>
     <span class="n">prediction</span> <span class="o">=</span> <span class="n">http_request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">predictions</span><span class="o">.</span><span class="n">get_latest</span><span class="p">(</span><span class="n">tr_id</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">prediction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;prediction not found&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"prediction not found"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">prediction</span></div>
 
 
@@ -110,19 +120,19 @@
 <div class="viewcode-block" id="predict">
 <a class="viewcode-back" href="../../../api.html#app.api.predictions.predict">[docs]</a>
 <span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
-    <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">""</span><span class="p">,</span>
     <span class="n">response_model</span><span class="o">=</span><span class="n">PredictionResponse</span><span class="p">,</span>
-    <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;Получить прогноз задержки&quot;</span><span class="p">,</span>
+    <span class="n">summary</span><span class="o">=</span><span class="s2">"Получить прогноз задержки"</span><span class="p">,</span>
     <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-        <span class="s2">&quot;Возвращает прогноз отклонения транспортного средства &quot;</span>
-        <span class="s2">&quot;от расписания на горизонте 10–15 минут.&quot;</span>
+        <span class="s2">"Возвращает прогноз отклонения транспортного средства "</span>
+        <span class="s2">"от расписания на горизонте 10–15 минут."</span>
     <span class="p">),</span>
 <span class="p">)</span>
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span>
     <span class="n">request</span><span class="p">:</span> <span class="n">PredictionRequest</span><span class="p">,</span>
     <span class="n">http_request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PredictionResponse</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Выполняет прогноз задержки транспортного средства.</span>
 
 <span class="sd">    Передаёт текущую точку и накопленную NDTP-историю в ML Service.</span>
@@ -134,7 +144,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        PredictionResponse:</span>
 <span class="sd">            Прогноз задержки в секундах.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">predict_delay</span><span class="p">(</span>
         <span class="n">http_request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">telemetry</span><span class="p">,</span>
@@ -148,12 +158,12 @@
         <span class="n">stop_lat</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">stop_lat</span><span class="p">,</span>
         <span class="n">stop_lon</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">stop_lon</span><span class="p">,</span>
         <span class="n">current_point</span><span class="o">=</span><span class="p">{</span>
-            <span class="s2">&quot;event_time&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
-            <span class="s2">&quot;receive_time&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
-            <span class="s2">&quot;location_valid&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-            <span class="s2">&quot;lat&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">lat</span><span class="p">,</span>
-            <span class="s2">&quot;lon&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">lon</span><span class="p">,</span>
-            <span class="s2">&quot;speed&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span>
+            <span class="s2">"event_time"</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+            <span class="s2">"receive_time"</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+            <span class="s2">"location_valid"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">"lat"</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">lat</span><span class="p">,</span>
+            <span class="s2">"lon"</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">lon</span><span class="p">,</span>
+            <span class="s2">"speed"</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span>
         <span class="p">},</span>
     <span class="p">)</span>
     <span class="n">http_request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">predictions</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">StoredPrediction</span><span class="p">(</span>
@@ -163,21 +173,33 @@
         <span class="n">target_stop_id</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">target_stop_id</span><span class="p">,</span>
         <span class="n">target_time</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">target_time_begin</span><span class="p">,</span>
         <span class="n">current_delay_s</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">cur_dev_s</span><span class="p">,</span>
-        <span class="n">predicted_delay_s</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;prediction&quot;</span><span class="p">],</span>
-        <span class="n">model_version</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;model_version&quot;</span><span class="p">],</span>
+        <span class="n">predicted_delay_s</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">"prediction"</span><span class="p">],</span>
+        <span class="n">model_version</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">"model_version"</span><span class="p">],</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model"</span><span class="p">),</span>
+        <span class="n">model_artifact_sha256</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model_artifact_sha256"</span><span class="p">),</span>
+        <span class="n">produced_at</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+        <span class="n">predicted_arrival</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">target_time_begin</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">"prediction"</span><span class="p">]),</span>
+        <span class="n">p_late</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"p_late"</span><span class="p">),</span>
+        <span class="n">risk_model_version</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"risk_model_version"</span><span class="p">),</span>
+        <span class="n">risk</span><span class="o">=</span><span class="n">http_request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">incidents</span><span class="o">.</span><span class="n">risk</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">"prediction"</span><span class="p">],</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"p_late"</span><span class="p">)),</span>
+        <span class="n">risk_source</span><span class="o">=</span><span class="s2">"calibrated_probability"</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"p_late"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">"threshold"</span><span class="p">,</span>
     <span class="p">))</span>
     <span class="k">return</span> <span class="n">PredictionResponse</span><span class="p">(</span>
         <span class="n">tr_id</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">tr_id</span><span class="p">,</span>
-        <span class="n">prediction</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;prediction&quot;</span><span class="p">],</span>
-        <span class="n">model_version</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;model_version&quot;</span><span class="p">],</span>
+        <span class="n">prediction</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">"prediction"</span><span class="p">],</span>
+        <span class="n">model_version</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">"model_version"</span><span class="p">],</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model"</span><span class="p">),</span>
+        <span class="n">model_artifact_sha256</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model_artifact_sha256"</span><span class="p">),</span>
+        <span class="n">p_late</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"p_late"</span><span class="p">),</span>
+        <span class="n">risk_model_version</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"risk_model_version"</span><span class="p">),</span>
     <span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="predict_from_buffer">
 <a class="viewcode-back" href="../../../api.html#app.api.predictions.predict_from_buffer">[docs]</a>
-<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/predict&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">PredictionResponse</span><span class="p">,</span>
-            <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;Прогноз по накопленной NDTP-телеметрии&quot;</span><span class="p">)</span>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/predict"</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">PredictionResponse</span><span class="p">,</span>
+            <span class="n">summary</span><span class="o">=</span><span class="s2">"Прогноз по накопленной NDTP-телеметрии"</span><span class="p">)</span>
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">predict_from_buffer</span><span class="p">(</span>
     <span class="n">http_request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span>
     <span class="n">tr_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -196,19 +218,19 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">explicit_stop</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
                 <span class="n">status_code</span><span class="o">=</span><span class="mi">422</span><span class="p">,</span>
-                <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;provide target_time_begin, stop_lat and stop_lon together&quot;</span><span class="p">,</span>
+                <span class="n">detail</span><span class="o">=</span><span class="s2">"provide target_time_begin, stop_lat and stop_lon together"</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="n">stop</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;tr_id&quot;</span><span class="p">:</span> <span class="n">tr_id</span><span class="p">,</span>
-            <span class="s2">&quot;target_time_begin&quot;</span><span class="p">:</span> <span class="n">target_time_begin</span><span class="p">,</span>
-            <span class="s2">&quot;stop_lat&quot;</span><span class="p">:</span> <span class="n">stop_lat</span><span class="p">,</span>
-            <span class="s2">&quot;stop_lon&quot;</span><span class="p">:</span> <span class="n">stop_lon</span><span class="p">,</span>
+            <span class="s2">"tr_id"</span><span class="p">:</span> <span class="n">tr_id</span><span class="p">,</span>
+            <span class="s2">"target_time_begin"</span><span class="p">:</span> <span class="n">target_time_begin</span><span class="p">,</span>
+            <span class="s2">"stop_lat"</span><span class="p">:</span> <span class="n">stop_lat</span><span class="p">,</span>
+            <span class="s2">"stop_lon"</span><span class="p">:</span> <span class="n">stop_lon</span><span class="p">,</span>
         <span class="p">}</span>
-    <span class="k">if</span> <span class="n">stop</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">stop</span><span class="p">[</span><span class="s2">&quot;tr_id&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">tr_id</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;target stop not found for vehicle&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">stop</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">stop</span><span class="p">[</span><span class="s2">"tr_id"</span><span class="p">]</span> <span class="o">!=</span> <span class="n">tr_id</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"target stop not found for vehicle"</span><span class="p">)</span>
     <span class="n">resolved_unit</span> <span class="o">=</span> <span class="n">unit_id</span> <span class="ow">or</span> <span class="n">lookup</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tr_id</span><span class="p">)</span> <span class="ow">or</span> <span class="n">tr_id</span>
     <span class="k">if</span> <span class="n">resolved_unit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;NDTP unit mapping not found for vehicle&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"NDTP unit mapping not found for vehicle"</span><span class="p">)</span>
     <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">predict_delay</span><span class="p">(</span>
         <span class="n">http_request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">telemetry</span><span class="p">,</span>
         <span class="n">http_request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">ml_client</span><span class="p">,</span>
@@ -218,27 +240,41 @@
         <span class="n">cur_dev_s</span><span class="o">=</span><span class="n">cur_dev_s</span><span class="p">,</span>
         <span class="n">target_stop_id</span><span class="o">=</span><span class="n">target_stop_id</span><span class="p">,</span>
         <span class="n">target_time_begin</span><span class="o">=</span><span class="p">(</span>
-            <span class="n">stop</span><span class="p">[</span><span class="s2">&quot;target_time_begin&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stop</span><span class="p">[</span><span class="s2">&quot;target_time_begin&quot;</span><span class="p">],</span> <span class="n">datetime</span><span class="p">)</span>
-            <span class="k">else</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">stop</span><span class="p">[</span><span class="s2">&quot;target_time_begin&quot;</span><span class="p">])</span>
+            <span class="n">stop</span><span class="p">[</span><span class="s2">"target_time_begin"</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stop</span><span class="p">[</span><span class="s2">"target_time_begin"</span><span class="p">],</span> <span class="n">datetime</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">stop</span><span class="p">[</span><span class="s2">"target_time_begin"</span><span class="p">])</span>
         <span class="p">),</span>
-        <span class="n">stop_lat</span><span class="o">=</span><span class="n">stop</span><span class="p">[</span><span class="s2">&quot;stop_lat&quot;</span><span class="p">],</span>
-        <span class="n">stop_lon</span><span class="o">=</span><span class="n">stop</span><span class="p">[</span><span class="s2">&quot;stop_lon&quot;</span><span class="p">],</span>
+        <span class="n">stop_lat</span><span class="o">=</span><span class="n">stop</span><span class="p">[</span><span class="s2">"stop_lat"</span><span class="p">],</span>
+        <span class="n">stop_lon</span><span class="o">=</span><span class="n">stop</span><span class="p">[</span><span class="s2">"stop_lon"</span><span class="p">],</span>
     <span class="p">)</span>
     <span class="n">http_request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">predictions</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">StoredPrediction</span><span class="p">(</span>
         <span class="n">tr_id</span><span class="o">=</span><span class="n">tr_id</span><span class="p">,</span>
         <span class="n">unit_id</span><span class="o">=</span><span class="n">resolved_unit</span><span class="p">,</span>
         <span class="n">prediction_time</span><span class="o">=</span><span class="n">T</span><span class="p">,</span>
         <span class="n">target_stop_id</span><span class="o">=</span><span class="n">target_stop_id</span><span class="p">,</span>
-        <span class="n">target_time</span><span class="o">=</span><span class="p">(</span><span class="n">stop</span><span class="p">[</span><span class="s2">&quot;target_time_begin&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stop</span><span class="p">[</span><span class="s2">&quot;target_time_begin&quot;</span><span class="p">],</span> <span class="n">datetime</span><span class="p">)</span>
-                     <span class="k">else</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">stop</span><span class="p">[</span><span class="s2">&quot;target_time_begin&quot;</span><span class="p">])),</span>
+        <span class="n">target_time</span><span class="o">=</span><span class="p">(</span><span class="n">stop</span><span class="p">[</span><span class="s2">"target_time_begin"</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stop</span><span class="p">[</span><span class="s2">"target_time_begin"</span><span class="p">],</span> <span class="n">datetime</span><span class="p">)</span>
+                     <span class="k">else</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">stop</span><span class="p">[</span><span class="s2">"target_time_begin"</span><span class="p">])),</span>
         <span class="n">current_delay_s</span><span class="o">=</span><span class="n">cur_dev_s</span><span class="p">,</span>
-        <span class="n">predicted_delay_s</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;prediction&quot;</span><span class="p">],</span>
-        <span class="n">model_version</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;model_version&quot;</span><span class="p">],</span>
+        <span class="n">predicted_delay_s</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">"prediction"</span><span class="p">],</span>
+        <span class="n">model_version</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">"model_version"</span><span class="p">],</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model"</span><span class="p">),</span>
+        <span class="n">model_artifact_sha256</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model_artifact_sha256"</span><span class="p">),</span>
+        <span class="n">produced_at</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+        <span class="n">predicted_arrival</span><span class="o">=</span><span class="p">(</span><span class="n">stop</span><span class="p">[</span><span class="s2">"target_time_begin"</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stop</span><span class="p">[</span><span class="s2">"target_time_begin"</span><span class="p">],</span> <span class="n">datetime</span><span class="p">)</span>
+                           <span class="k">else</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">stop</span><span class="p">[</span><span class="s2">"target_time_begin"</span><span class="p">]))</span>
+        <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">"prediction"</span><span class="p">]),</span>
+        <span class="n">p_late</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"p_late"</span><span class="p">),</span>
+        <span class="n">risk_model_version</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"risk_model_version"</span><span class="p">),</span>
+        <span class="n">risk</span><span class="o">=</span><span class="n">http_request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">incidents</span><span class="o">.</span><span class="n">risk</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">"prediction"</span><span class="p">],</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"p_late"</span><span class="p">)),</span>
+        <span class="n">risk_source</span><span class="o">=</span><span class="s2">"calibrated_probability"</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"p_late"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">"threshold"</span><span class="p">,</span>
     <span class="p">))</span>
     <span class="k">return</span> <span class="n">PredictionResponse</span><span class="p">(</span>
         <span class="n">tr_id</span><span class="o">=</span><span class="n">tr_id</span><span class="p">,</span>
-        <span class="n">prediction</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;prediction&quot;</span><span class="p">],</span>
-        <span class="n">model_version</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;model_version&quot;</span><span class="p">],</span>
+        <span class="n">prediction</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">"prediction"</span><span class="p">],</span>
+        <span class="n">model_version</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s2">"model_version"</span><span class="p">],</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model"</span><span class="p">),</span>
+        <span class="n">model_artifact_sha256</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model_artifact_sha256"</span><span class="p">),</span>
+        <span class="n">p_late</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"p_late"</span><span class="p">),</span>
+        <span class="n">risk_model_version</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"risk_model_version"</span><span class="p">),</span>
     <span class="p">)</span></div>
 
 </pre></div>

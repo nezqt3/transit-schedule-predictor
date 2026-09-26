@@ -67,3 +67,25 @@ def test_login_rejects_invalid_credentials(client: TestClient):
 
     assert response.status_code == 401
     assert "transport_session=" not in response.headers.get("set-cookie", "")
+
+
+def test_database_outage_returns_503_and_recovers(client: TestClient):
+    assert client.post("/api/v1/auth/token", data={
+        "username": "dispatcher", "password": "transport",
+    }).status_code == 200
+
+    class UnavailableAuthService:
+        async def authenticate(self, username: str, password: str):
+            raise TimeoutError("database unavailable")
+
+        async def get_current_user(self, username: str):
+            raise TimeoutError("database unavailable")
+
+    app.state.auth_service = UnavailableAuthService()
+    assert client.post("/api/v1/auth/token", data={
+        "username": "dispatcher", "password": "transport",
+    }).status_code == 503
+    assert client.get("/api/v1/vehicles").status_code == 503
+
+    app.state.auth_service = FakeAuthService()
+    assert client.get("/api/v1/vehicles").status_code == 200

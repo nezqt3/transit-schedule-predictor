@@ -33,6 +33,10 @@ class NdtServer:
         self.port = port
         self._server: asyncio.Server | None = None
         self._units: dict[str, int] = {}  # peer -> unitId после handshake
+        self.connections_total = 0
+        self.active_connections = 0
+        self.invalid_packets = 0
+        self.parsed_packets = 0
 
     async def start(self) -> None:
         self._server = await asyncio.start_server(
@@ -60,6 +64,8 @@ class NdtServer:
         peer = writer.get_extra_info("peername")
         peer_key = str(peer)
         logger.info("NDTP client connected: %s", peer)
+        self.connections_total += 1
+        self.active_connections += 1
         try:
             while True:
                 try:
@@ -71,10 +77,13 @@ class NdtServer:
                 try:
                     npl, packet = parser.parse_packet(frame)
                 except NdtParseError as exc:
+                    self.invalid_packets += 1
                     logger.warning(
                         "invalid NDTP packet from %s: %s", peer, exc
                     )
                     continue
+
+                self.parsed_packets += 1
 
                 if isinstance(packet, HandshakeRequest):
                     self._units[peer_key] = packet.peer_address
@@ -102,6 +111,7 @@ class NdtServer:
         except Exception:
             logger.exception("NDTP connection error: %s", peer)
         finally:
+            self.active_connections -= 1
             self._units.pop(peer_key, None)
             writer.close()
             try:

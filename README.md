@@ -1,115 +1,57 @@
-<div align="center">
+# Предиктор отклонений городского транспорта
 
-# Transport Delay Predictor
+NDTP-пакет поступает в backend по TCP. Backend сопоставляет терминал с рейсом,
+выбирает первую плановую остановку в интервале **(T + 10 минут, T + 15 минут]**,
+запрашивает ML-прогноз отклонения в секундах и отправляет событие диспетчеру.
 
-### Раннее предсказание задержек городского транспорта
+## Запуск
 
-**NDTP-телеметрия → ML-прогноз на 10–15 минут вперёд → предупреждение диспетчера**
-
-Команда: Алексеенко Денис · Верещагин Илья · Урманов Артём
-
-</div>
-
----
-
-## Смысл кейса
-
-Диспетчер обычно видит задержку, когда транспорт уже выбился из расписания.
-Наша система анализирует поток телеметрии и заранее предсказывает отклонение
-от графика в секундах.
-
-> 💡 Цель: дать диспетчеру время отреагировать **до** того, как задержка станет критической.
-
-```text
-NDTP-телеметрия
-        ↓
-Backend + история движения
-        ↓
-CatBoost / PyTorch
-        ↓
-Прогноз задержки на 10–15 минут
-        ↓
-Диспетчерский дашборд
-```
-
-## Стек
-
-| Слой | Технологии |
-| --- | --- |
-| ML | CatBoost, LightGBM, PyTorch, pandas, NumPy |
-| Backend | Python 3.12, FastAPI, Pydantic, async I/O |
-| Telemetry | NDTP over TCP, realtime processing |
-| Data | PostgreSQL, SQLAlchemy |
-| Frontend | React 19, TypeScript, Vite, TanStack Query |
-| Security | JWT, HttpOnly cookies, Argon2 |
-| Infrastructure | Docker, Docker Compose, nginx |
-
-## Быстрый запуск
+Нужны Docker Compose, файлы `data/raw/validate/{traffic.csv,schedule_plan.csv}`
+и артефакты из `ml/artifacts/`, перечисленные в
+[`release_manifest.json`](ml/artifacts/release_manifest.json). При старте ML
+проверяет их SHA-256 и не подменяет выбранную модель на baseline.
 
 ```bash
 cp .env.example .env
 docker compose up --build
 ```
 
-| Сервис | Адрес |
-| --- | --- |
-| Дашборд | <http://localhost:8080> |
-| Swagger API | <http://localhost:8000/docs> |
-| Health check | <http://localhost:8000/api/v1/health> |
+Дашборд: <http://localhost:8080>. Swagger: <http://localhost:8000/docs>.
+Для локальной демонстрации учётная запись `dispatcher` / `transport`;
+перед внешним размещением измените пароль и `AUTH_JWT_SECRET`.
 
-Демо-вход: `dispatcher` / `transport`. Перед деплоем замените пароль и `AUTH_JWT_SECRET` в `.env`.
+Базовый стек ждёт TCP-телеметрию на `localhost:9201`. Для подачи исторических
+NDTP-пакетов через тот же backend и ML используйте `make up-dataset-replay`.
+Для этого диагностического режима дополнительно нужен `data/raw/validate/points.csv`.
+Для эмулятора организаторов нужен отдельно предоставленный Docker-архив;
+команда запуска — `make up-ndtp`. Его план помечен как синтетический и не
+доказывает качество на реальном маршруте. Полная инструкция и ограничения:
+[`ЗАПУСК.md`](ЗАПУСК.md).
+Результаты сквозной приёмки и нагрузки — в
+[`ПРОТОКОЛ-приёмки.md`](docs/ПРОТОКОЛ-приёмки.md).
 
-Сырые данные соревнования (`data/raw/...`) в Git не коммитятся — их нужно
-положить локально до запуска replay-сценариев.
+## Конкурсный результат
 
-## 📡 Как подать поток
+Выбранный кандидат — LightGBM plan, `lightgbm-plan-2026-09-26`. Локальная MAE
+на 353 размеченных test-точках: **58,6033 с** против **93,3598 с** у baseline
+`cur_dev_s`. По сообщению команды, результат LightGBM на платформе —
+**score 1 = 1 (максимум)**; скрин или ссылка на конкретную отправку пока не
+приложены, поэтому связь с хешем текущего CSV документально не проверена.
+Файл `data/submissions/final_submission.csv` имеет 151 строку и формат
+`sample_id;prediction`. Проверка: `python scripts/verify_submission.py`.
+Паритет офлайн-прогноза и ML API: `python scripts/verify_model_parity.py`.
 
-```bash
-make up-dataset-replay   # рекомендуемый демо-путь: реальный датасет → NDTP → backend
-make up-ndtp             # официальный эмулятор организаторов (:18080)
-```
+## Состав
 
-Первая команда поднимает стек и сама запускает NDTP-поток по реальному рейсу
-из `validate`. Управление потоком (выбор рейсов, скорость, пауза) —
-<http://localhost:18081/docs>.
+| Компонент | Назначение |
+|---|---|
+| `backend/` | FastAPI, авторизация, NDTP TCP, состояние транспорта, прогнозы и инциденты |
+| `ml/` | Общие признаки офлайн/сервис, LightGBM, калибровка вероятности |
+| `frontend/` | Карта, список транспорта, риск и карточка инцидента |
+| `emulator/` | Историческая NDTP-подача и интеграция с эмулятором организаторов |
+| `docs/` | [ТЗ](docs/ТЗ-доработки-системы.md), [эксперименты](docs/ML-эксперименты.md), [NDTP](docs/Телеметрия-и-карты.md), [OpenAPI](docs/public/api.html) и [Sphinx](docs/public/pydoc/index.html) |
 
-- Пошаговая инструкция для демо (поток, прогнозы, алерты, метрики):
-  [ЗАПУСК.md](ЗАПУСК.md)
-- Подробности эмуляторов, январской карты реальных проездов и восстановления
-  маршрутов: [docs/Телеметрия-и-карты.md](docs/Телеметрия-и-карты.md)
-- CLI-варианты подачи: `REPLAY_TR_ID=131672 make replay-start`,
-  `REPLAY_ALL_VALID=1 REPLAY_SPEED=60 python scripts/start_dataset_replay.py`
-
-## Документация
-
-| Документ | Что внутри |
-| --- | --- |
-| [Инструкция для жюри](ЗАПУСК.md) | Как за 3 минуты подать поток и показать прогнозы, алерты и метрики |
-| [`docs/public/api.html`](docs/public/api.html) | OpenAPI в Swagger UI — открывается прямо из clone, без запущенных сервисов |
-| [`docs/public/pydoc/index.html`](docs/public/pydoc/index.html) | PyDoc (Sphinx): архитектура, авторизация, конфигурация, модули backend |
-| [docs/ML-эксперименты.md](docs/ML-эксперименты.md) | Kaggle, метрики чемпиона, история ML-экспериментов |
-| [docs/Телеметрия-и-карты.md](docs/Телеметрия-и-карты.md) | Эмуляторы NDTP, NDTP-карта и исторический прогон |
-| [`docs/Emulator-and-Telematic-Packets-Specification.md`](docs/Emulator-and-Telematic-Packets-Specification.md) | Спецификация NDTP-пакетов от организаторов |
-| [backend/README.md](backend/README.md) · [ml/README.md](ml/README.md) · [frontend/README.md](frontend/README.md) | Запуск и разработка отдельных контуров |
-
-Собрать документацию заново после изменений в коде: `make docs`.
-Живые Swagger и ReDoc — в запущенном backend: <http://localhost:8000/docs>,
-<http://localhost:8000/redoc>.
-
-## Структура
-
-```text
-backend/    FastAPI, NDTP-парсер, PostgreSQL, авторизация
-ml/         признаки, preprocessing, обучение и inference service
-frontend/   диспетчерский React-дашборд
-emulator/   официальный эмулятор + dataset-replay (CSV → NDTP)
-docs/       гайды и собранная документация
-data/       raw-датасеты соревнования (не в Git)
-scripts/    запуск эмуляторов, экспорт OpenAPI
-```
-
-<div align="center">
-
-**Прогнозируем проблему раньше, чем она появится на табло.**
-
-</div>
+Прогнозы и инциденты находятся в памяти backend и теряются при перезапуске;
+PostgreSQL используется для авторизации. Исторический табличный экран является
+ретроспективной диагностикой; факты будущих остановок до их логического времени
+не выдаются.

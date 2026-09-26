@@ -1,0 +1,57 @@
+{
+  "environment": {
+    "system": "Windows-11-10.0.26200-SP0",
+    "cpu": "AMD64 Family 26 Model 68 Stepping 0, AuthenticAMD",
+    "logical_cpus": 32,
+    "python": "3.12.10"
+  },
+  "units": 100,
+  "duration_s": 600,
+  "interval_s": 15,
+  "packets_sent": 4001,
+  "send_phase": "uniform",
+  "accepted_delta": 4001,
+  "lost_correct_packets": 0,
+  "invalid_delta": 0,
+  "ignored_delta": 0,
+  "prediction_delta": 1624,
+  "model_calls_delta": 1624,
+  "model_calls_per_unit": 16.24,
+  "first_prediction_after_first_send_s": 15.01600000000326,
+  "stack_cold_start_s": 17.603,
+  "stack_cold_start_note": "Measured separately from docker compose up --build (cached images) to healthy HTTP endpoints with four ML workers",
+  "ws_prediction_samples": 1624,
+  "packet_to_ws_p50_s": 0.01600000000325963,
+  "packet_to_ws_p95_s": 0.0319999999992433,
+  "packet_to_ws_p99_s": 0.0319999999992433,
+  "backend_metrics_after": {
+    "ndtp": {
+      "connections_total": 100,
+      "active_connections": 0,
+      "parsed_packets": 4101,
+      "invalid_packets": 0,
+      "accepted_packets": 4001,
+      "ignored_packets": 0,
+      "ws_dropped_events": 0,
+      "subscriber_queue_peak": 1,
+      "vehicles": 100
+    },
+    "prediction": {
+      "requests_started": 1624,
+      "requests_succeeded": 1624,
+      "requests_failed": 0,
+      "active_tasks": 0,
+      "peak_active_tasks": 1,
+      "packet_to_publish_p50_s": 0.019353,
+      "packet_to_publish_p95_s": 0.02217,
+      "packet_to_publish_p99_s": 0.024541,
+      "ml_request_p50_s": 0.01900000000023283,
+      "ml_request_p95_s": 0.021999999999934516,
+      "ml_request_p99_s": 0.023999999999887223,
+      "ml_queue_wait_p50_s": 0.0,
+      "ml_queue_wait_p95_s": 0.0,
+      "ml_queue_wait_p99_s": 0.0,
+      "latency_samples": 1624
+    }
+  }
+}

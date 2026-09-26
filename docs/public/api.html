@@ -44,6 +44,7 @@
                 "type": "null"
               }
             ],
+            "format": "password",
             "title": "Client Secret"
           },
           "grant_type": {
@@ -59,6 +60,7 @@
             "title": "Grant Type"
           },
           "password": {
+            "format": "password",
             "title": "Password",
             "type": "string"
           },
@@ -183,6 +185,130 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "Incident": {
+        "properties": {
+          "cause": {
+            "title": "Cause",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "evidence": {
+            "title": "Evidence",
+            "type": "string"
+          },
+          "incident_id": {
+            "title": "Incident Id",
+            "type": "string"
+          },
+          "p_late": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Late"
+          },
+          "predicted_delay_s": {
+            "title": "Predicted Delay S",
+            "type": "number"
+          },
+          "previous_stop_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Stop Id"
+          },
+          "recommendation": {
+            "title": "Recommendation",
+            "type": "string"
+          },
+          "risk": {
+            "title": "Risk",
+            "type": "string"
+          },
+          "risk_source": {
+            "title": "Risk Source",
+            "type": "string"
+          },
+          "segment": {
+            "title": "Segment",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "target_stop_id": {
+            "title": "Target Stop Id",
+            "type": "integer"
+          },
+          "target_time": {
+            "format": "date-time",
+            "title": "Target Time",
+            "type": "string"
+          },
+          "tr_id": {
+            "title": "Tr Id",
+            "type": "integer"
+          },
+          "unit_id": {
+            "title": "Unit Id",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "incident_id",
+          "tr_id",
+          "unit_id",
+          "target_stop_id",
+          "target_time",
+          "segment",
+          "predicted_delay_s",
+          "risk",
+          "risk_source",
+          "cause",
+          "evidence",
+          "recommendation",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "Incident",
+        "type": "object"
+      },
+      "MetricsResponse": {
+        "properties": {
+          "ndtp": {
+            "$ref": "#/components/schemas/NdtpMetrics"
+          },
+          "prediction": {
+            "$ref": "#/components/schemas/PredictionMetrics"
+          }
+        },
+        "required": [
+          "ndtp",
+          "prediction"
+        ],
+        "title": "MetricsResponse",
+        "type": "object"
+      },
       "NavData": {
         "description": "Навигационные данные telemetry-события.",
         "properties": {
@@ -305,6 +431,205 @@
         "title": "NavData",
         "type": "object"
       },
+      "NdtpMetrics": {
+        "properties": {
+          "accepted_packets": {
+            "title": "Accepted Packets",
+            "type": "integer"
+          },
+          "active_connections": {
+            "title": "Active Connections",
+            "type": "integer"
+          },
+          "connections_total": {
+            "title": "Connections Total",
+            "type": "integer"
+          },
+          "ignored_packets": {
+            "title": "Ignored Packets",
+            "type": "integer"
+          },
+          "invalid_packets": {
+            "title": "Invalid Packets",
+            "type": "integer"
+          },
+          "parsed_packets": {
+            "title": "Parsed Packets",
+            "type": "integer"
+          },
+          "subscriber_queue_peak": {
+            "title": "Subscriber Queue Peak",
+            "type": "integer"
+          },
+          "vehicles": {
+            "title": "Vehicles",
+            "type": "integer"
+          },
+          "ws_dropped_events": {
+            "title": "Ws Dropped Events",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "connections_total",
+          "active_connections",
+          "parsed_packets",
+          "invalid_packets",
+          "accepted_packets",
+          "ignored_packets",
+          "ws_dropped_events",
+          "subscriber_queue_peak",
+          "vehicles"
+        ],
+        "title": "NdtpMetrics",
+        "type": "object"
+      },
+      "PredictionMetrics": {
+        "properties": {
+          "active_tasks": {
+            "title": "Active Tasks",
+            "type": "integer"
+          },
+          "latency_samples": {
+            "title": "Latency Samples",
+            "type": "integer"
+          },
+          "ml_queue_wait_p50_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ml Queue Wait P50 S"
+          },
+          "ml_queue_wait_p95_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ml Queue Wait P95 S"
+          },
+          "ml_queue_wait_p99_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ml Queue Wait P99 S"
+          },
+          "ml_request_p50_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ml Request P50 S"
+          },
+          "ml_request_p95_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ml Request P95 S"
+          },
+          "ml_request_p99_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ml Request P99 S"
+          },
+          "packet_to_publish_p50_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Packet To Publish P50 S"
+          },
+          "packet_to_publish_p95_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Packet To Publish P95 S"
+          },
+          "packet_to_publish_p99_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Packet To Publish P99 S"
+          },
+          "peak_active_tasks": {
+            "title": "Peak Active Tasks",
+            "type": "integer"
+          },
+          "requests_failed": {
+            "title": "Requests Failed",
+            "type": "integer"
+          },
+          "requests_started": {
+            "title": "Requests Started",
+            "type": "integer"
+          },
+          "requests_succeeded": {
+            "title": "Requests Succeeded",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "requests_started",
+          "requests_succeeded",
+          "requests_failed",
+          "active_tasks",
+          "peak_active_tasks",
+          "packet_to_publish_p50_s",
+          "packet_to_publish_p95_s",
+          "packet_to_publish_p99_s",
+          "ml_request_p50_s",
+          "ml_request_p95_s",
+          "ml_request_p99_s",
+          "ml_queue_wait_p50_s",
+          "ml_queue_wait_p95_s",
+          "ml_queue_wait_p99_s",
+          "latency_samples"
+        ],
+        "title": "PredictionMetrics",
+        "type": "object"
+      },
       "PredictionRequest": {
         "properties": {
           "cur_dev_s": {
@@ -390,14 +715,58 @@
       },
       "PredictionResponse": {
         "properties": {
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "model_artifact_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Artifact Sha256"
+          },
           "model_version": {
             "title": "Model Version",
             "type": "string"
+          },
+          "p_late": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Late"
           },
           "prediction": {
             "description": "Прогноз задержки через 10–15 минут, сек",
             "title": "Prediction",
             "type": "number"
+          },
+          "risk_model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Model Version"
           },
           "tr_id": {
             "title": "Tr Id",
@@ -410,6 +779,41 @@
           "model_version"
         ],
         "title": "PredictionResponse",
+        "type": "object"
+      },
+      "PredictionStatus": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "tr_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tr Id"
+          },
+          "unit_id": {
+            "title": "Unit Id",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unit_id",
+          "code",
+          "updated_at"
+        ],
+        "title": "PredictionStatus",
         "type": "object"
       },
       "ReplayFleet": {
@@ -495,13 +899,8 @@
         "title": "ReplayFleetVehicle",
         "type": "object"
       },
-      "ReplayPoint": {
+      "ReplayOutcome": {
         "properties": {
-          "T": {
-            "format": "date-time",
-            "title": "T",
-            "type": "string"
-          },
           "actual_at": {
             "format": "date-time",
             "title": "Actual At",
@@ -510,6 +909,49 @@
           "actual_delay_s": {
             "title": "Actual Delay S",
             "type": "number"
+          },
+          "sample_id": {
+            "title": "Sample Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sample_id",
+          "actual_delay_s",
+          "actual_at"
+        ],
+        "title": "ReplayOutcome",
+        "type": "object"
+      },
+      "ReplayPoint": {
+        "properties": {
+          "T": {
+            "format": "date-time",
+            "title": "T",
+            "type": "string"
+          },
+          "actual_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual At"
+          },
+          "actual_delay_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Delay S"
           },
           "cur_dev_s": {
             "title": "Cur Dev S",
@@ -543,8 +985,6 @@
           "target_stop_id",
           "target_time_begin",
           "cur_dev_s",
-          "actual_delay_s",
-          "actual_at",
           "lat",
           "lon"
         ],
@@ -685,6 +1125,18 @@
             "default": false,
             "title": "Gps Confirmed",
             "type": "boolean"
+          },
+          "gps_confirmed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gps Confirmed At"
           },
           "gps_distance_m": {
             "anyOf": [
@@ -876,9 +1328,111 @@
             "title": "Current Delay S",
             "type": "number"
           },
+          "current_delay_source": {
+            "default": "point_input",
+            "title": "Current Delay Source",
+            "type": "string"
+          },
+          "freshness": {
+            "default": "fresh",
+            "title": "Freshness",
+            "type": "string"
+          },
+          "input_event_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Event Time"
+          },
+          "input_received_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Received At"
+          },
+          "last_confirmed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Confirmed At"
+          },
+          "last_confirmed_stop_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Confirmed Stop Id"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "model_artifact_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Artifact Sha256"
+          },
           "model_version": {
             "title": "Model Version",
             "type": "string"
+          },
+          "p_late": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Late"
+          },
+          "predicted_arrival": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Predicted Arrival"
           },
           "predicted_delay_s": {
             "title": "Predicted Delay S",
@@ -887,6 +1441,44 @@
           "prediction_time": {
             "format": "date-time",
             "title": "Prediction Time",
+            "type": "string"
+          },
+          "produced_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produced At"
+          },
+          "risk": {
+            "default": "low",
+            "title": "Risk",
+            "type": "string"
+          },
+          "risk_model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Model Version"
+          },
+          "risk_source": {
+            "default": "threshold",
+            "title": "Risk Source",
+            "type": "string"
+          },
+          "source": {
+            "default": "manual",
+            "title": "Source",
             "type": "string"
           },
           "target_stop_id": {
@@ -990,6 +1582,13 @@
       },
       "ValidationError": {
         "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
           "loc": {
             "items": {
               "anyOf": [
@@ -1019,6 +1618,210 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "WhatIfAssignment": {
+        "properties": {
+          "after_delay_s": {
+            "title": "After Delay S",
+            "type": "number"
+          },
+          "before_delay_s": {
+            "title": "Before Delay S",
+            "type": "number"
+          },
+          "reduction_s": {
+            "title": "Reduction S",
+            "type": "number"
+          },
+          "reserve_vehicle": {
+            "title": "Reserve Vehicle",
+            "type": "integer"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "target_stop_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Stop Id"
+          },
+          "tr_id": {
+            "title": "Tr Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "reserve_vehicle",
+          "tr_id",
+          "run_id",
+          "target_stop_id",
+          "before_delay_s",
+          "after_delay_s",
+          "reduction_s"
+        ],
+        "title": "WhatIfAssignment",
+        "type": "object"
+      },
+      "WhatIfMetrics": {
+        "properties": {
+          "average_delay_s": {
+            "title": "Average Delay S",
+            "type": "number"
+          },
+          "late_runs": {
+            "title": "Late Runs",
+            "type": "integer"
+          },
+          "maximum_delay_s": {
+            "title": "Maximum Delay S",
+            "type": "number"
+          },
+          "on_time_runs": {
+            "title": "On Time Runs",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "average_delay_s",
+          "maximum_delay_s",
+          "late_runs",
+          "on_time_runs"
+        ],
+        "title": "WhatIfMetrics",
+        "type": "object"
+      },
+      "WhatIfRequest": {
+        "description": "Parameters of an additional-vehicle dispatch scenario.",
+        "properties": {
+          "additional_vehicles": {
+            "default": 1,
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Additional Vehicles",
+            "type": "integer"
+          },
+          "dispatch_lead_minutes": {
+            "default": 3,
+            "maximum": 30.0,
+            "minimum": 0.0,
+            "title": "Dispatch Lead Minutes",
+            "type": "integer"
+          },
+          "late_threshold_s": {
+            "default": 120,
+            "maximum": 3600.0,
+            "minimum": 1.0,
+            "title": "Late Threshold S",
+            "type": "integer"
+          },
+          "vehicles": {
+            "items": {
+              "$ref": "#/components/schemas/WhatIfVehicle"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Vehicles",
+            "type": "array"
+          }
+        },
+        "required": [
+          "vehicles"
+        ],
+        "title": "WhatIfRequest",
+        "type": "object"
+      },
+      "WhatIfResponse": {
+        "properties": {
+          "assignments": {
+            "items": {
+              "$ref": "#/components/schemas/WhatIfAssignment"
+            },
+            "title": "Assignments",
+            "type": "array"
+          },
+          "baseline": {
+            "$ref": "#/components/schemas/WhatIfMetrics"
+          },
+          "methodology": {
+            "title": "Methodology",
+            "type": "string"
+          },
+          "scenario": {
+            "$ref": "#/components/schemas/WhatIfMetrics"
+          },
+          "total_delay_reduction_s": {
+            "title": "Total Delay Reduction S",
+            "type": "number"
+          }
+        },
+        "required": [
+          "baseline",
+          "scenario",
+          "assignments",
+          "total_delay_reduction_s",
+          "methodology"
+        ],
+        "title": "WhatIfResponse",
+        "type": "object"
+      },
+      "WhatIfVehicle": {
+        "description": "One active run and its current delay forecast.",
+        "properties": {
+          "predicted_delay_s": {
+            "description": "Forecast schedule deviation in seconds",
+            "title": "Predicted Delay S",
+            "type": "number"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Active run identifier when known",
+            "title": "Run Id"
+          },
+          "target_stop_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Forecast target stop when known",
+            "title": "Target Stop Id"
+          },
+          "tr_id": {
+            "description": "Vehicle identifier",
+            "title": "Tr Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "tr_id",
+          "predicted_delay_s"
+        ],
+        "title": "WhatIfVehicle",
         "type": "object"
       }
     },
@@ -1073,6 +1876,9 @@
           },
           "401": {
             "description": "Токен отсутствует, повреждён или истёк"
+          },
+          "503": {
+            "description": "Хранилище авторизации временно недоступно"
           }
         },
         "security": [
@@ -1123,6 +1929,9 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "description": "Хранилище авторизации временно недоступно"
           }
         },
         "summary": "Войти в диспетчерскую",
@@ -1154,6 +1963,109 @@
         "summary": "Health check",
         "tags": [
           "Health"
+        ]
+      }
+    },
+    "/api/v1/incidents": {
+      "get": {
+        "operationId": "list_incidents_api_v1_incidents_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Incident"
+                  },
+                  "title": "Response List Incidents Api V1 Incidents Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Инциденты диспетчера",
+        "tags": [
+          "Incidents"
+        ]
+      }
+    },
+    "/api/v1/incidents/{incident_id}": {
+      "get": {
+        "operationId": "get_incident_api_v1_incidents__incident_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "title": "Incident Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Incident"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Карточка инцидента",
+        "tags": [
+          "Incidents"
+        ]
+      }
+    },
+    "/api/v1/metrics": {
+      "get": {
+        "operationId": "metrics_api_v1_metrics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "NDTP and prediction pipeline measurements",
+        "tags": [
+          "Metrics"
         ]
       }
     },
@@ -1512,6 +2424,36 @@
         ]
       }
     },
+    "/api/v1/predictions/statuses": {
+      "get": {
+        "operationId": "prediction_statuses_api_v1_predictions_statuses_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PredictionStatus"
+                  },
+                  "title": "Response Prediction Statuses Api V1 Predictions Statuses Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Причины отсутствия актуального прогноза",
+        "tags": [
+          "Predictions"
+        ]
+      }
+    },
     "/api/v1/predictions/{tr_id}/latest": {
       "get": {
         "operationId": "latest_prediction_api_v1_predictions__tr_id__latest_get",
@@ -1580,6 +2522,58 @@
           }
         ],
         "summary": "Общая январская шкала, GPS и проверенные рейсы",
+        "tags": [
+          "Historical replay"
+        ]
+      }
+    },
+    "/api/v1/replay/outcomes": {
+      "get": {
+        "operationId": "get_replay_outcomes_api_v1_replay_outcomes_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "title": "As Of",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReplayOutcome"
+                  },
+                  "title": "Response Get Replay Outcomes Api V1 Replay Outcomes Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Факты прибытия, уже наступившие к моменту replay",
         "tags": [
           "Historical replay"
         ]
@@ -1863,6 +2857,53 @@
           "Vehicles"
         ]
       }
+    },
+    "/api/v1/what-if/analyze": {
+      "post": {
+        "description": "Return a deterministic comparison without changing live dispatch state.",
+        "operationId": "analyze_scenario_api_v1_what_if_analyze_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WhatIfRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WhatIfResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Оценить выпуск дополнительных ТС на активные рейсы",
+        "tags": [
+          "What-if analysis"
+        ]
+      }
     }
   },
   "tags": [
@@ -1881,6 +2922,22 @@
     {
       "description": "Прогноз отклонения на горизонте 10–15 минут.",
       "name": "Predictions"
+    },
+    {
+      "description": "Актуальные и завершённые инциденты диспетчера.",
+      "name": "Incidents"
+    },
+    {
+      "description": "Счётчики приёма NDTP и задержки прогнозирования.",
+      "name": "Metrics"
+    },
+    {
+      "description": "Диагностический просмотр архивного набора.",
+      "name": "Historical replay"
+    },
+    {
+      "description": "Оценка диспетчерских сценариев без изменения рабочего состояния.",
+      "name": "What-if analysis"
     }
   ]
 }</script>

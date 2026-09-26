@@ -1,160 +1,44 @@
-# ML-контур прогнозирования задержек
+# ML-контур
 
-Этот каталог содержит полный жизненный цикл ML-модели: подготовку исходных данных, генерацию признаков, обучение CatBoost и PyTorch, ансамбль, инференс и HTTP-сервис для backend.
+Выбранная конкурсная и демонстрационная модель — пара LightGBM (прямой и
+остаточный регрессоры), версия `lightgbm-plan-2026-09-26`. Выход `prediction`
+означает `target_delay_s` в секундах. Дополнительно сервис возвращает
+калиброванную вероятность `p_late` для `target_delay_s >= 120 с`. На 353
+размеченных test-точках локальная MAE выбранной модели **58,6033 с**, baseline
+`cur_dev_s` — **93,3598 с**. По сообщению команды score 1 на платформе для
+LightGBM равен **1 (максимум)**; подтверждающий скрин/ссылка конкретной
+отправки пока не приложены.
 
-## Быстрая навигация
+`service.main` предоставляет `GET /health` и `POST /predict`. При старте
+проверяются хеши весов, метаданных, калибровки и планового расписания из
+`artifacts/release_manifest.json`. Отсутствующий/повреждённый артефакт
+останавливает загрузку; baseline выбирается только явно через
+`MODEL_NAME=baseline`.
 
-| Каталог | Назначение |
-| --- | --- |
-| `src/offline/dataset_builder.py` | чтение CSV и временное соединение точек с телеметрией |
-| `src/features.py` | единое ядро признаков для offline и online |
-| `src/offline/` | сборка Parquet, обучение residual CatBoost, сабмит |
-| `src/preprocessing.py` | очистка исходных таблиц для исследовательских экспериментов |
-| `src/models/` | отдельные реализации CatBoost, PyTorch и ансамбля |
-| `src/training/` | воспроизводимые точки запуска обучения |
-| `src/inference/` | загрузка артефактов и предсказание |
-| `service/` | FastAPI-контракт для backend |
-| `notebooks/` | исследование данных и эксперименты |
-| `artifacts/` | локальные веса и метаданные; бинарные файлы не коммитим |
-
-## Локальный запуск
+## Обучение и воспроизведение релиза
 
 Из корня репозитория:
 
 ```bash
-python -m pip install -r ml/requirements.txt
-make features
-make train
-make submit
-docker compose up --build
+python scripts/exp_lightgbm_plan.py --release
+python scripts/train_risk_calibration.py
+python scripts/freeze_release.py
+python scripts/verify_submission.py
+python scripts/verify_model_parity.py
+python scripts/evaluate_risk_policy.py
 ```
 
-Без `make` используйте из каталога `ml`: `python -m src.offline.dataset_builder
---split all`, затем `python -m src.offline.train` и
-`python -m src.offline.predict_submission`. На Windows команды также можно
-запускать напрямую в PowerShell. Для локального API:
-`cd ml && python -m uvicorn service.main:app --port 8001`.
+`--release` обучает выбранную пару и генерирует чистый LightGBM CSV без
+Torch-артефакта. `freeze_release.py` пересчитывает SHA-256 и проверяет, что
+калибровка обучена для текущих весов; при новом релизе прежний официальный
+балл сбрасывается. Остальные CatBoost/PyTorch файлы и скрипты в репозитории —
+отдельные эксперименты и не входят в текущий inference Docker.
 
-Обучение создаёт `ml/artifacts/catboost_residual_mae.cbm` и метаданные `.json`.
-Они не входят в Git: перед `docker compose up --build` нужен обученный артефакт.
-Если его нет, ML-сервис явно завершится с ошибкой. Метрика test сохраняется в
-метаданных; для нормированного score организаторов передайте опубликованное
-`MAE_TARGET` через переменную окружения или `--mae-target`. Без него поле score
-остаётся `null`, чтобы не выдумывать константу.
+`src.features_simple` и `src.plan_features` используются и офлайн, и в
+сервисе. Читаются только плановые поля расписания. В окне телеметрии
+разрешены лишь `event_time <= T` и `receive_time <= T`, если время получения
+известно. Naive timestamp CSV интерпретируется как `SOURCE_TIMEZONE`.
+Тестовые метки нужны только для локальной оценки, а не для работающего ML API.
 
-Для отдельного GPU-эксперимента CatBoost из каталога `ml`:
-
-```bash
-python -m src.offline.train --task-type GPU --devices 0 --gpu-ram-part 0.5
-```
-
-Он сохраняет `catboost_residual_mae_gpu.cbm` отдельно от CPU-модели. На текущих
-4 434 train и 353 test точках проверка в одном Docker-образе дала CPU MAE
-77,87 с за 1,00 с обучения и GPU MAE 90,04 с за 346,23 с. Для этой небольшой
-выборки GPU не ускорил обучение и ухудшил качество; GPU-модель не используется
-для онлайн-прогнозов. В эксперименте использовалось стандартное для CatBoost
-ограничение GPU памяти 0,95; новый флаг ограничивает его до 0,5 для
-последующих запусков.
-
-Проверка сервиса:
-
-```bash
-curl http://localhost:8001/health
-curl -X POST http://localhost:8001/predict -H 'Content-Type: application/json' -d '{"tr_id":122048,"T":"2026-01-06T02:10:00","cur_dev_s":0,"target_stop_id":53699018679,"target_time_begin":"2026-01-06T02:22:00","stop_lat":55.61389253,"stop_lon":37.74851317,"telemetry":[]}'
-```
-
-PyTorch для отдельных последовательных экспериментов ставится отдельно:
-`python -m pip install -e './ml[models]'` из корня проекта. Runtime Docker
-использует CatBoost на CPU.
-
-Текущий конкурсный CatBoost-ансамбль и экспериментальный PyTorch blend на
-обработанных CSV воспроизводятся из корня проекта так:
-
-```bash
-python scripts/exp_simple_target_mode.py --write-candidate
-python scripts/exp_torch_blend.py
-python scripts/exp_torch_blend.py --export-experimental-weight 0.05
-```
-
-Последняя команда создаёт `data/submissions/catboost_torch_5pct_experimental_submission.csv`.
-PyTorch-модель и параметры нормализации сохраняются в `ml/artifacts/torch_tabular.pt`.
-Вес PyTorch подбирается на временных срезах train; если лучший вес равен нулю,
-обычный запуск не создаёт новый сабмит. Экспериментальный CSV с явно заданным
-весом полезен для отдельной проверки, но не заменяет модель с лучшей локальной
-валидацией автоматически.
-
-Для сравнения новых моделей по отдельности:
-
-```bash
-python scripts/exp_plan_routes.py
-python scripts/exp_torch_seeds.py
-python scripts/exp_lightgbm_plan.py
-```
-
-Признаки планового маршрута строятся только из `tr_id`, `tt_action_item_id`,
-`time_begin` и `geom` расписания. Поля фактического прибытия и отклонения
-(`time_fact_begin`, `dev_s`) в этих экспериментах не читаются.
-
-## Данные и схема
-
-По умолчанию ожидается такая раскладка относительно корня проекта:
-
-```text
-data/raw/train/traffic.csv
-data/raw/train/schedule.csv
-data/raw/labels/labels_train.csv
-data/raw/test/traffic.csv
-data/raw/test/schedule.csv
-```
-
-Метки train и test используются отдельно. Для каждого `(tr_id, T)` окно
-телеметрии равно `[T−15 минут, T]`; используются только пакеты с
-`location_valid=True`, `event_time<=T` и, если есть, `receive_time<=T`.
-Модель учится на `target_delay_s−cur_dev_s`, а сервис возвращает сумму
-`cur_dev_s+predicted_delta`. `submission.csv` имеет две колонки
-`sample_id;prediction`, UTF-8 и ограничение прогнозов `[-300, 700]`.
-
-## Обучение и артефакты
-
-Команда `make train` сохраняет модель, список признаков и метрики в `ml/artifacts/`.
-
-Исследовательские notebooks и старые эксперименты остаются отдельно от
-канонического контура `src/offline/`.
-
-## Kaggle: эксперименты и хранение результата
-
-Kaggle удобно использовать как удалённую среду с GPU, ноутбуками, версиями Dataset и сохранением output после обучения:
-
-- [Kaggle Notebooks](https://www.kaggle.com/code) — запуск ноутбуков из `ml/notebooks`;
-- [Kaggle Datasets](https://www.kaggle.com/datasets) — хранение очищенных данных, feature-наборов и артефактов;
-- [Kaggle Models](https://www.kaggle.com/models) — публикация версионируемых моделей.
-
-Основной командный notebook: [transit-delay team notebook](https://www.kaggle.com/code/nezqt52/notebook34755737a1/edit). Его нужно расшарить на всех трёх участников с правом `Can edit`.
-
-Пошаговые настройки для команды и шаблон участников находятся в [`kaggle/README.md`](kaggle/README.md). Не добавляйте `kaggle.json` или API token в репозиторий.
-
-Ссылку на конкретный Kaggle Dataset или Competition нужно вписать в переменную `KAGGLE_DATASET_URL` в `.env`/CI после создания приватного или публичного набора. В коде не зашиваем несуществующую ссылку: команда сможет заменить источник без изменения пайплайна.
-
-После обучения в Kaggle артефакты находятся в `/kaggle/working/artifacts`; сохраните их через `Save Version` с включённым output или загрузите в Dataset. Для API скачайте ту же версию в `ml/artifacts`:
-
-```bash
-pip install kaggle
-kaggle datasets download -d <owner>/<dataset-slug> -p ml/artifacts --unzip
-```
-
-`artifact_manifest.json` должен содержать версию датасета, commit проекта, seed и дату обучения.
-
-## Контракт сервиса
-
-`POST /predict` принимает `tr_id`, `T`, `cur_dev_s`, идентификатор и
-координаты целевой остановки, её плановое время и список нормализованных
-точек NDTP. Ответ: `prediction` в секундах, `model` и `model_version`.
-`GET /health` используется Docker healthcheck.
-
-## Принципы воспроизводимости
-
-- фиксируем `random_seed`;
-- разделяем train/validation по времени, а не случайно;
-- сохраняем список признаков и параметры preprocessing рядом с весами;
-- не допускаем target leakage;
-- версионируем данные и артефакты отдельно от исходного кода.
+Локальные тесты: `cd ml && python -m pytest -q`. Инструкция по запуску всего
+стека: [`ЗАПУСК.md`](../ЗАПУСК.md).

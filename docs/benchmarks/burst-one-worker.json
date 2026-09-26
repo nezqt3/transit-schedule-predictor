@@ -1,0 +1,54 @@
+{
+  "environment": {
+    "system": "Windows-11-10.0.26200-SP0",
+    "cpu": "AMD64 Family 26 Model 68 Stepping 0, AuthenticAMD",
+    "logical_cpus": 32,
+    "python": "3.12.10"
+  },
+  "units": 100,
+  "duration_s": 60,
+  "interval_s": 15,
+  "packets_sent": 400,
+  "send_phase": "synchronized",
+  "accepted_delta": 400,
+  "lost_correct_packets": 0,
+  "invalid_delta": 0,
+  "ignored_delta": 0,
+  "prediction_delta": 101,
+  "model_calls_delta": 101,
+  "model_calls_per_unit": 1.01,
+  "first_prediction_after_first_send_s": 18.906999999999243,
+  "stack_cold_start_s": null,
+  "stack_cold_start_note": "Not measured",
+  "ws_prediction_samples": 101,
+  "packet_to_ws_p50_s": 4.453000000001339,
+  "packet_to_ws_p95_s": 4.844000000004598,
+  "packet_to_ws_p99_s": 4.844000000004598,
+  "backend_metrics_after": {
+    "ndtp": {
+      "connections_total": 100,
+      "active_connections": 0,
+      "parsed_packets": 500,
+      "invalid_packets": 0,
+      "accepted_packets": 400,
+      "ignored_packets": 0,
+      "ws_dropped_events": 0,
+      "subscriber_queue_peak": 71,
+      "vehicles": 100
+    },
+    "prediction": {
+      "requests_started": 101,
+      "requests_succeeded": 101,
+      "requests_failed": 0,
+      "active_tasks": 0,
+      "peak_active_tasks": 100,
+      "packet_to_publish_p50_s": 4.429874,
+      "packet_to_publish_p95_s": 4.82976,
+      "packet_to_publish_p99_s": 4.832128,
+      "ml_request_p50_s": 4.419999999999845,
+      "ml_request_p95_s": 4.802999999999884,
+      "ml_request_p99_s": 4.810999999999922,
+      "latency_samples": 101
+    }
+  }
+}

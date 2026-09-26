@@ -153,6 +153,36 @@ def wait_for_backend(
     )
 
 
+def wait_for_predictions(unit_ids: set[int], backend_url: str, token: str) -> None:
+    url = f"{backend_url.rstrip('/')}/api/v1/predictions"
+    for _ in range(30):
+        predictions = read_json(url, token)
+        ready = {item["unit_id"] for item in predictions if item["source"] == "demo"}
+        if unit_ids <= ready:
+            print(f"Synthetic demo forecasts ready for {sorted(unit_ids)}")
+            return
+        time.sleep(1)
+    raise RuntimeError(
+        "NDTP packets arrived, but synthetic demo predictions were not generated "
+        f"for {sorted(unit_ids)}; inspect /api/v1/predictions/statuses"
+    )
+
+
+def wait_for_incidents(unit_ids: set[int], backend_url: str, token: str) -> None:
+    url = f"{backend_url.rstrip('/')}/api/v1/incidents"
+    for _ in range(30):
+        incidents = read_json(url, token)
+        ready = {item["unit_id"] for item in incidents if item["status"] == "active"}
+        if unit_ids <= ready:
+            print(f"Synthetic dispatcher incidents ready for {sorted(unit_ids)}")
+            return
+        time.sleep(1)
+    raise RuntimeError(
+        f"No active incidents for synthetic units {sorted(unit_ids)}; "
+        "inspect /api/v1/predictions and /api/v1/incidents"
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=ROOT / "emulator" / "official-demo-config.json")
@@ -195,6 +225,8 @@ def main() -> None:
     post_config(args.api_port, config)
     print(f"Official NDTP emulator configured for {len(unit_ids)} unit(s) at {args.target_host}:{args.target_port}")
     wait_for_backend(unit_ids, args.backend_url, configured_at, token)
+    wait_for_predictions(unit_ids, args.backend_url, token)
+    wait_for_incidents(unit_ids, args.backend_url, token)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,46 @@
+{
+  "tr_id": 130072,
+  "interval": {
+    "dataset": "validate",
+    "tr_ids": [
+      130072
+    ],
+    "time_mode": "original",
+    "valid_locations_only": true,
+    "start_at": "2026-01-06T23:30:05",
+    "end_at": "2026-01-06T23:30:20"
+  },
+  "slow": {
+    "speed_multiplier": 1,
+    "sent_packets": 5,
+    "prediction": {
+      "prediction_time": "2026-01-06T20:30:03Z",
+      "input_event_time": "2026-01-06T20:30:03Z",
+      "target_stop_id": 53698461565,
+      "target_time": "2026-01-06T20:41:00Z",
+      "current_delay_s": 0.0,
+      "current_delay_source": "point_input",
+      "predicted_delay_s": 20.343185430652056,
+      "p_late": 0.11344180152933386,
+      "model_version": "lightgbm-plan-2026-09-26",
+      "model_artifact_sha256": "23a9665d6dc305171383d18d31358b3a422e13a8a3cf689c92ea824e4794b432"
+    }
+  },
+  "fast": {
+    "speed_multiplier": 1800,
+    "sent_packets": 5,
+    "prediction": {
+      "prediction_time": "2026-01-06T20:30:03Z",
+      "input_event_time": "2026-01-06T20:30:03Z",
+      "target_stop_id": 53698461565,
+      "target_time": "2026-01-06T20:41:00Z",
+      "current_delay_s": 0.0,
+      "current_delay_source": "point_input",
+      "predicted_delay_s": 20.343185430652056,
+      "p_late": 0.11344180152933386,
+      "model_version": "lightgbm-plan-2026-09-26",
+      "model_artifact_sha256": "23a9665d6dc305171383d18d31358b3a422e13a8a3cf689c92ea824e4794b432"
+    }
+  },
+  "exact_match": true
+}

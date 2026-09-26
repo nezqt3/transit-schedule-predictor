@@ -1,0 +1,10 @@
+artifacts/*
+!artifacts/lightgbm_plan_direct.txt
+!artifacts/lightgbm_plan_residual.txt
+!artifacts/lightgbm_plan_metadata.json
+!artifacts/risk_calibration.json
+!artifacts/release_manifest.json
+notebooks/
+tests/
+__pycache__/
+*.pyc

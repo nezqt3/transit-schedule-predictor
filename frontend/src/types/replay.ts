@@ -33,10 +33,16 @@ export type ReplayPoint = {
   target_stop_id: number
   target_time_begin: string
   cur_dev_s: number
-  actual_delay_s: number
-  actual_at: string
+  actual_delay_s: number | null
+  actual_at: string | null
   lat: number
   lon: number
+}
+
+export type ReplayOutcome = {
+  sample_id: string
+  actual_delay_s: number
+  actual_at: string
 }
 
 export type ReplayScenario = {

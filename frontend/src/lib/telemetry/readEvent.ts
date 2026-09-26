@@ -3,7 +3,9 @@ import type { TelemetryEvent } from '@/types/api'
 const STALE_AFTER_MS = 30_000
 
 export function eventTimeMs(event: TelemetryEvent): number {
-  return event.nav ? event.nav.timestamp * 1000 : Date.parse(event.received_at)
+  const received = Date.parse(event.received_at)
+  const device = event.nav ? event.nav.timestamp * 1000 : received
+  return Math.abs(received - device) > 24 * 60 * 60 * 1000 ? received : device
 }
 
 export function speedKmh(event: TelemetryEvent): number | null {

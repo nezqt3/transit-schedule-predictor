@@ -93,8 +93,9 @@ export function VehicleMap({ events, predictions, selectedHistory, selectedUnitI
       const speed = speedKmh(event)
       const displaySpeed = speed !== null && speed >= 0 && speed <= 120 ? speed : null
       const prediction = predictions.find((item) => item.unit_id === event.unit_id)
+      const risk = prediction?.freshness === 'stale' ? null : prediction?.risk
       const element = markerElement(status, event.unit_id === selectedUnitId, event.nav?.course ?? null,
-        { delaySeconds: prediction?.predicted_delay_s, speedKmh: displaySpeed })
+        { delaySeconds: prediction?.predicted_delay_s, speedKmh: displaySpeed, risk })
       element.setAttribute('aria-label', `Терминал ${event.unit_id}: ${statusLabel[status]}${prediction?.predicted_delay_s != null && prediction.predicted_delay_s >= 120 ? `, прогноз опоздания ${Math.round(prediction.predicted_delay_s)} секунд` : ''}${status === 'moving' && displaySpeed !== null ? `, ${Math.round(displaySpeed)} км/ч` : ''}`)
       element.addEventListener('click', () => onSelect(event.unit_id))
       const tooltip = document.createElement('span')

@@ -1,9 +1,12 @@
 """Authentication endpoints used by Swagger UI and the dashboard."""
 
+import logging
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.dependencies import get_auth_service, get_current_user
 from app.core.config import settings
@@ -12,6 +15,7 @@ from app.schemas.auth import CurrentUser, TokenResponse
 from app.services.auth import AuthService
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post(
@@ -19,7 +23,10 @@ router = APIRouter()
     response_model=TokenResponse,
     summary="Войти в диспетчерскую",
     description="Проверяет логин и пароль и выдаёт JWT Bearer-токен.",
-    responses={401: {"description": "Неверный логин или пароль"}},
+    responses={
+        401: {"description": "Неверный логин или пароль"},
+        503: {"description": "Хранилище авторизации временно недоступно"},
+    },
 )
 async def login(
     form: Annotated[OAuth2PasswordRequestForm, Depends()],
@@ -27,7 +34,14 @@ async def login(
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> TokenResponse:
     """Authenticate a dispatcher and persist the JWT in an HttpOnly cookie."""
-    user = await auth_service.authenticate(form.username, form.password)
+    try:
+        user = await auth_service.authenticate(form.username, form.password)
+    except (SQLAlchemyError, OSError, TimeoutError) as exc:
+        logger.warning("authentication storage unavailable: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="authentication storage is unavailable",
+        ) from exc
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -51,7 +65,10 @@ async def login(
     "/me",
     response_model=CurrentUser,
     summary="Текущий пользователь",
-    responses={401: {"description": "Токен отсутствует, повреждён или истёк"}},
+    responses={
+        401: {"description": "Токен отсутствует, повреждён или истёк"},
+        503: {"description": "Хранилище авторизации временно недоступно"},
+    },
 )
 async def read_current_user(
     user: Annotated[CurrentUser, Depends(get_current_user)],

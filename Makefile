@@ -32,11 +32,11 @@ run-online:
 	docker compose up --build ml backend
 
 up-ndtp:
-	docker compose up -d --build backend frontend
+	docker compose -f docker-compose.yml -f docker-compose.official-demo.yml up -d --build ml backend frontend
 	python scripts/start_official_emulator.py
 
 up-dataset-replay:
-	docker compose --profile replay up -d --build backend frontend dataset-replay
+	docker compose -f docker-compose.yml -f docker-compose.replay.yml --profile replay up -d --build ml backend frontend dataset-replay
 	python scripts/start_dataset_replay.py
 
 replay-start:
@@ -57,9 +57,9 @@ preprocessing:
 # Собирает публичные документы в docs/public/ (коммитится в Git):
 # PyDoc (Sphinx) + статичный OpenAPI-файл и самодостаточный Swagger UI.
 docs:
-	cd backend && sphinx-build -W --keep-going -b html docs ../docs/public/pydoc
+	cd backend && python -m sphinx -W --keep-going -b html docs ../docs/public/pydoc
 	python scripts/export_openapi.py
-	touch docs/public/.nojekyll
+	python -c "from pathlib import Path; Path('docs/public/.nojekyll').touch()"
 
 
 # --- frontend: локально (pnpm) ---

@@ -5,7 +5,7 @@ import { fleetStatusIcons } from '@/features/vehicles/markerIcon'
 import { WhatIfPanel } from '@/features/what-if/WhatIfPanel'
 import { statusLabel, type VehicleStatus } from '@/lib/telemetry/vehicleStatus'
 import { useDashboardStore } from '@/store/dashboard'
-import { useReplayFleet } from './api'
+import { useReplayFleet, useReplayOutcomes } from './api'
 import { displaySpeedKmh, fleetSnapshot } from './fleetClock'
 import { HistoricalFleetMap } from './HistoricalFleetMap'
 import { HistoricalVehicleDetails } from './HistoricalVehicleDetails'
@@ -25,6 +25,7 @@ const filterOptions: { value: FleetFilter; label: string }[] = [
 export function HistoricalFleetDashboard() {
   const { data: fleet, isPending, isError } = useReplayFleet()
   const timeMs = useDashboardStore((state) => state.replayTimeMs)
+  const { data: outcomes = [] } = useReplayOutcomes(timeMs)
   const predictions = useDashboardStore((state) => state.replayPredictions)
   const selectedId = useDashboardStore((state) => state.selectedReplayId)
   const selectVehicle = useDashboardStore((state) => state.selectReplayVehicle)
@@ -107,7 +108,7 @@ export function HistoricalFleetDashboard() {
         {detailsOpen ? <ChevronRight size={21} strokeWidth={2.5} /> : <ChevronLeft size={21} strokeWidth={2.5} />}
         <span className="sr-only">{detailsOpen ? 'Свернуть сведения' : 'Развернуть сведения'}</span>
       </button>
-      {detailsOpen && <HistoricalVehicleDetails vehicle={selected} timeMs={timeMs} />}
+      {detailsOpen && <HistoricalVehicleDetails vehicle={selected} timeMs={timeMs} outcomes={outcomes} />}
     </aside>
 
     <main className="historical-main">

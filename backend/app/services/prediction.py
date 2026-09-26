@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from threading import RLock
+from zoneinfo import ZoneInfo
 
 import httpx
 from fastapi import HTTPException
 
 from app.schemas.prediction import StoredPrediction
+from app.core.config import settings
 from app.services.ml_client import request_prediction
 from app.services.telemetry import TelemetryService
 
@@ -22,20 +24,43 @@ class PredictionStore:
         self._lock = RLock()
         self._max_vehicles = max_vehicles
 
-    def record(self, prediction: StoredPrediction) -> None:
+    def record(self, prediction: StoredPrediction) -> bool:
         with self._lock:
+            previous = self._latest.get(prediction.tr_id)
+            if previous and prediction.prediction_time <= previous.prediction_time:
+                return False
             self._latest.pop(prediction.tr_id, None)
             self._latest[prediction.tr_id] = prediction
             if len(self._latest) > self._max_vehicles:
                 self._latest.popitem(last=False)
+            return True
 
     def list_latest(self) -> list[StoredPrediction]:
         with self._lock:
-            return list(self._latest.values())
+            return [self._with_freshness(value) for value in self._latest.values()]
 
     def get_latest(self, tr_id: int) -> StoredPrediction | None:
         with self._lock:
-            return self._latest.get(tr_id)
+            prediction = self._latest.get(tr_id)
+            return self._with_freshness(prediction) if prediction else None
+
+    def mark_stale(self, tr_id: int) -> StoredPrediction | None:
+        with self._lock:
+            prediction = self._latest.get(tr_id)
+            if prediction is None or prediction.freshness == "stale":
+                return None
+            stale = prediction.model_copy(update={"freshness": "stale"})
+            self._latest[tr_id] = stale
+            return stale
+
+    @staticmethod
+    def _with_freshness(prediction: StoredPrediction) -> StoredPrediction:
+        produced = prediction.produced_at or prediction.prediction_time
+        if produced.tzinfo is None:
+            produced = produced.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) - produced > timedelta(minutes=2):
+            return prediction.model_copy(update={"freshness": "stale"})
+        return prediction
 
 
 async def predict_delay(
@@ -51,15 +76,16 @@ async def predict_delay(
     stop_lat: float,
     stop_lon: float,
     current_point: dict | None = None,
+    replay: bool = False,
+    planned_stops: list[dict] | None = None,
 ) -> dict:
     """Call ML with at most 150 normalized packets for the target vehicle."""
-    normalized_t = (
-        T.replace(tzinfo=timezone.utc) if T.tzinfo is None else T.astimezone(timezone.utc)
-    )
-    normalized_target = (
-        target_time_begin.replace(tzinfo=timezone.utc)
-        if target_time_begin.tzinfo is None else target_time_begin.astimezone(timezone.utc)
-    )
+    source_zone = ZoneInfo(settings.source_timezone)
+    normalized_t = (T.replace(tzinfo=source_zone) if T.tzinfo is None
+                    else T).astimezone(timezone.utc)
+    normalized_target = (target_time_begin.replace(tzinfo=source_zone)
+                         if target_time_begin.tzinfo is None
+                         else target_time_begin).astimezone(timezone.utc)
     horizon_s = (normalized_target - normalized_t).total_seconds()
     if not 600 < horizon_s <= 900:
         raise HTTPException(status_code=422, detail="target stop must be in (T+10m, T+15m]")
@@ -68,9 +94,13 @@ async def predict_delay(
         nav = event.nav
         if nav is None:
             continue
+        event_time = event.event_time.astimezone(timezone.utc)
+        receive_time = (event_time if replay else event.received_at.astimezone(timezone.utc))
+        if event_time > normalized_t or receive_time > normalized_t:
+            continue
         points.append({
-            "event_time": event.event_time.isoformat(),
-            "receive_time": event.received_at.isoformat(),
+            "event_time": event_time.isoformat(),
+            "receive_time": receive_time.isoformat(),
             "location_valid": nav.coordinates_valid,
             "lat": nav.latitude,
             "lon": nav.longitude,
@@ -90,5 +120,6 @@ async def predict_delay(
         "stop_lat": stop_lat,
         "stop_lon": stop_lon,
         "telemetry": points,
+        "planned_stops": planned_stops or [],
     }
     return await request_prediction(payload, ml_client)
