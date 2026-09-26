@@ -101,4 +101,3 @@ async def resume_replay() -> ReplayStatus:
 @app.post("/api/replay/stop", response_model=ReplayStatus)
 async def stop_replay() -> ReplayStatus:
     return await manager.stop()
-

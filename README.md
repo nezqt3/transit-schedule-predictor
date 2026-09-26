@@ -66,6 +66,7 @@
 
 ```text
 data/                         Датасеты train/test/validate и sample submission
+docs/                         Спецификация NDTP + собранные PyDoc и OpenAPI
 emulator/                     NDTP-эмулятор и спецификация протокола
 backend/                      API, TCP/NDTP parser, telemetry и ML client
 frontend/                     Диспетчерский дашборд (Vite + React), см. frontend/README.md
@@ -187,6 +188,37 @@ pip install -e '.[dev,models]'
 ```
 
 Дальнейшие команды обучения и API описаны в [`ml/README.md`](ml/README.md). Пока ML-файлы являются каркасом, поэтому сначала следует согласовать feature contract и target.
+
+### Весь стек целиком
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+| Сервис | Адрес |
+| --- | --- |
+| Дашборд | <http://localhost:8080> |
+| Swagger API | <http://localhost:8000/docs> |
+| Health check | <http://localhost:8000/api/v1/health> |
+
+Демо-вход диспетчера: `dispatcher` / `transport`. Перед деплоем замените пароль
+и `AUTH_JWT_SECRET` в `.env`.
+
+## 📚 Документация
+
+Собранные документы лежат в репозитории и открываются прямо из clone,
+без запущенных сервисов:
+
+| Файл | Что внутри |
+| --- | --- |
+| [`docs/public/pydoc/index.html`](docs/public/pydoc/index.html) | PyDoc (Sphinx): архитектура, авторизация, конфигурация, API backend, исходники модулей |
+| [`docs/public/api.html`](docs/public/api.html) | OpenAPI-спецификация в Swagger UI: все эндпоинты, схемы, требования авторизации. Схема встроена в HTML, поэтому страница открывается даже там, где `fetch` до `openapi.json` недоступен |
+| [`docs/public/openapi.json`](docs/public/openapi.json) | Машиночитаемая схема — импорт в Postman или вставка в <https://redocly.github.io/redoc/> |
+
+Пересобрать после изменений в коде или `.rst`-доках: `make docs`.
+Живой Swagger и ReDoc — в запущенном backend: <http://localhost:8000/docs>,
+<http://localhost:8000/redoc>.
 
 ## Kaggle
 

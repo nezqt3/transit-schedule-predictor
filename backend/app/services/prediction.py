@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from collections import OrderedDict
+from datetime import datetime, timezone
 from threading import RLock
 
 import httpx
 from fastapi import HTTPException
 
+from app.schemas.prediction import StoredPrediction
 from app.services.ml_client import request_prediction
 from app.services.telemetry import TelemetryService
-from app.schemas.prediction import StoredPrediction
 
 
 class PredictionStore:
@@ -53,7 +53,9 @@ async def predict_delay(
     current_point: dict | None = None,
 ) -> dict:
     """Call ML with at most 150 normalized packets for the target vehicle."""
-    normalized_t = T.replace(tzinfo=timezone.utc) if T.tzinfo is None else T.astimezone(timezone.utc)
+    normalized_t = (
+        T.replace(tzinfo=timezone.utc) if T.tzinfo is None else T.astimezone(timezone.utc)
+    )
     normalized_target = (
         target_time_begin.replace(tzinfo=timezone.utc)
         if target_time_begin.tzinfo is None else target_time_begin.astimezone(timezone.utc)

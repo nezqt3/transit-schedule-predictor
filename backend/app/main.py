@@ -7,10 +7,12 @@ from fastapi import FastAPI
 from app.api.router import api_router
 from app.core.config import settings
 from app.ndtp.server import NdtServer
-from app.services.runtime_lookup import RuntimeLookup
+from app.repositories.auth import AuthRepository
+from app.services.auth import AuthService
 from app.services.prediction import PredictionStore
-from app.services.telemetry import TelemetryService
 from app.services.replay import ReplayDataset
+from app.services.runtime_lookup import RuntimeLookup
+from app.services.telemetry import TelemetryService
 
 
 @asynccontextmanager
@@ -37,6 +39,30 @@ async def lifespan(app: FastAPI):
         trust_env=False,
     )
 
+    auth_repository = AuthRepository(
+        settings.database_url,
+        settings.auth_database_connect_timeout_s,
+    )
+    auth_service = AuthService(auth_repository)
+    app.state.auth_service = auth_service
+    app.state.auth_available = False
+    try:
+        await auth_repository.initialize()
+        created = await auth_service.bootstrap(
+            settings.auth_bootstrap_username,
+            settings.auth_bootstrap_password,
+        )
+        app.state.auth_available = True
+        if created:
+            logging.getLogger(__name__).info(
+                "Created bootstrap dispatcher account %s",
+                settings.auth_bootstrap_username,
+            )
+    except Exception:
+        logging.getLogger(__name__).exception(
+            "Authentication database is unavailable; login is disabled"
+        )
+
     ndtp_server = NdtServer(
         on_event=telemetry.handle_event,
         host=settings.ndtp_host,
@@ -62,15 +88,25 @@ async def lifespan(app: FastAPI):
     # shutdown
     await ndtp_server.stop()
     await app.state.ml_client.aclose()
+    await auth_repository.close()
 
 
 app = FastAPI(
     title="Transport Delay Predictor API",
     description=(
-        "Backend API системы раннего прогнозирования "
-        "задержек наземного транспорта."
+        "Backend API системы раннего прогнозирования задержек "
+        "наземного транспорта.\n\n"
+        "1. Получите токен через `POST /api/v1/auth/token`.\n"
+        "2. В Swagger UI нажмите **Authorize** и введите учётные данные.\n"
+        "3. Health check остаётся публичным; telemetry и prediction API защищены."
     ),
-    version="0.1.0",
+    version="0.2.0",
+    openapi_tags=[
+        {"name": "Health", "description": "Публичная проверка готовности Backend."},
+        {"name": "Authentication", "description": "Вход и сведения о текущем диспетчере."},
+        {"name": "Vehicles", "description": "Актуальная NDTP-телеметрия транспорта."},
+        {"name": "Predictions", "description": "Прогноз отклонения на горизонте 10–15 минут."},
+    ],
 
     # Swagger UI
     docs_url="/docs",

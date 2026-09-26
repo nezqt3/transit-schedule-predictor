@@ -1,9 +1,9 @@
 # Design QA — Сигнальная сетка
 
-**Source visual:** `C:\Users\user\.codex\skills\artifact-template-signal-grid\assets\reference.png` (unchanged copy of the supplied PNG)  
-**Rendered implementation:** `C:\Users\user\.codex\visualizations\2026\09\25\01a0d986-7812-7df2-8cb0-e823eac1159e\desktop-final.png`  
-**Tablet evidence:** `C:\Users\user\.codex\visualizations\2026\09\25\01a0d986-7812-7df2-8cb0-e823eac1159e\tablet-implementation.png`  
-**Viewport and density:** source 1672 × 941 pixels; desktop browser 1672 × 941 CSS pixels at 1×; tablet browser 834 × 1194 CSS pixels at 1×. No density normalization required.  
+**Source visual:** `C:\Users\user\.codex\skills\artifact-template-signal-grid\assets\reference.png` (unchanged copy of the supplied PNG)
+**Rendered implementation:** `C:\Users\user\.codex\visualizations\2026\09\25\01a0d986-7812-7df2-8cb0-e823eac1159e\desktop-final.png`
+**Tablet evidence:** `C:\Users\user\.codex\visualizations\2026\09\25\01a0d986-7812-7df2-8cb0-e823eac1159e\tablet-implementation.png`
+**Viewport and density:** source 1672 × 941 pixels; desktop browser 1672 × 941 CSS pixels at 1×; tablet browser 834 × 1194 CSS pixels at 1×. No density normalization required.
 **State:** eight temporary NDTP verification packets in backend memory, with one alert and selected terminal #777. The final running backend was restarted afterward to clear these packets.
 
 ## Findings
@@ -23,6 +23,6 @@ No actionable P0/P1/P2 findings remain. The source and browser screenshot were i
 2. The first narrow capture showed the map partly above the scroll origin. Replacing `column-reverse` with explicit visual ordering fixed the initial viewport.
 3. Final desktop capture shows the forecast row and history toggle in the selected panel, with no browser console errors. The map, list, search and selected detail remained synchronized in browser checks.
 
-**Primary interactions tested:** NDTP TCP packet → backend REST → marker; marker selection → detail; list selection → marker; ID search → filtered markers and detail; zoom controls present; backend unavailable and no-telemetry states visible.  
-**Follow-up polish:** A quieter tile provider would bring the map closer to the mock if a licensed tile key is supplied.  
+**Primary interactions tested:** NDTP TCP packet → backend REST → marker; marker selection → detail; list selection → marker; ID search → filtered markers and detail; zoom controls present; backend unavailable and no-telemetry states visible.
+**Follow-up polish:** A quieter tile provider would bring the map closer to the mock if a licensed tile key is supplied.
 **final result: passed**
