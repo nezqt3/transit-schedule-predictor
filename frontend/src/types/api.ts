@@ -65,6 +65,45 @@ export type StoredPrediction = {
   model_version: string
 }
 
+export type WhatIfVehicle = {
+  tr_id: number
+  predicted_delay_s: number
+  run_id?: string | null
+  target_stop_id?: number | null
+}
+
+export type WhatIfRequest = {
+  vehicles: WhatIfVehicle[]
+  additional_vehicles: number
+  dispatch_lead_minutes: number
+  late_threshold_s: number
+}
+
+export type WhatIfMetrics = {
+  average_delay_s: number
+  maximum_delay_s: number
+  late_runs: number
+  on_time_runs: number
+}
+
+export type WhatIfAssignment = {
+  reserve_vehicle: number
+  tr_id: number
+  run_id: string | null
+  target_stop_id: number | null
+  before_delay_s: number
+  after_delay_s: number
+  reduction_s: number
+}
+
+export type WhatIfResponse = {
+  baseline: WhatIfMetrics
+  scenario: WhatIfMetrics
+  assignments: WhatIfAssignment[]
+  total_delay_reduction_s: number
+  methodology: string
+}
+
 export type HealthResponse = {
   status: string
   service: string

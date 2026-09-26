@@ -106,6 +106,10 @@ app = FastAPI(
         {"name": "Authentication", "description": "Вход и сведения о текущем диспетчере."},
         {"name": "Vehicles", "description": "Актуальная NDTP-телеметрия транспорта."},
         {"name": "Predictions", "description": "Прогноз отклонения на горизонте 10–15 минут."},
+        {
+            "name": "What-if analysis",
+            "description": "Оценка диспетчерских сценариев без изменения рабочего состояния.",
+        },
     ],
 
     # Swagger UI

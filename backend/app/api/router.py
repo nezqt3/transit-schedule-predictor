@@ -7,6 +7,7 @@ from app.api.predictions import predict_from_buffer
 from app.api.predictions import router as predictions_router
 from app.api.replay import router as replay_router
 from app.api.vehicles import router as vehicles_router
+from app.api.what_if import router as what_if_router
 from app.api.ws import router as ws_router
 
 api_router = APIRouter()
@@ -45,6 +46,12 @@ protected_router.include_router(
     replay_router,
     prefix="/replay",
     tags=["Historical replay"],
+)
+
+protected_router.include_router(
+    what_if_router,
+    prefix="/what-if",
+    tags=["What-if analysis"],
 )
 
 api_router.include_router(protected_router)

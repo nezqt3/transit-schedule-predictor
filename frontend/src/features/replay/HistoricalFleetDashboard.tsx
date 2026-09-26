@@ -1,7 +1,8 @@
-import { AlertTriangle, ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { AlertTriangle, BusFront, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 
 import { fleetStatusIcons } from '@/features/vehicles/markerIcon'
+import { WhatIfPanel } from '@/features/what-if/WhatIfPanel'
 import { statusLabel, type VehicleStatus } from '@/lib/telemetry/vehicleStatus'
 import { useDashboardStore } from '@/store/dashboard'
 import { useReplayFleet } from './api'
@@ -31,6 +32,7 @@ export function HistoricalFleetDashboard() {
   const [detailsOpen, setDetailsOpen] = useState(true)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<FleetFilter>('all')
+  const [whatIfOpen, setWhatIfOpen] = useState(false)
 
   const visible = useMemo(() => fleetSnapshot(fleet, timeMs, predictions), [fleet, timeMs, predictions])
   const filtered = useMemo(() => visible.filter((item) => {
@@ -41,6 +43,12 @@ export function HistoricalFleetDashboard() {
   }), [visible, query, filter])
   const selected = fleet?.vehicles.find((vehicle) => vehicle.tr_id === selectedId) ?? null
   const attentionCount = visible.filter((item) => item.late || item.status === 'stale').length
+  const whatIfVehicles = visible.flatMap((item) => item.forecast && item.run && item.point ? [{
+    tr_id: item.vehicle.tr_id,
+    predicted_delay_s: item.forecast.predicted_delay_s,
+    run_id: item.run.run_id,
+    target_stop_id: item.point.target_stop_id,
+  }] : [])
 
   useEffect(() => {
     if (!visible.length && selectedId !== null) { selectVehicle(null); return }
@@ -103,9 +111,10 @@ export function HistoricalFleetDashboard() {
     </aside>
 
     <main className="historical-main">
-      <div className="historical-overview"><span><strong>{visible.length}</strong> на карте</span><span><strong>{attentionCount}</strong> требуют внимания</span></div>
+      <div className="historical-overview"><span><strong>{visible.length}</strong> на карте</span><span><strong>{attentionCount}</strong> требуют внимания</span><button aria-pressed={whatIfOpen} className="historical-overview__what-if" onClick={() => setWhatIfOpen(!whatIfOpen)} type="button"><BusFront size={15} /> What-if</button></div>
       <div className="historical-map-wrap">
         <HistoricalFleetMap onSelect={onMapSelect} selected={selected} timeMs={timeMs ?? 0} visible={filtered} />
+        {whatIfOpen && <WhatIfPanel context={timeMs === null ? 'Исторический поток' : `6 января · ${new Date(timeMs).toLocaleTimeString('ru-RU', { timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit' })}`} onClose={() => setWhatIfOpen(false)} vehicles={whatIfVehicles} />}
         <div className="historical-map-legend"><span>↗ Движется</span><span>■ Стоит</span><span>◷ GPS устарел</span><span><AlertTriangle size={13} /> Прогноз опоздания</span><span>— Пройденный путь</span><span>┄ Маршрут</span></div>
       </div>
     </main>

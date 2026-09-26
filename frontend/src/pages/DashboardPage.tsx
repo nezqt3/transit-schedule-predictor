@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowRight, ChevronLeft, ChevronRight, Clock3, MapPinOff, Navigation2, Search, Square, WifiOff } from 'lucide-react'
+import { AlertTriangle, ArrowRight, BusFront, ChevronLeft, ChevronRight, Clock3, MapPinOff, Navigation2, Search, Square, WifiOff } from 'lucide-react'
 import { useEffect, useMemo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 
 import { useVehicleHistory } from '@/features/vehicles/api'
@@ -11,6 +11,7 @@ import { eventTimeMs, hasValidPosition, isStale, speedKmh } from '@/lib/telemetr
 import { hasAlarm, needsAttention, statusLabel, vehicleStatus, type VehicleStatus } from '@/lib/telemetry/vehicleStatus'
 import { useTelemetryStore } from '@/store/telemetry'
 import { HistoricalFleetDashboard } from '@/features/replay/HistoricalFleetDashboard'
+import { WhatIfPanel } from '@/features/what-if/WhatIfPanel'
 import { useDashboardStore } from '@/store/dashboard'
 import type { StoredPrediction, TelemetryEvent } from '@/types/api'
 
@@ -104,6 +105,7 @@ function LiveDashboard() {
   const [filter, setFilter] = useState<FleetFilter>('all')
   const [sidebarWidth, setSidebarWidth] = useState(390)
   const [detailsOpen, setDetailsOpen] = useState(true)
+  const [whatIfOpen, setWhatIfOpen] = useState(false)
   const now = Date.now()
 
   const resizeSidebar = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -144,6 +146,13 @@ function LiveDashboard() {
   const visibleOnMap = filtered.filter(hasValidPosition).length
   const attentionCount = events.filter((event) => needsAttention(event, now)).length
   const allStale = events.length > 0 && events.every((event) => isStale(event, now))
+  const activeUnitIds = new Set(events.map((event) => event.unit_id))
+  const whatIfVehicles = predictions.filter((prediction) =>
+    activeUnitIds.has(prediction.unit_id)).map((prediction) => ({
+    tr_id: prediction.tr_id,
+    predicted_delay_s: prediction.predicted_delay_s,
+    target_stop_id: prediction.target_stop_id,
+  }))
 
   return (
     <div className={`dispatch-screen${detailsOpen ? '' : ' dispatch-screen--details-collapsed'}`} style={{ '--sidebar-width': `${sidebarWidth}px` } as CSSProperties}>
@@ -170,10 +179,11 @@ function LiveDashboard() {
       <main className="dispatch-map-area">
         <div className="dispatch-map-area__meta">
           <div className="fleet-stats"><span><strong>{isPending || isError ? '—' : events.length}</strong> терминалов</span><span><strong>{isPending || isError ? '—' : onMap}</strong> на карте</span><span><strong>{isPending || isError ? '—' : attentionCount}</strong> требуют внимания</span></div>
-          <div className="poll-status">{streamConnected || dataUpdatedAt ? 'Связь активна' : 'Ожидаем соединение'}</div>
+          <div className="dispatch-map-area__actions"><button aria-pressed={whatIfOpen} onClick={() => setWhatIfOpen(!whatIfOpen)} type="button"><BusFront size={15} /> What-if</button><div className="poll-status">{streamConnected || dataUpdatedAt ? 'Связь активна' : 'Ожидаем соединение'}</div></div>
         </div>
         <div className="dispatch-map-area__map">
           <VehicleMap events={filtered} predictions={predictions} onSelect={selectUnit} selectedHistory={selectedHistory} selectedUnitId={selectedUnitId} />
+          {whatIfOpen && <WhatIfPanel context="Текущий NDTP-поток" onClose={() => setWhatIfOpen(false)} vehicles={whatIfVehicles} />}
           {isPending && <div className="map-state"><strong>Загружаем позиции</strong></div>}
           {isError && !isPending && <div className="map-state map-state--error"><WifiOff size={20} /><strong>Нет связи с сервером</strong><span>Данные временно недоступны.</span></div>}
           {!isPending && !isError && events.length === 0 && <div className="map-state"><strong>Нет транспорта на карте</strong><span>Ожидаем новые данные.</span></div>}
