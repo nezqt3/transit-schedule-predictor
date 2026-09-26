@@ -1,4 +1,6 @@
 {
+  "targetHost": "host.docker.internal",
+  "targetPort": 9201,
   "units": [
     {
       "unitId": 1166336,

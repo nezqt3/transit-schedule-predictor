@@ -14,8 +14,9 @@ class Settings(BaseSettings):
     ml_service_port: int = 8001
 
     artifacts_dir: str = "artifacts"
-    model_name: str = "catboost"
+    model_name: str = "baseline"
     model_version: str = "1.0"
+    schedule_plan_path: str = "data/raw/validate/schedule_plan.csv"
 
     log_level: str = "INFO"
 

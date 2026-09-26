@@ -23,6 +23,10 @@ class Settings(BaseSettings):
 
     runtime_schedule_path: str = "data/raw/validate/schedule_plan.csv"
     runtime_traffic_path: str = "data/raw/validate/traffic.csv"
+    replay_schedule_path: str = "data/raw/test/schedule.csv"
+    replay_traffic_path: str = "data/raw/test/traffic.csv"
+    replay_labels_path: str = "data/raw/labels/labels_test.csv"
+    dataset_replay_url: str | None = None
 
     postgres_host: str = "postgres"
     postgres_port: int = 5432

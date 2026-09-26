@@ -31,3 +31,18 @@ async def get_vehicle(
     if event is None:
         raise HTTPException(status_code=404, detail="unit not found")
     return event
+
+
+@router.get(
+    "/{unit_id}/history",
+    response_model=list[TelemetryEvent],
+    summary="Недавняя NDTP-телеметрия терминала",
+)
+async def get_vehicle_history(
+    unit_id: int,
+    service: TelemetryService = Depends(get_telemetry_service),
+) -> list[TelemetryEvent]:
+    """Return the buffered packets used for the terminal's speed history."""
+    if service.get_latest(unit_id) is None:
+        raise HTTPException(status_code=404, detail="unit not found")
+    return service.get_recent(unit_id)

@@ -1,5 +1,9 @@
 # Эмулятор устройств NDTP
 
+> Этот каталог по-прежнему описывает неизменённый эмулятор организаторов.
+> Дополнительный сценарий воспроизведения конкурсных CSV через NDTP находится в
+> [`dataset_replay/README.md`](dataset_replay/README.md) и запускается отдельно.
+
 По REST принимает конфиг, по TCP подключается к NDTP-серверу как бортовой терминал: выполняет handshake, затем периодически отправляет пакеты телематики.
 
 Порт API: **18080**. Конфиг хранится в памяти и после рестарта сбрасывается.
@@ -66,6 +70,11 @@ curl -s -X POST http://localhost:18080/api/config \
   -H 'Content-Type: application/json' \
   -d @config.json
 ```
+
+`config.json` в этой папке уже нацелен на Backend через
+`host.docker.internal:9201`. Перед отправкой конфигурации запустите
+`docker compose up -d --build backend frontend`; поступившие пакеты видны на
+`http://localhost:8080/` и через `GET /api/v1/vehicles`.
 
 Невалидный конфиг → HTTP 400, тело `{ "timestamp", "status", "error", "message" }`.
 

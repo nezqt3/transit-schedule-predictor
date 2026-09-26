@@ -5,10 +5,26 @@ from fastapi import APIRouter, HTTPException, Request
 from app.schemas.prediction import (
     PredictionRequest,
     PredictionResponse,
+    StoredPrediction,
 )
 from app.services.prediction import predict_delay
 
 router = APIRouter()
+
+
+@router.get("", response_model=list[StoredPrediction],
+            summary="Последние прогнозы по транспортным средствам")
+async def list_predictions(http_request: Request) -> list[StoredPrediction]:
+    return http_request.app.state.predictions.list_latest()
+
+
+@router.get("/{tr_id}/latest", response_model=StoredPrediction,
+            summary="Последний прогноз транспортного средства")
+async def latest_prediction(tr_id: int, http_request: Request) -> StoredPrediction:
+    prediction = http_request.app.state.predictions.get_latest(tr_id)
+    if prediction is None:
+        raise HTTPException(status_code=404, detail="prediction not found")
+    return prediction
 
 
 @router.post(
@@ -58,6 +74,16 @@ async def predict(
             "speed": request.speed,
         },
     )
+    http_request.app.state.predictions.record(StoredPrediction(
+        tr_id=request.tr_id,
+        unit_id=request.unit_id or request.tr_id,
+        prediction_time=request.timestamp,
+        target_stop_id=request.target_stop_id,
+        target_time=request.target_time_begin,
+        current_delay_s=request.cur_dev_s,
+        predicted_delay_s=result["prediction"],
+        model_version=result["model_version"],
+    ))
     return PredictionResponse(
         tr_id=request.tr_id,
         prediction=result["prediction"],
@@ -113,6 +139,17 @@ async def predict_from_buffer(
         stop_lat=stop["stop_lat"],
         stop_lon=stop["stop_lon"],
     )
+    http_request.app.state.predictions.record(StoredPrediction(
+        tr_id=tr_id,
+        unit_id=resolved_unit,
+        prediction_time=T,
+        target_stop_id=target_stop_id,
+        target_time=(stop["target_time_begin"] if isinstance(stop["target_time_begin"], datetime)
+                     else datetime.fromisoformat(stop["target_time_begin"])),
+        current_delay_s=cur_dev_s,
+        predicted_delay_s=result["prediction"],
+        model_version=result["model_version"],
+    ))
     return PredictionResponse(
         tr_id=tr_id,
         prediction=result["prediction"],

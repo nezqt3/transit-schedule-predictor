@@ -1,6 +1,7 @@
-.PHONY: up down build logs test docs features train submit run-online \
+.PHONY: up down build logs test features train submit run-online \
+	up-dataset-replay replay-start logs-dataset-replay lint format preprocessing docs \
 	fe-install fe-dev fe-build fe-check fe-preview fe-clean \
-	up-frontend up-frontend-dev
+	up-frontend up-frontend-dev logs-frontend
 
 up:
 	docker compose up -d
@@ -30,6 +31,16 @@ submit:
 run-online:
 	docker compose up --build ml backend
 
+up-dataset-replay:
+	docker compose --profile replay up -d --build backend dataset-replay
+	python scripts/start_dataset_replay.py
+
+replay-start:
+	python scripts/start_dataset_replay.py
+
+logs-dataset-replay:
+	docker compose --profile replay logs -f dataset-replay
+
 lint:
 	cd backend && ruff check .
 
@@ -37,10 +48,15 @@ format:
 	cd backend && ruff format .
 
 preprocessing:
-	cd scripts && python -m scripts.prepare_dataset
+	cd ml && python -m src.offline.dataset_builder --split train
 
+# Собирает публичные документы в docs/public/ (коммитится в Git):
+# PyDoc (Sphinx) + статичный OpenAPI-файл и ReDoc-вьюер.
 docs:
-	cd backend && sphinx-build -W --keep-going -b html docs docs/_build/html
+	cd backend && sphinx-build -W --keep-going -b html docs ../docs/public/pydoc
+	python scripts/export_openapi.py
+	cp docs/api-viewer.html docs/public/api.html
+	touch docs/public/.nojekyll
 
 
 # --- frontend: локально (pnpm) ---
@@ -61,7 +77,7 @@ fe-preview:
 	cd frontend && pnpm preview --port 4173
 
 fe-clean:
-	rm -rf frontend/dist frontend/node_modules/.vite
+	node -e "const fs = require('node:fs'); for (const path of ['frontend/dist', 'frontend/node_modules/.vite']) fs.rmSync(path, { recursive: true, force: true })"
 
 # --- frontend: в docker ---
 

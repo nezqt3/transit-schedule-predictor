@@ -1,0 +1,1766 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Backend API &mdash; Transport Delay Predictor  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Конфигурация" href="configuration.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Transport Delay Predictor
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Руководство:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Архитектура</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authentication.html">Авторизация</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Конфигурация</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Backend API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-app.main">Main Application</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#app.main.lifespan"><code class="docutils literal notranslate"><span class="pre">lifespan()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-app.api.auth">Authentication API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#app.api.auth.login"><code class="docutils literal notranslate"><span class="pre">login()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.api.auth.logout"><code class="docutils literal notranslate"><span class="pre">logout()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.api.auth.read_current_user"><code class="docutils literal notranslate"><span class="pre">read_current_user()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-app.core.security">Authentication Internals</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#app.core.security.create_access_token"><code class="docutils literal notranslate"><span class="pre">create_access_token()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.core.security.decode_access_token"><code class="docutils literal notranslate"><span class="pre">decode_access_token()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.services.auth.AuthService"><code class="docutils literal notranslate"><span class="pre">AuthService</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.services.auth.AuthService.authenticate"><code class="docutils literal notranslate"><span class="pre">AuthService.authenticate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.services.auth.AuthService.bootstrap"><code class="docutils literal notranslate"><span class="pre">AuthService.bootstrap()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.services.auth.AuthService.get_current_user"><code class="docutils literal notranslate"><span class="pre">AuthService.get_current_user()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#app.repositories.auth.AuthRepository"><code class="docutils literal notranslate"><span class="pre">AuthRepository</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.repositories.auth.AuthRepository.close"><code class="docutils literal notranslate"><span class="pre">AuthRepository.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.repositories.auth.AuthRepository.create_initial_user"><code class="docutils literal notranslate"><span class="pre">AuthRepository.create_initial_user()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.repositories.auth.AuthRepository.get_active_user"><code class="docutils literal notranslate"><span class="pre">AuthRepository.get_active_user()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.repositories.auth.AuthRepository.initialize"><code class="docutils literal notranslate"><span class="pre">AuthRepository.initialize()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#app.repositories.auth.AuthUser"><code class="docutils literal notranslate"><span class="pre">AuthUser</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.repositories.auth.AuthUser.created_at"><code class="docutils literal notranslate"><span class="pre">AuthUser.created_at</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.repositories.auth.AuthUser.is_active"><code class="docutils literal notranslate"><span class="pre">AuthUser.is_active</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.repositories.auth.AuthUser.password_hash"><code class="docutils literal notranslate"><span class="pre">AuthUser.password_hash</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.repositories.auth.AuthUser.role"><code class="docutils literal notranslate"><span class="pre">AuthUser.role</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.repositories.auth.AuthUser.username"><code class="docutils literal notranslate"><span class="pre">AuthUser.username</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-app.api.health">Health API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#app.api.health.health_check"><code class="docutils literal notranslate"><span class="pre">health_check()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-app.api.predictions">Predictions API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#app.api.predictions.latest_prediction"><code class="docutils literal notranslate"><span class="pre">latest_prediction()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.api.predictions.list_predictions"><code class="docutils literal notranslate"><span class="pre">list_predictions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.api.predictions.predict"><code class="docutils literal notranslate"><span class="pre">predict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.api.predictions.predict_from_buffer"><code class="docutils literal notranslate"><span class="pre">predict_from_buffer()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-app.schemas.prediction">Schemas</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#app.schemas.prediction.PredictionRequest"><code class="docutils literal notranslate"><span class="pre">PredictionRequest</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.PredictionRequest.cur_dev_s"><code class="docutils literal notranslate"><span class="pre">PredictionRequest.cur_dev_s</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.PredictionRequest.lat"><code class="docutils literal notranslate"><span class="pre">PredictionRequest.lat</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.PredictionRequest.lon"><code class="docutils literal notranslate"><span class="pre">PredictionRequest.lon</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.PredictionRequest.model_config"><code class="docutils literal notranslate"><span class="pre">PredictionRequest.model_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.PredictionRequest.speed"><code class="docutils literal notranslate"><span class="pre">PredictionRequest.speed</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.PredictionRequest.stop_lat"><code class="docutils literal notranslate"><span class="pre">PredictionRequest.stop_lat</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.PredictionRequest.stop_lon"><code class="docutils literal notranslate"><span class="pre">PredictionRequest.stop_lon</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.PredictionRequest.target_stop_id"><code class="docutils literal notranslate"><span class="pre">PredictionRequest.target_stop_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.PredictionRequest.target_time_begin"><code class="docutils literal notranslate"><span class="pre">PredictionRequest.target_time_begin</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.PredictionRequest.timestamp"><code class="docutils literal notranslate"><span class="pre">PredictionRequest.timestamp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.PredictionRequest.tr_id"><code class="docutils literal notranslate"><span class="pre">PredictionRequest.tr_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.PredictionRequest.unit_id"><code class="docutils literal notranslate"><span class="pre">PredictionRequest.unit_id</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#app.schemas.prediction.PredictionResponse"><code class="docutils literal notranslate"><span class="pre">PredictionResponse</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.PredictionResponse.model_config"><code class="docutils literal notranslate"><span class="pre">PredictionResponse.model_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.PredictionResponse.model_version"><code class="docutils literal notranslate"><span class="pre">PredictionResponse.model_version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.PredictionResponse.prediction"><code class="docutils literal notranslate"><span class="pre">PredictionResponse.prediction</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.PredictionResponse.tr_id"><code class="docutils literal notranslate"><span class="pre">PredictionResponse.tr_id</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#app.schemas.prediction.StoredPrediction"><code class="docutils literal notranslate"><span class="pre">StoredPrediction</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.StoredPrediction.current_delay_s"><code class="docutils literal notranslate"><span class="pre">StoredPrediction.current_delay_s</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.StoredPrediction.model_config"><code class="docutils literal notranslate"><span class="pre">StoredPrediction.model_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.StoredPrediction.model_version"><code class="docutils literal notranslate"><span class="pre">StoredPrediction.model_version</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.StoredPrediction.predicted_delay_s"><code class="docutils literal notranslate"><span class="pre">StoredPrediction.predicted_delay_s</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.StoredPrediction.prediction_time"><code class="docutils literal notranslate"><span class="pre">StoredPrediction.prediction_time</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.StoredPrediction.target_stop_id"><code class="docutils literal notranslate"><span class="pre">StoredPrediction.target_stop_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.StoredPrediction.target_time"><code class="docutils literal notranslate"><span class="pre">StoredPrediction.target_time</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.StoredPrediction.tr_id"><code class="docutils literal notranslate"><span class="pre">StoredPrediction.tr_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.prediction.StoredPrediction.unit_id"><code class="docutils literal notranslate"><span class="pre">StoredPrediction.unit_id</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#app.schemas.auth.CurrentUser"><code class="docutils literal notranslate"><span class="pre">CurrentUser</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.auth.CurrentUser.model_config"><code class="docutils literal notranslate"><span class="pre">CurrentUser.model_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.auth.CurrentUser.role"><code class="docutils literal notranslate"><span class="pre">CurrentUser.role</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.auth.CurrentUser.username"><code class="docutils literal notranslate"><span class="pre">CurrentUser.username</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#app.schemas.auth.TokenResponse"><code class="docutils literal notranslate"><span class="pre">TokenResponse</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.auth.TokenResponse.access_token"><code class="docutils literal notranslate"><span class="pre">TokenResponse.access_token</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.auth.TokenResponse.expires_in"><code class="docutils literal notranslate"><span class="pre">TokenResponse.expires_in</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.auth.TokenResponse.model_config"><code class="docutils literal notranslate"><span class="pre">TokenResponse.model_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.schemas.auth.TokenResponse.token_type"><code class="docutils literal notranslate"><span class="pre">TokenResponse.token_type</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-app.api.vehicles">Vehicles API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#app.api.vehicles.get_vehicle"><code class="docutils literal notranslate"><span class="pre">get_vehicle()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.api.vehicles.get_vehicle_history"><code class="docutils literal notranslate"><span class="pre">get_vehicle_history()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.api.vehicles.list_vehicles"><code class="docutils literal notranslate"><span class="pre">list_vehicles()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-app.ndtp.server">NDTP Server</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.server.NdtServer"><code class="docutils literal notranslate"><span class="pre">NdtServer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.server.NdtServer.start"><code class="docutils literal notranslate"><span class="pre">NdtServer.start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.server.NdtServer.stop"><code class="docutils literal notranslate"><span class="pre">NdtServer.stop()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-app.ndtp.parser">NDTP Parser</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.Can10"><code class="docutils literal notranslate"><span class="pre">Can10</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Can10.alarm_flags"><code class="docutils literal notranslate"><span class="pre">Can10.alarm_flags</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Can10.engine_hours"><code class="docutils literal notranslate"><span class="pre">Can10.engine_hours</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Can10.engine_rpm"><code class="docutils literal notranslate"><span class="pre">Can10.engine_rpm</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Can10.engine_temp_c"><code class="docutils literal notranslate"><span class="pre">Can10.engine_temp_c</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Can10.odometer_km"><code class="docutils literal notranslate"><span class="pre">Can10.odometer_km</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Can10.speed_kmh"><code class="docutils literal notranslate"><span class="pre">Can10.speed_kmh</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.HandshakeRequest"><code class="docutils literal notranslate"><span class="pre">HandshakeRequest</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.HandshakeRequest.peer_address"><code class="docutils literal notranslate"><span class="pre">HandshakeRequest.peer_address</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.HandshakeRequest.proto_major"><code class="docutils literal notranslate"><span class="pre">HandshakeRequest.proto_major</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.HandshakeRequest.proto_minor"><code class="docutils literal notranslate"><span class="pre">HandshakeRequest.proto_minor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.IntSensor02"><code class="docutils literal notranslate"><span class="pre">IntSensor02</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.IntSensor02.csq"><code class="docutils literal notranslate"><span class="pre">IntSensor02.csq</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.IntSensor02.di0_counter"><code class="docutils literal notranslate"><span class="pre">IntSensor02.di0_counter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.IntSensor02.di1_counter"><code class="docutils literal notranslate"><span class="pre">IntSensor02.di1_counter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.IntSensor02.di2_counter"><code class="docutils literal notranslate"><span class="pre">IntSensor02.di2_counter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.IntSensor02.di3_counter"><code class="docutils literal notranslate"><span class="pre">IntSensor02.di3_counter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.IntSensor02.gprs_state"><code class="docutils literal notranslate"><span class="pre">IntSensor02.gprs_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.IntSensor02.odometer"><code class="docutils literal notranslate"><span class="pre">IntSensor02.odometer</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.Nav00"><code class="docutils literal notranslate"><span class="pre">Nav00</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Nav00.alert"><code class="docutils literal notranslate"><span class="pre">Nav00.alert</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Nav00.altitude_m"><code class="docutils literal notranslate"><span class="pre">Nav00.altitude_m</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Nav00.battery_voltage_mv"><code class="docutils literal notranslate"><span class="pre">Nav00.battery_voltage_mv</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Nav00.coordinates_valid"><code class="docutils literal notranslate"><span class="pre">Nav00.coordinates_valid</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Nav00.course"><code class="docutils literal notranslate"><span class="pre">Nav00.course</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Nav00.latitude"><code class="docutils literal notranslate"><span class="pre">Nav00.latitude</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Nav00.longitude"><code class="docutils literal notranslate"><span class="pre">Nav00.longitude</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Nav00.pdop"><code class="docutils literal notranslate"><span class="pre">Nav00.pdop</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Nav00.satellites"><code class="docutils literal notranslate"><span class="pre">Nav00.satellites</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Nav00.sos"><code class="docutils literal notranslate"><span class="pre">Nav00.sos</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Nav00.speed_avg"><code class="docutils literal notranslate"><span class="pre">Nav00.speed_avg</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Nav00.speed_max"><code class="docutils literal notranslate"><span class="pre">Nav00.speed_max</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Nav00.timestamp"><code class="docutils literal notranslate"><span class="pre">Nav00.timestamp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Nav00.track_m"><code class="docutils literal notranslate"><span class="pre">Nav00.track_m</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.NdtParseError"><code class="docutils literal notranslate"><span class="pre">NdtParseError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.NphHeader"><code class="docutils literal notranslate"><span class="pre">NphHeader</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.NphHeader.is_request"><code class="docutils literal notranslate"><span class="pre">NphHeader.is_request</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.NphHeader.packet_type"><code class="docutils literal notranslate"><span class="pre">NphHeader.packet_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.NphHeader.request_id"><code class="docutils literal notranslate"><span class="pre">NphHeader.request_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.NphHeader.service_id"><code class="docutils literal notranslate"><span class="pre">NphHeader.service_id</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.NplHeader"><code class="docutils literal notranslate"><span class="pre">NplHeader</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.NplHeader.crc"><code class="docutils literal notranslate"><span class="pre">NplHeader.crc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.NplHeader.crc_enabled"><code class="docutils literal notranslate"><span class="pre">NplHeader.crc_enabled</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.NplHeader.data_size"><code class="docutils literal notranslate"><span class="pre">NplHeader.data_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.NplHeader.packet_type"><code class="docutils literal notranslate"><span class="pre">NplHeader.packet_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.NplHeader.peer_address"><code class="docutils literal notranslate"><span class="pre">NplHeader.peer_address</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.NplHeader.request_id"><code class="docutils literal notranslate"><span class="pre">NplHeader.request_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.NplHeader.signature"><code class="docutils literal notranslate"><span class="pre">NplHeader.signature</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.RealtimePacket"><code class="docutils literal notranslate"><span class="pre">RealtimePacket</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.RealtimePacket.cells"><code class="docutils literal notranslate"><span class="pre">RealtimePacket.cells</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.RealtimePacket.peer_address"><code class="docutils literal notranslate"><span class="pre">RealtimePacket.peer_address</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.RealtimePacket.request_id"><code class="docutils literal notranslate"><span class="pre">RealtimePacket.request_id</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.Termo16"><code class="docutils literal notranslate"><span class="pre">Termo16</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Termo16.status"><code class="docutils literal notranslate"><span class="pre">Termo16.status</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Termo16.temperature_c"><code class="docutils literal notranslate"><span class="pre">Termo16.temperature_c</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.Usi08"><code class="docutils literal notranslate"><span class="pre">Usi08</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Usi08.det_status"><code class="docutils literal notranslate"><span class="pre">Usi08.det_status</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Usi08.level_l"><code class="docutils literal notranslate"><span class="pre">Usi08.level_l</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Usi08.level_mm"><code class="docutils literal notranslate"><span class="pre">Usi08.level_mm</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.ndtp.parser.Usi08.temperature"><code class="docutils literal notranslate"><span class="pre">Usi08.temperature</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.build_handshake"><code class="docutils literal notranslate"><span class="pre">build_handshake()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.build_nav00_payload"><code class="docutils literal notranslate"><span class="pre">build_nav00_payload()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.build_nph"><code class="docutils literal notranslate"><span class="pre">build_nph()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.build_npl"><code class="docutils literal notranslate"><span class="pre">build_npl()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.build_realtime"><code class="docutils literal notranslate"><span class="pre">build_realtime()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.crc16_modbus"><code class="docutils literal notranslate"><span class="pre">crc16_modbus()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.decode_cell"><code class="docutils literal notranslate"><span class="pre">decode_cell()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.parse_handshake"><code class="docutils literal notranslate"><span class="pre">parse_handshake()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.parse_nph"><code class="docutils literal notranslate"><span class="pre">parse_nph()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.parse_npl"><code class="docutils literal notranslate"><span class="pre">parse_npl()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.parse_packet"><code class="docutils literal notranslate"><span class="pre">parse_packet()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#app.ndtp.parser.parse_realtime"><code class="docutils literal notranslate"><span class="pre">parse_realtime()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-app.services.telemetry">Telemetry Service</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#app.services.telemetry.TelemetryService"><code class="docutils literal notranslate"><span class="pre">TelemetryService</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#app.services.telemetry.TelemetryService.count"><code class="docutils literal notranslate"><span class="pre">TelemetryService.count()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.services.telemetry.TelemetryService.get_latest"><code class="docutils literal notranslate"><span class="pre">TelemetryService.get_latest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.services.telemetry.TelemetryService.get_recent"><code class="docutils literal notranslate"><span class="pre">TelemetryService.get_recent()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.services.telemetry.TelemetryService.handle_event"><code class="docutils literal notranslate"><span class="pre">TelemetryService.handle_event()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.services.telemetry.TelemetryService.list_latest"><code class="docutils literal notranslate"><span class="pre">TelemetryService.list_latest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.services.telemetry.TelemetryService.record"><code class="docutils literal notranslate"><span class="pre">TelemetryService.record()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.services.telemetry.TelemetryService.subscribe"><code class="docutils literal notranslate"><span class="pre">TelemetryService.subscribe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#app.services.telemetry.TelemetryService.unsubscribe"><code class="docutils literal notranslate"><span class="pre">TelemetryService.unsubscribe()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Transport Delay Predictor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Backend API</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="backend-api">
+<h1>Backend API<a class="headerlink" href="#backend-api" title="Link to this heading"></a></h1>
+<section id="module-app.main">
+<span id="main-application"></span><h2>Main Application<a class="headerlink" href="#module-app.main" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="app.main.lifespan">
+<span class="sig-prename descclassname"><span class="pre">app.main.</span></span><span class="sig-name descname"><span class="pre">lifespan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/main.html#lifespan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.main.lifespan" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>app</strong> (<em>FastAPI</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-app.api.auth">
+<span id="authentication-api"></span><h2>Authentication API<a class="headerlink" href="#module-app.api.auth" title="Link to this heading"></a></h2>
+<p>Authentication endpoints used by Swagger UI and the dashboard.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="app.api.auth.login">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.api.auth.</span></span><span class="sig-name descname"><span class="pre">login</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">response</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auth_service</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/api/auth.html#login"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.api.auth.login" title="Link to this definition"></a></dt>
+<dd><p>Authenticate a dispatcher and persist the JWT in an HttpOnly cookie.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#app.schemas.auth.TokenResponse" title="app.schemas.auth.TokenResponse"><code class="xref py py-class docutils literal notranslate"><span class="pre">TokenResponse</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>form</strong> (<em>Annotated</em><em>[</em><em>OAuth2PasswordRequestForm</em><em>, </em><em>Depends</em><em>(</em><em>NoneType</em><em>)</em><em>]</em>)</p></li>
+<li><p><strong>response</strong> (<em>Response</em>)</p></li>
+<li><p><strong>auth_service</strong> (<em>Annotated</em><em>[</em><a class="reference internal" href="#app.services.auth.AuthService" title="app.services.auth.AuthService"><em>AuthService</em></a><em>, </em><em>Depends</em><em>(</em><em>get_auth_service</em><em>)</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.api.auth.logout">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.api.auth.</span></span><span class="sig-name descname"><span class="pre">logout</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/api/auth.html#logout"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.api.auth.logout" title="Link to this definition"></a></dt>
+<dd><p>Delete the browser session cookie.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>response</strong> (<em>Response</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.api.auth.read_current_user">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.api.auth.</span></span><span class="sig-name descname"><span class="pre">read_current_user</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/api/auth.html#read_current_user"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.api.auth.read_current_user" title="Link to this definition"></a></dt>
+<dd><p>Return the identity encoded in the current Bearer token.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#app.schemas.auth.CurrentUser" title="app.schemas.auth.CurrentUser"><code class="xref py py-class docutils literal notranslate"><span class="pre">CurrentUser</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>user</strong> (<em>Annotated</em><em>[</em><a class="reference internal" href="#app.schemas.auth.CurrentUser" title="app.schemas.auth.CurrentUser"><em>CurrentUser</em></a><em>, </em><em>Depends</em><em>(</em><em>get_current_user</em><em>)</em><em>]</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-app.core.security">
+<span id="authentication-internals"></span><h2>Authentication Internals<a class="headerlink" href="#module-app.core.security" title="Link to this heading"></a></h2>
+<p>JWT creation and validation for the dispatcher API.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="app.core.security.create_access_token">
+<span class="sig-prename descclassname"><span class="pre">app.core.security.</span></span><span class="sig-name descname"><span class="pre">create_access_token</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">role</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/core/security.html#create_access_token"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.core.security.create_access_token" title="Link to this definition"></a></dt>
+<dd><p>Create a signed access token and return it with its lifetime in seconds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>username</strong> (<em>str</em>)</p></li>
+<li><p><strong>role</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.core.security.decode_access_token">
+<span class="sig-prename descclassname"><span class="pre">app.core.security.</span></span><span class="sig-name descname"><span class="pre">decode_access_token</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">token</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/core/security.html#decode_access_token"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.core.security.decode_access_token" title="Link to this definition"></a></dt>
+<dd><p>Return username and role or <code class="docutils literal notranslate"><span class="pre">None</span></code> for an invalid/expired token.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>] | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>token</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-app.services.auth">Authentication business logic independent from FastAPI routes.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.services.auth.AuthService">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.services.auth.</span></span><span class="sig-name descname"><span class="pre">AuthService</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repository</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/services/auth.html#AuthService"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.services.auth.AuthService" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Authenticate dispatchers and bootstrap the first database account.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>repository</strong> (<a class="reference internal" href="#app.repositories.auth.AuthRepository" title="app.repositories.auth.AuthRepository"><em>AuthRepository</em></a>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="app.services.auth.AuthService.authenticate">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">authenticate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/services/auth.html#AuthService.authenticate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.services.auth.AuthService.authenticate" title="Link to this definition"></a></dt>
+<dd><p>Verify credentials against the active PostgreSQL account.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#app.schemas.auth.CurrentUser" title="app.schemas.auth.CurrentUser"><code class="xref py py-class docutils literal notranslate"><span class="pre">CurrentUser</span></code></a> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>username</strong> (<em>str</em>)</p></li>
+<li><p><strong>password</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.services.auth.AuthService.bootstrap">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">bootstrap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/services/auth.html#AuthService.bootstrap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.services.auth.AuthService.bootstrap" title="Link to this definition"></a></dt>
+<dd><p>Create the first configured account without overwriting existing data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>username</strong> (<em>str</em>)</p></li>
+<li><p><strong>password</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.services.auth.AuthService.get_current_user">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_current_user</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/services/auth.html#AuthService.get_current_user"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.services.auth.AuthService.get_current_user" title="Link to this definition"></a></dt>
+<dd><p>Resolve the current active account for authorization checks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#app.schemas.auth.CurrentUser" title="app.schemas.auth.CurrentUser"><code class="xref py py-class docutils literal notranslate"><span class="pre">CurrentUser</span></code></a> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>username</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<p id="module-app.repositories.auth">PostgreSQL persistence for dispatcher accounts.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.repositories.auth.AuthRepository">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.repositories.auth.</span></span><span class="sig-name descname"><span class="pre">AuthRepository</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">database_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connect_timeout_s</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/repositories/auth.html#AuthRepository"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.repositories.auth.AuthRepository" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Read and bootstrap authentication accounts in PostgreSQL.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>database_url</strong> (<em>str</em>)</p></li>
+<li><p><strong>connect_timeout_s</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="app.repositories.auth.AuthRepository.close">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/repositories/auth.html#AuthRepository.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.repositories.auth.AuthRepository.close" title="Link to this definition"></a></dt>
+<dd><p>Release all pooled database connections.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.repositories.auth.AuthRepository.create_initial_user">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">create_initial_user</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password_hash</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">role</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dispatcher'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/repositories/auth.html#AuthRepository.create_initial_user"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.repositories.auth.AuthRepository.create_initial_user" title="Link to this definition"></a></dt>
+<dd><p>Insert a bootstrap account only when its username is absent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>username</strong> (<em>str</em>)</p></li>
+<li><p><strong>password_hash</strong> (<em>str</em>)</p></li>
+<li><p><strong>role</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.repositories.auth.AuthRepository.get_active_user">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_active_user</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/repositories/auth.html#AuthRepository.get_active_user"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.repositories.auth.AuthRepository.get_active_user" title="Link to this definition"></a></dt>
+<dd><p>Return an enabled user by exact username.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#app.repositories.auth.AuthUser" title="app.repositories.auth.AuthUser"><code class="xref py py-class docutils literal notranslate"><span class="pre">AuthUser</span></code></a> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>username</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.repositories.auth.AuthRepository.initialize">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">initialize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/repositories/auth.html#AuthRepository.initialize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.repositories.auth.AuthRepository.initialize" title="Link to this definition"></a></dt>
+<dd><p>Create backend-owned tables if they do not exist.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.repositories.auth.AuthUser">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.repositories.auth.</span></span><span class="sig-name descname"><span class="pre">AuthUser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/repositories/auth.html#AuthUser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.repositories.auth.AuthUser" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Base</span></code></p>
+<p>Dispatcher account stored in PostgreSQL.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.repositories.auth.AuthUser.created_at">
+<span class="sig-name descname"><span class="pre">created_at</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapped</span><span class="p"><span class="pre">[</span></span><span class="pre">datetime</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#app.repositories.auth.AuthUser.created_at" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.repositories.auth.AuthUser.is_active">
+<span class="sig-name descname"><span class="pre">is_active</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapped</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#app.repositories.auth.AuthUser.is_active" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.repositories.auth.AuthUser.password_hash">
+<span class="sig-name descname"><span class="pre">password_hash</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapped</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#app.repositories.auth.AuthUser.password_hash" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.repositories.auth.AuthUser.role">
+<span class="sig-name descname"><span class="pre">role</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapped</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#app.repositories.auth.AuthUser.role" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.repositories.auth.AuthUser.username">
+<span class="sig-name descname"><span class="pre">username</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Mapped</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#app.repositories.auth.AuthUser.username" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-app.api.health">
+<span id="health-api"></span><h2>Health API<a class="headerlink" href="#module-app.api.health" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="app.api.health.health_check">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.api.health.</span></span><span class="sig-name descname"><span class="pre">health_check</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/api/health.html#health_check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.api.health.health_check" title="Link to this definition"></a></dt>
+<dd><p>Проверка состояния Backend.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Текущее состояние сервиса.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-app.api.predictions">
+<span id="predictions-api"></span><h2>Predictions API<a class="headerlink" href="#module-app.api.predictions" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="app.api.predictions.latest_prediction">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.api.predictions.</span></span><span class="sig-name descname"><span class="pre">latest_prediction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tr_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http_request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/api/predictions.html#latest_prediction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.api.predictions.latest_prediction" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#app.schemas.prediction.StoredPrediction" title="app.schemas.prediction.StoredPrediction"><code class="xref py py-class docutils literal notranslate"><span class="pre">StoredPrediction</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>tr_id</strong> (<em>int</em>)</p></li>
+<li><p><strong>http_request</strong> (<em>Request</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.api.predictions.list_predictions">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.api.predictions.</span></span><span class="sig-name descname"><span class="pre">list_predictions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">http_request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/api/predictions.html#list_predictions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.api.predictions.list_predictions" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<a class="reference internal" href="#app.schemas.prediction.StoredPrediction" title="app.schemas.prediction.StoredPrediction"><code class="xref py py-class docutils literal notranslate"><span class="pre">StoredPrediction</span></code></a>]</span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>http_request</strong> (<em>Request</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.api.predictions.predict">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.api.predictions.</span></span><span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http_request</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/api/predictions.html#predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.api.predictions.predict" title="Link to this definition"></a></dt>
+<dd><p>Выполняет прогноз задержки транспортного средства.</p>
+<p>Передаёт текущую точку и накопленную NDTP-историю в ML Service.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#app.schemas.prediction.PredictionRequest" title="app.schemas.prediction.PredictionRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">PredictionRequest</span></code></a></span>) – Текущее состояние транспортного средства.</p></li>
+<li><p><strong>http_request</strong> (<em>Request</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Прогноз задержки в секундах.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#app.schemas.prediction.PredictionResponse" title="app.schemas.prediction.PredictionResponse"><code class="xref py py-class docutils literal notranslate"><span class="pre">PredictionResponse</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.api.predictions.predict_from_buffer">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.api.predictions.</span></span><span class="sig-name descname"><span class="pre">predict_from_buffer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">http_request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tr_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cur_dev_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_stop_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_time_begin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop_lat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop_lon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/api/predictions.html#predict_from_buffer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.api.predictions.predict_from_buffer" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#app.schemas.prediction.PredictionResponse" title="app.schemas.prediction.PredictionResponse"><code class="xref py py-class docutils literal notranslate"><span class="pre">PredictionResponse</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>http_request</strong> (<em>Request</em>)</p></li>
+<li><p><strong>tr_id</strong> (<em>int</em>)</p></li>
+<li><p><strong>T</strong> (<em>datetime</em>)</p></li>
+<li><p><strong>cur_dev_s</strong> (<em>float</em>)</p></li>
+<li><p><strong>target_stop_id</strong> (<em>int</em>)</p></li>
+<li><p><strong>unit_id</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>target_time_begin</strong> (<em>datetime</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>stop_lat</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>stop_lon</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-app.schemas.prediction">
+<span id="schemas"></span><h2>Schemas<a class="headerlink" href="#module-app.schemas.prediction" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.schemas.prediction.PredictionRequest">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.schemas.prediction.</span></span><span class="sig-name descname"><span class="pre">PredictionRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/schemas/prediction.html#PredictionRequest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.schemas.prediction.PredictionRequest" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tr_id</strong> (<em>int</em>)</p></li>
+<li><p><strong>timestamp</strong> (<em>datetime</em>)</p></li>
+<li><p><strong>unit_id</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>target_stop_id</strong> (<em>int</em>)</p></li>
+<li><p><strong>target_time_begin</strong> (<em>datetime</em>)</p></li>
+<li><p><strong>stop_lat</strong> (<em>float</em>)</p></li>
+<li><p><strong>stop_lon</strong> (<em>float</em>)</p></li>
+<li><p><strong>lat</strong> (<em>float</em>)</p></li>
+<li><p><strong>lon</strong> (<em>float</em>)</p></li>
+<li><p><strong>speed</strong> (<em>float</em>)</p></li>
+<li><p><strong>cur_dev_s</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.PredictionRequest.cur_dev_s">
+<span class="sig-name descname"><span class="pre">cur_dev_s</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#app.schemas.prediction.PredictionRequest.cur_dev_s" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.PredictionRequest.lat">
+<span class="sig-name descname"><span class="pre">lat</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#app.schemas.prediction.PredictionRequest.lat" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.PredictionRequest.lon">
+<span class="sig-name descname"><span class="pre">lon</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#app.schemas.prediction.PredictionRequest.lon" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.PredictionRequest.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#app.schemas.prediction.PredictionRequest.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.PredictionRequest.speed">
+<span class="sig-name descname"><span class="pre">speed</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#app.schemas.prediction.PredictionRequest.speed" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.PredictionRequest.stop_lat">
+<span class="sig-name descname"><span class="pre">stop_lat</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#app.schemas.prediction.PredictionRequest.stop_lat" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.PredictionRequest.stop_lon">
+<span class="sig-name descname"><span class="pre">stop_lon</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#app.schemas.prediction.PredictionRequest.stop_lon" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.PredictionRequest.target_stop_id">
+<span class="sig-name descname"><span class="pre">target_stop_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.schemas.prediction.PredictionRequest.target_stop_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.PredictionRequest.target_time_begin">
+<span class="sig-name descname"><span class="pre">target_time_begin</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">datetime</span></span><a class="headerlink" href="#app.schemas.prediction.PredictionRequest.target_time_begin" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.PredictionRequest.timestamp">
+<span class="sig-name descname"><span class="pre">timestamp</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">datetime</span></span><a class="headerlink" href="#app.schemas.prediction.PredictionRequest.timestamp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.PredictionRequest.tr_id">
+<span class="sig-name descname"><span class="pre">tr_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.schemas.prediction.PredictionRequest.tr_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.PredictionRequest.unit_id">
+<span class="sig-name descname"><span class="pre">unit_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#app.schemas.prediction.PredictionRequest.unit_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.schemas.prediction.PredictionResponse">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.schemas.prediction.</span></span><span class="sig-name descname"><span class="pre">PredictionResponse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/schemas/prediction.html#PredictionResponse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.schemas.prediction.PredictionResponse" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tr_id</strong> (<em>int</em>)</p></li>
+<li><p><strong>prediction</strong> (<em>float</em>)</p></li>
+<li><p><strong>model_version</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.PredictionResponse.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#app.schemas.prediction.PredictionResponse.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.PredictionResponse.model_version">
+<span class="sig-name descname"><span class="pre">model_version</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#app.schemas.prediction.PredictionResponse.model_version" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.PredictionResponse.prediction">
+<span class="sig-name descname"><span class="pre">prediction</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#app.schemas.prediction.PredictionResponse.prediction" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.PredictionResponse.tr_id">
+<span class="sig-name descname"><span class="pre">tr_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.schemas.prediction.PredictionResponse.tr_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.schemas.prediction.StoredPrediction">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.schemas.prediction.</span></span><span class="sig-name descname"><span class="pre">StoredPrediction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/schemas/prediction.html#StoredPrediction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.schemas.prediction.StoredPrediction" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tr_id</strong> (<em>int</em>)</p></li>
+<li><p><strong>unit_id</strong> (<em>int</em>)</p></li>
+<li><p><strong>prediction_time</strong> (<em>datetime</em>)</p></li>
+<li><p><strong>target_stop_id</strong> (<em>int</em>)</p></li>
+<li><p><strong>target_time</strong> (<em>datetime</em>)</p></li>
+<li><p><strong>current_delay_s</strong> (<em>float</em>)</p></li>
+<li><p><strong>predicted_delay_s</strong> (<em>float</em>)</p></li>
+<li><p><strong>model_version</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.StoredPrediction.current_delay_s">
+<span class="sig-name descname"><span class="pre">current_delay_s</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#app.schemas.prediction.StoredPrediction.current_delay_s" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.StoredPrediction.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#app.schemas.prediction.StoredPrediction.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.StoredPrediction.model_version">
+<span class="sig-name descname"><span class="pre">model_version</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#app.schemas.prediction.StoredPrediction.model_version" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.StoredPrediction.predicted_delay_s">
+<span class="sig-name descname"><span class="pre">predicted_delay_s</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#app.schemas.prediction.StoredPrediction.predicted_delay_s" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.StoredPrediction.prediction_time">
+<span class="sig-name descname"><span class="pre">prediction_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">datetime</span></span><a class="headerlink" href="#app.schemas.prediction.StoredPrediction.prediction_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.StoredPrediction.target_stop_id">
+<span class="sig-name descname"><span class="pre">target_stop_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.schemas.prediction.StoredPrediction.target_stop_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.StoredPrediction.target_time">
+<span class="sig-name descname"><span class="pre">target_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">datetime</span></span><a class="headerlink" href="#app.schemas.prediction.StoredPrediction.target_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.StoredPrediction.tr_id">
+<span class="sig-name descname"><span class="pre">tr_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.schemas.prediction.StoredPrediction.tr_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.prediction.StoredPrediction.unit_id">
+<span class="sig-name descname"><span class="pre">unit_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.schemas.prediction.StoredPrediction.unit_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<p id="module-app.schemas.auth">API schemas for dispatcher authentication.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.schemas.auth.CurrentUser">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.schemas.auth.</span></span><span class="sig-name descname"><span class="pre">CurrentUser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/schemas/auth.html#CurrentUser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.schemas.auth.CurrentUser" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>Authenticated dispatcher identity exposed to API clients.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>username</strong> (<em>str</em>)</p></li>
+<li><p><strong>role</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.auth.CurrentUser.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#app.schemas.auth.CurrentUser.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.auth.CurrentUser.role">
+<span class="sig-name descname"><span class="pre">role</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#app.schemas.auth.CurrentUser.role" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.auth.CurrentUser.username">
+<span class="sig-name descname"><span class="pre">username</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#app.schemas.auth.CurrentUser.username" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.schemas.auth.TokenResponse">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.schemas.auth.</span></span><span class="sig-name descname"><span class="pre">TokenResponse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/schemas/auth.html#TokenResponse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.schemas.auth.TokenResponse" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>Bearer token returned after successful authentication.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>access_token</strong> (<em>str</em>)</p></li>
+<li><p><strong>token_type</strong> (<em>str</em>)</p></li>
+<li><p><strong>expires_in</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.auth.TokenResponse.access_token">
+<span class="sig-name descname"><span class="pre">access_token</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#app.schemas.auth.TokenResponse.access_token" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.auth.TokenResponse.expires_in">
+<span class="sig-name descname"><span class="pre">expires_in</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.schemas.auth.TokenResponse.expires_in" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.auth.TokenResponse.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#app.schemas.auth.TokenResponse.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.schemas.auth.TokenResponse.token_type">
+<span class="sig-name descname"><span class="pre">token_type</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#app.schemas.auth.TokenResponse.token_type" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-app.api.vehicles">
+<span id="vehicles-api"></span><h2>Vehicles API<a class="headerlink" href="#module-app.api.vehicles" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="app.api.vehicles.get_vehicle">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.api.vehicles.</span></span><span class="sig-name descname"><span class="pre">get_vehicle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">service</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Depends(get_telemetry_service)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/api/vehicles.html#get_vehicle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.api.vehicles.get_vehicle" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TelemetryEvent</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>unit_id</strong> (<em>int</em>)</p></li>
+<li><p><strong>service</strong> (<a class="reference internal" href="#app.services.telemetry.TelemetryService" title="app.services.telemetry.TelemetryService"><em>TelemetryService</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.api.vehicles.get_vehicle_history">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.api.vehicles.</span></span><span class="sig-name descname"><span class="pre">get_vehicle_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">service</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Depends(get_telemetry_service)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/api/vehicles.html#get_vehicle_history"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.api.vehicles.get_vehicle_history" title="Link to this definition"></a></dt>
+<dd><p>Return the buffered packets used for the terminal’s speed history.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TelemetryEvent</span></code>]</span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>unit_id</strong> (<em>int</em>)</p></li>
+<li><p><strong>service</strong> (<a class="reference internal" href="#app.services.telemetry.TelemetryService" title="app.services.telemetry.TelemetryService"><em>TelemetryService</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.api.vehicles.list_vehicles">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.api.vehicles.</span></span><span class="sig-name descname"><span class="pre">list_vehicles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">service</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Depends(get_telemetry_service)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/api/vehicles.html#list_vehicles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.api.vehicles.list_vehicles" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TelemetryEvent</span></code>]</span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>service</strong> (<a class="reference internal" href="#app.services.telemetry.TelemetryService" title="app.services.telemetry.TelemetryService"><em>TelemetryService</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-app.ndtp.server">
+<span id="ndtp-server"></span><h2>NDTP Server<a class="headerlink" href="#module-app.ndtp.server" title="Link to this heading"></a></h2>
+<p>Async TCP-сервер приёма NDTP-телеметрии.</p>
+<p>Заканчивает знание о протоколе: наружу отдаёт только TelemetryEvent.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.ndtp.server.NdtServer">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.ndtp.server.</span></span><span class="sig-name descname"><span class="pre">NdtServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">on_event</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'0.0.0.0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">9201</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/server.html#NdtServer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.server.NdtServer" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>TCP-сервер: читает кадры NDTP и транслирует их в TelemetryEvent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>on_event</strong> (<em>Callable</em><em>[</em><em>[</em><em>TelemetryEvent</em><em>]</em><em>, </em><em>Awaitable</em><em>[</em><em>None</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>host</strong> (<em>str</em>)</p></li>
+<li><p><strong>port</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="app.ndtp.server.NdtServer.start">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/server.html#NdtServer.start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.server.NdtServer.start" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.ndtp.server.NdtServer.stop">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/server.html#NdtServer.stop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.server.NdtServer.stop" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-app.ndtp.parser">
+<span id="ndtp-parser"></span><h2>NDTP Parser<a class="headerlink" href="#module-app.ndtp.parser" title="Link to this heading"></a></h2>
+<p>Бинарный парсер протокола NDTP.</p>
+<p>Каждый кадр NDTP: [NPL 15 байт][NPH 10 байт][тело].
+Все поля little-endian. Здесь живёт ВСЁ знание о протоколе: наружу модуль
+отдаёт только normalized-объекты из app.ndtp.schemas.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.ndtp.parser.Can10">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">Can10</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">speed_kmh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine_rpm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine_temp_c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">odometer_km</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine_hours</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alarm_flags</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#Can10"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.Can10" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>speed_kmh</strong> (<em>float</em>)</p></li>
+<li><p><strong>engine_rpm</strong> (<em>int</em>)</p></li>
+<li><p><strong>engine_temp_c</strong> (<em>int</em>)</p></li>
+<li><p><strong>odometer_km</strong> (<em>int</em>)</p></li>
+<li><p><strong>engine_hours</strong> (<em>float</em>)</p></li>
+<li><p><strong>alarm_flags</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Can10.alarm_flags">
+<span class="sig-name descname"><span class="pre">alarm_flags</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.Can10.alarm_flags" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Can10.engine_hours">
+<span class="sig-name descname"><span class="pre">engine_hours</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#app.ndtp.parser.Can10.engine_hours" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Can10.engine_rpm">
+<span class="sig-name descname"><span class="pre">engine_rpm</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.Can10.engine_rpm" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Can10.engine_temp_c">
+<span class="sig-name descname"><span class="pre">engine_temp_c</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.Can10.engine_temp_c" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Can10.odometer_km">
+<span class="sig-name descname"><span class="pre">odometer_km</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.Can10.odometer_km" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Can10.speed_kmh">
+<span class="sig-name descname"><span class="pre">speed_kmh</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#app.ndtp.parser.Can10.speed_kmh" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.ndtp.parser.HandshakeRequest">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">HandshakeRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">peer_address</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proto_major</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proto_minor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#HandshakeRequest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.HandshakeRequest" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>peer_address</strong> (<em>int</em>)</p></li>
+<li><p><strong>proto_major</strong> (<em>int</em>)</p></li>
+<li><p><strong>proto_minor</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.HandshakeRequest.peer_address">
+<span class="sig-name descname"><span class="pre">peer_address</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.HandshakeRequest.peer_address" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.HandshakeRequest.proto_major">
+<span class="sig-name descname"><span class="pre">proto_major</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.HandshakeRequest.proto_major" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.HandshakeRequest.proto_minor">
+<span class="sig-name descname"><span class="pre">proto_minor</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.HandshakeRequest.proto_minor" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.ndtp.parser.IntSensor02">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">IntSensor02</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">di0_counter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">di1_counter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">di2_counter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">di3_counter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">odometer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">csq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gprs_state</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#IntSensor02"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.IntSensor02" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>di0_counter</strong> (<em>int</em>)</p></li>
+<li><p><strong>di1_counter</strong> (<em>int</em>)</p></li>
+<li><p><strong>di2_counter</strong> (<em>int</em>)</p></li>
+<li><p><strong>di3_counter</strong> (<em>int</em>)</p></li>
+<li><p><strong>odometer</strong> (<em>int</em>)</p></li>
+<li><p><strong>csq</strong> (<em>int</em>)</p></li>
+<li><p><strong>gprs_state</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.IntSensor02.csq">
+<span class="sig-name descname"><span class="pre">csq</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.IntSensor02.csq" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.IntSensor02.di0_counter">
+<span class="sig-name descname"><span class="pre">di0_counter</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.IntSensor02.di0_counter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.IntSensor02.di1_counter">
+<span class="sig-name descname"><span class="pre">di1_counter</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.IntSensor02.di1_counter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.IntSensor02.di2_counter">
+<span class="sig-name descname"><span class="pre">di2_counter</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.IntSensor02.di2_counter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.IntSensor02.di3_counter">
+<span class="sig-name descname"><span class="pre">di3_counter</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.IntSensor02.di3_counter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.IntSensor02.gprs_state">
+<span class="sig-name descname"><span class="pre">gprs_state</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.IntSensor02.gprs_state" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.IntSensor02.odometer">
+<span class="sig-name descname"><span class="pre">odometer</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.IntSensor02.odometer" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.ndtp.parser.Nav00">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">Nav00</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timestamp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latitude</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coordinates_valid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">battery_voltage_mv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">speed_avg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">speed_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">course</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">track_m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">altitude_m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">satellites</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdop</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#Nav00"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.Nav00" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>timestamp</strong> (<em>int</em>)</p></li>
+<li><p><strong>latitude</strong> (<em>float</em>)</p></li>
+<li><p><strong>longitude</strong> (<em>float</em>)</p></li>
+<li><p><strong>coordinates_valid</strong> (<em>bool</em>)</p></li>
+<li><p><strong>alert</strong> (<em>bool</em>)</p></li>
+<li><p><strong>sos</strong> (<em>bool</em>)</p></li>
+<li><p><strong>battery_voltage_mv</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>speed_avg</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>speed_max</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>course</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>track_m</strong> (<em>int</em>)</p></li>
+<li><p><strong>altitude_m</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>satellites</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>pdop</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Nav00.alert">
+<span class="sig-name descname"><span class="pre">alert</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#app.ndtp.parser.Nav00.alert" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Nav00.altitude_m">
+<span class="sig-name descname"><span class="pre">altitude_m</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#app.ndtp.parser.Nav00.altitude_m" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Nav00.battery_voltage_mv">
+<span class="sig-name descname"><span class="pre">battery_voltage_mv</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#app.ndtp.parser.Nav00.battery_voltage_mv" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Nav00.coordinates_valid">
+<span class="sig-name descname"><span class="pre">coordinates_valid</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#app.ndtp.parser.Nav00.coordinates_valid" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Nav00.course">
+<span class="sig-name descname"><span class="pre">course</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#app.ndtp.parser.Nav00.course" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Nav00.latitude">
+<span class="sig-name descname"><span class="pre">latitude</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#app.ndtp.parser.Nav00.latitude" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Nav00.longitude">
+<span class="sig-name descname"><span class="pre">longitude</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#app.ndtp.parser.Nav00.longitude" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Nav00.pdop">
+<span class="sig-name descname"><span class="pre">pdop</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.Nav00.pdop" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Nav00.satellites">
+<span class="sig-name descname"><span class="pre">satellites</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#app.ndtp.parser.Nav00.satellites" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Nav00.sos">
+<span class="sig-name descname"><span class="pre">sos</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#app.ndtp.parser.Nav00.sos" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Nav00.speed_avg">
+<span class="sig-name descname"><span class="pre">speed_avg</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#app.ndtp.parser.Nav00.speed_avg" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Nav00.speed_max">
+<span class="sig-name descname"><span class="pre">speed_max</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#app.ndtp.parser.Nav00.speed_max" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Nav00.timestamp">
+<span class="sig-name descname"><span class="pre">timestamp</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.Nav00.timestamp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Nav00.track_m">
+<span class="sig-name descname"><span class="pre">track_m</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.Nav00.track_m" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="app.ndtp.parser.NdtParseError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">NdtParseError</span></span><a class="reference internal" href="_modules/app/ndtp/parser.html#NdtParseError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.NdtParseError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ValueError</span></code></p>
+<p>Невалидный или неподдерживаемый NDTP-пакет.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.ndtp.parser.NphHeader">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">NphHeader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">service_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">packet_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#NphHeader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.NphHeader" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>service_id</strong> (<em>int</em>)</p></li>
+<li><p><strong>packet_type</strong> (<em>int</em>)</p></li>
+<li><p><strong>is_request</strong> (<em>bool</em>)</p></li>
+<li><p><strong>request_id</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.NphHeader.is_request">
+<span class="sig-name descname"><span class="pre">is_request</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#app.ndtp.parser.NphHeader.is_request" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.NphHeader.packet_type">
+<span class="sig-name descname"><span class="pre">packet_type</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.NphHeader.packet_type" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.NphHeader.request_id">
+<span class="sig-name descname"><span class="pre">request_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.NphHeader.request_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.NphHeader.service_id">
+<span class="sig-name descname"><span class="pre">service_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.NphHeader.service_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.ndtp.parser.NplHeader">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">NplHeader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crc_enabled</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">packet_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peer_address</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#NplHeader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.NplHeader" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>signature</strong> (<em>int</em>)</p></li>
+<li><p><strong>data_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>crc</strong> (<em>int</em>)</p></li>
+<li><p><strong>crc_enabled</strong> (<em>bool</em>)</p></li>
+<li><p><strong>packet_type</strong> (<em>int</em>)</p></li>
+<li><p><strong>peer_address</strong> (<em>int</em>)</p></li>
+<li><p><strong>request_id</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.NplHeader.crc">
+<span class="sig-name descname"><span class="pre">crc</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.NplHeader.crc" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.NplHeader.crc_enabled">
+<span class="sig-name descname"><span class="pre">crc_enabled</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#app.ndtp.parser.NplHeader.crc_enabled" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.NplHeader.data_size">
+<span class="sig-name descname"><span class="pre">data_size</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.NplHeader.data_size" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.NplHeader.packet_type">
+<span class="sig-name descname"><span class="pre">packet_type</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.NplHeader.packet_type" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.NplHeader.peer_address">
+<span class="sig-name descname"><span class="pre">peer_address</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.NplHeader.peer_address" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.NplHeader.request_id">
+<span class="sig-name descname"><span class="pre">request_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.NplHeader.request_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.NplHeader.signature">
+<span class="sig-name descname"><span class="pre">signature</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.NplHeader.signature" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.ndtp.parser.RealtimePacket">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">RealtimePacket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">peer_address</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cells</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#RealtimePacket"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.RealtimePacket" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>peer_address</strong> (<em>int</em>)</p></li>
+<li><p><strong>request_id</strong> (<em>int</em>)</p></li>
+<li><p><strong>cells</strong> (<em>dict</em><em>[</em><em>int</em><em> | </em><em>str</em><em>, </em><em>object</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.RealtimePacket.cells">
+<span class="sig-name descname"><span class="pre">cells</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">object</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#app.ndtp.parser.RealtimePacket.cells" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.RealtimePacket.peer_address">
+<span class="sig-name descname"><span class="pre">peer_address</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.RealtimePacket.peer_address" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.RealtimePacket.request_id">
+<span class="sig-name descname"><span class="pre">request_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.RealtimePacket.request_id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.ndtp.parser.Termo16">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">Termo16</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">status</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature_c</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#Termo16"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.Termo16" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>status</strong> (<em>int</em>)</p></li>
+<li><p><strong>temperature_c</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Termo16.status">
+<span class="sig-name descname"><span class="pre">status</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.Termo16.status" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Termo16.temperature_c">
+<span class="sig-name descname"><span class="pre">temperature_c</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.Termo16.temperature_c" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="app.ndtp.parser.Usi08">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">Usi08</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">det_status</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_mm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_l</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#Usi08"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.Usi08" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>det_status</strong> (<em>int</em>)</p></li>
+<li><p><strong>level_mm</strong> (<em>int</em>)</p></li>
+<li><p><strong>level_l</strong> (<em>int</em>)</p></li>
+<li><p><strong>temperature</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Usi08.det_status">
+<span class="sig-name descname"><span class="pre">det_status</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.Usi08.det_status" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Usi08.level_l">
+<span class="sig-name descname"><span class="pre">level_l</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.Usi08.level_l" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Usi08.level_mm">
+<span class="sig-name descname"><span class="pre">level_mm</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.Usi08.level_mm" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="app.ndtp.parser.Usi08.temperature">
+<span class="sig-name descname"><span class="pre">temperature</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#app.ndtp.parser.Usi08.temperature" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.ndtp.parser.build_handshake">
+<span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">build_handshake</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#build_handshake"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.build_handshake" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>unit_id</strong> (<em>int</em>)</p></li>
+<li><p><strong>request_id</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.ndtp.parser.build_nav00_payload">
+<span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">build_nav00_payload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timestamp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latitude</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">speed_avg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">course</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#build_nav00_payload"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.build_nav00_payload" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>timestamp</strong> (<em>int</em>)</p></li>
+<li><p><strong>latitude</strong> (<em>float</em>)</p></li>
+<li><p><strong>longitude</strong> (<em>float</em>)</p></li>
+<li><p><strong>speed_avg</strong> (<em>float</em>)</p></li>
+<li><p><strong>course</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.ndtp.parser.build_nph">
+<span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">build_nph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">service_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">packet_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#build_nph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.build_nph" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>service_id</strong> (<em>int</em>)</p></li>
+<li><p><strong>packet_type</strong> (<em>int</em>)</p></li>
+<li><p><strong>request_id</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.ndtp.parser.build_npl">
+<span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">build_npl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peer_address</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">payload</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#build_npl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.build_npl" title="Link to this definition"></a></dt>
+<dd><p>Собрать 15-байтный NPL с корректным CRC по NPH+телу.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>data_size</strong> (<em>int</em>)</p></li>
+<li><p><strong>peer_address</strong> (<em>int</em>)</p></li>
+<li><p><strong>payload</strong> (<em>bytes</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.ndtp.parser.build_realtime">
+<span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">build_realtime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nav_payload</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#build_realtime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.build_realtime" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>unit_id</strong> (<em>int</em>)</p></li>
+<li><p><strong>nav_payload</strong> (<em>bytes</em>)</p></li>
+<li><p><strong>request_id</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.ndtp.parser.crc16_modbus">
+<span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">crc16_modbus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#crc16_modbus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.crc16_modbus" title="Link to this definition"></a></dt>
+<dd><p>CRC-16/Modbus (poly 0xA001, init 0xFFFF).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>data</strong> (<em>bytes</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.ndtp.parser.decode_cell">
+<span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">decode_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">payload</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#decode_cell"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.decode_cell" title="Link to this definition"></a></dt>
+<dd><p>Декодировать известную ячейку; None — если тип поддерживаем, но не нужен.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>cell_type</strong> (<em>int</em>)</p></li>
+<li><p><strong>payload</strong> (<em>bytes</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.ndtp.parser.parse_handshake">
+<span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">parse_handshake</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nph_body</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#parse_handshake"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.parse_handshake" title="Link to this definition"></a></dt>
+<dd><p>Тело NPH_SGC_CONN_REQUEST: 18 байт.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#app.ndtp.parser.HandshakeRequest" title="app.ndtp.parser.HandshakeRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">HandshakeRequest</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>nph_body</strong> (<em>bytes</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.ndtp.parser.parse_nph">
+<span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">parse_nph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">body</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#parse_nph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.parse_nph" title="Link to this definition"></a></dt>
+<dd><p>Распаковать 10-байтный заголовок NPH.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#app.ndtp.parser.NphHeader" title="app.ndtp.parser.NphHeader"><code class="xref py py-class docutils literal notranslate"><span class="pre">NphHeader</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>body</strong> (<em>bytes</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.ndtp.parser.parse_npl">
+<span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">parse_npl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#parse_npl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.parse_npl" title="Link to this definition"></a></dt>
+<dd><p>Распаковать 15-байтный заголовок NPL и проверить CRC.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#app.ndtp.parser.NplHeader" title="app.ndtp.parser.NplHeader"><code class="xref py py-class docutils literal notranslate"><span class="pre">NplHeader</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>frame</strong> (<em>bytes</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.ndtp.parser.parse_packet">
+<span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">parse_packet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#parse_packet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.parse_packet" title="Link to this definition"></a></dt>
+<dd><p>Полный разбор одного кадра NDTP в типизированную структуру.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<a class="reference internal" href="#app.ndtp.parser.NplHeader" title="app.ndtp.parser.NplHeader"><code class="xref py py-class docutils literal notranslate"><span class="pre">NplHeader</span></code></a>, <a class="reference internal" href="#app.ndtp.parser.HandshakeRequest" title="app.ndtp.parser.HandshakeRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">HandshakeRequest</span></code></a> | <a class="reference internal" href="#app.ndtp.parser.RealtimePacket" title="app.ndtp.parser.RealtimePacket"><code class="xref py py-class docutils literal notranslate"><span class="pre">RealtimePacket</span></code></a>]</span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>frame</strong> (<em>bytes</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="app.ndtp.parser.parse_realtime">
+<span class="sig-prename descclassname"><span class="pre">app.ndtp.parser.</span></span><span class="sig-name descname"><span class="pre">parse_realtime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">npl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nph_body</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/ndtp/parser.html#parse_realtime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.ndtp.parser.parse_realtime" title="Link to this definition"></a></dt>
+<dd><p>Разобрать тело NPH_SND_REALTIME на ячейки.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#app.ndtp.parser.RealtimePacket" title="app.ndtp.parser.RealtimePacket"><code class="xref py py-class docutils literal notranslate"><span class="pre">RealtimePacket</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>npl</strong> (<a class="reference internal" href="#app.ndtp.parser.NplHeader" title="app.ndtp.parser.NplHeader"><em>NplHeader</em></a>)</p></li>
+<li><p><strong>nph_body</strong> (<em>bytes</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-app.services.telemetry">
+<span id="telemetry-service"></span><h2>Telemetry Service<a class="headerlink" href="#module-app.services.telemetry" title="Link to this heading"></a></h2>
+<p>Хранение текущего состояния ТС по телеметрии.</p>
+<p>Временное in-memory состояние для демки; при подключении БД сюда же
+добавится запись history. API и ML-пайплайн читают события только через
+нормализованный TelemetryEvent.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="app.services.telemetry.TelemetryService">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">app.services.telemetry.</span></span><span class="sig-name descname"><span class="pre">TelemetryService</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">150</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/services/telemetry.html#TelemetryService"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.services.telemetry.TelemetryService" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>In-memory реестр последних телеметрия-событий по каждому устройству.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_units</strong> (<em>int</em>)</p></li>
+<li><p><strong>max_points</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="app.services.telemetry.TelemetryService.count">
+<span class="sig-name descname"><span class="pre">count</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/services/telemetry.html#TelemetryService.count"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.services.telemetry.TelemetryService.count" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.services.telemetry.TelemetryService.get_latest">
+<span class="sig-name descname"><span class="pre">get_latest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/services/telemetry.html#TelemetryService.get_latest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.services.telemetry.TelemetryService.get_latest" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TelemetryEvent</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>unit_id</strong> (<em>int</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.services.telemetry.TelemetryService.get_recent">
+<span class="sig-name descname"><span class="pre">get_recent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/services/telemetry.html#TelemetryService.get_recent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.services.telemetry.TelemetryService.get_recent" title="Link to this definition"></a></dt>
+<dd><p>Snapshot at most 150 packets for one device.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TelemetryEvent</span></code>]</span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>unit_id</strong> (<em>int</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.services.telemetry.TelemetryService.handle_event">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">handle_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/services/telemetry.html#TelemetryService.handle_event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.services.telemetry.TelemetryService.handle_event" title="Link to this definition"></a></dt>
+<dd><p>Callback для NDTP-сервера.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>event</strong> (<em>TelemetryEvent</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.services.telemetry.TelemetryService.list_latest">
+<span class="sig-name descname"><span class="pre">list_latest</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/services/telemetry.html#TelemetryService.list_latest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.services.telemetry.TelemetryService.list_latest" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TelemetryEvent</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.services.telemetry.TelemetryService.record">
+<span class="sig-name descname"><span class="pre">record</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/services/telemetry.html#TelemetryService.record"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.services.telemetry.TelemetryService.record" title="Link to this definition"></a></dt>
+<dd><p>Сохранить последнее событие устройства.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>event</strong> (<em>TelemetryEvent</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.services.telemetry.TelemetryService.subscribe">
+<span class="sig-name descname"><span class="pre">subscribe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/services/telemetry.html#TelemetryService.subscribe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.services.telemetry.TelemetryService.subscribe" title="Link to this definition"></a></dt>
+<dd><p>Subscribe to bounded live updates without blocking the NDTP receiver.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Queue</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TelemetryEvent</span></code>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="app.services.telemetry.TelemetryService.unsubscribe">
+<span class="sig-name descname"><span class="pre">unsubscribe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">queue</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/app/services/telemetry.html#TelemetryService.unsubscribe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#app.services.telemetry.TelemetryService.unsubscribe" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>queue</strong> (<em>Queue</em><em>[</em><em>TelemetryEvent</em><em>]</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="configuration.html" class="btn btn-neutral float-left" title="Конфигурация" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

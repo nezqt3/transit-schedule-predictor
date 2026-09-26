@@ -1,4 +1,4 @@
-import { Bus, Gauge, LogOut } from 'lucide-react'
+import { List, LogOut, Map, Play } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
 import { env } from '@/config/env'
@@ -9,8 +9,9 @@ import { queryClient } from '@/lib/api/queryClient'
 import { useAuthStore } from '@/store/auth'
 
 const links = [
-  { to: '/', label: 'Обзор', icon: Gauge, end: true },
-  { to: '/vehicles', label: 'Телеметрия', icon: Bus, end: false },
+  { to: '/', label: 'Карта', icon: Map, end: true },
+  { to: '/vehicles', label: 'Таблица', icon: List, end: false },
+  { to: '/replay', label: 'Январь', icon: Play, end: false },
 ]
 
 export function NavBar() {
@@ -28,7 +29,6 @@ export function NavBar() {
   return (
     <header className="topbar">
       <div className="topbar__brand">
-        <span className="topbar__dot" aria-hidden />
         {env.appName}
       </div>
 
@@ -47,6 +47,13 @@ export function NavBar() {
       </nav>
 
       <BackendStatus />
+      <span className="topbar__date">
+        {new Date().toLocaleDateString('ru-RU', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })}
+      </span>
       <button className="topbar__logout" onClick={handleLogout} title="Выйти" type="button">
         <LogOut size={16} />
         <span>Выйти</span>
