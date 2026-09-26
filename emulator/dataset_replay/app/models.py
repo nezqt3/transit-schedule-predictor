@@ -50,6 +50,7 @@ class ReplayStartRequest(BaseModel):
     dataset: str = Field("validate", pattern=r"^[A-Za-z0-9_-]+$")
     tr_ids: list[int] = Field(..., min_length=1, max_length=100)
     time_mode: TimeMode = TimeMode.SHIFT_TO_NOW
+    speed_multiplier: float = Field(1.0, ge=0.1, le=3600)
     valid_locations_only: bool = True
     start_at: datetime | None = None
     end_at: datetime | None = None
@@ -81,6 +82,7 @@ class ReplayStatus(BaseModel):
     state: ReplayState = ReplayState.IDLE
     dataset: str | None = None
     time_mode: TimeMode | None = None
+    speed_multiplier: float = 1.0
     started_at: datetime | None = None
     finished_at: datetime | None = None
     sent_packets: int = 0

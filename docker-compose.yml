@@ -48,6 +48,7 @@ services:
       REPLAY_SCHEDULE_PATH: /app/replay_data/schedule.csv
       REPLAY_TRAFFIC_PATH: /app/replay_data/traffic.csv
       REPLAY_LABELS_PATH: /app/replay_labels.csv
+      DATASET_REPLAY_URL: http://dataset-replay:18081
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: ${POSTGRES_DB:-transport}

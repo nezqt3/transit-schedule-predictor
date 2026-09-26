@@ -5,23 +5,16 @@ import { useVehicleHistory } from '@/features/vehicles/api'
 import { usePredictions } from '@/features/predictions/api'
 import { SpeedTrend } from '@/features/vehicles/SpeedTrend'
 import { VehicleMap } from '@/features/vehicles/VehicleMap'
+import { fleetStatusIcons } from '@/features/vehicles/markerIcon'
 import { useVehicleFeed } from '@/features/vehicles/hooks'
 import { formatAge, formatClock } from '@/lib/format/time'
 import { eventTimeMs, hasValidPosition, isStale, speedKmh } from '@/lib/telemetry/readEvent'
 import { hasAlarm, needsAttention, statusLabel, vehicleStatus, type VehicleStatus } from '@/lib/telemetry/vehicleStatus'
 import { useTelemetryStore } from '@/store/telemetry'
+import { HistoricalFleetDashboard } from '@/features/replay/HistoricalFleetDashboard'
 import type { StoredPrediction, TelemetryEvent } from '@/types/api'
 
 type FleetFilter = 'all' | 'attention' | VehicleStatus
-
-const statusIcons = {
-  alarm: AlertTriangle,
-  'no-position': MapPinOff,
-  stale: Clock3,
-  moving: Navigation2,
-  stopped: Square,
-  unknown: Clock3,
-} as const
 
 const filterOptions: { value: FleetFilter; label: string }[] = [
   { value: 'all', label: 'Все состояния' },
@@ -49,7 +42,7 @@ function FleetRow({ event, selected, onSelect }: {
   onSelect: () => void
 }) {
   const status = vehicleStatus(event)
-  const Icon = statusIcons[status]
+  const Icon = fleetStatusIcons[status]
   const speed = speedKmh(event)
   return (
     <button
@@ -114,7 +107,7 @@ function VehicleDetails({ event, prediction }: {
   )
 }
 
-export function DashboardPage() {
+function LiveDashboard() {
   const { data: events = [], isPending, isError, error, dataUpdatedAt, streamConnected } = useVehicleFeed()
   const { data: predictions = [] } = usePredictions()
   const selectedUnitId = useTelemetryStore((state) => state.selectedUnitId)
@@ -144,6 +137,9 @@ export function DashboardPage() {
   const visibleOnMap = filtered.filter(hasValidPosition).length
   const attentionCount = events.filter((event) => needsAttention(event, now)).length
   const allStale = events.length > 0 && events.every((event) => isStale(event, now))
+  const historicalPackets = events.some((event) => event.nav &&
+    now - event.nav.timestamp * 1000 > 24 * 60 * 60_000 &&
+    now - Date.parse(event.received_at) < 60_000)
 
   return (
     <div className="dispatch-screen">
@@ -178,10 +174,27 @@ export function DashboardPage() {
           {!isPending && !isError && events.length === 0 && <div className="map-state"><strong>Нет телеметрии</strong><span>Карта заполнится, когда поступит первый NDTP-пакет.</span></div>}
           {!isPending && !isError && events.length > 0 && filtered.length === 0 && <div className="map-state"><strong>Нет совпадений</strong><span>Измените поиск или фильтр состояния.</span></div>}
           {!isPending && !isError && filtered.length > 0 && visibleOnMap === 0 && <div className="map-state"><MapPinOff size={20} /><strong>Нет валидных координат</strong><span>Выбранные терминалы видны в списке слева.</span></div>}
-          {allStale && !isError && <div className="map-warning"><Clock3 size={16} /> Все последние координаты устарели</div>}
+          {allStale && !isError && <div className="map-warning"><Clock3 size={16} /> {historicalPackets ? 'NDTP передаёт январские timestamps. Для виртуального времени и прогноза выберите «Январь».' : 'Все последние координаты устарели'}</div>}
           <div className="map-legend"><span><Navigation2 size={14} /> Движется</span><span><Square size={13} /> Стоит</span><span><Clock3 size={14} /> Устарели</span><span><AlertTriangle size={14} /> Тревога</span></div>
         </div>
       </main>
     </div>
   )
+}
+
+export function DashboardPage() {
+  const [source, setSource] = useState<'historical' | 'ndtp'>(() =>
+    window.localStorage.getItem('dashboard-source') === 'ndtp' ? 'ndtp' : 'historical')
+  const changeSource = (value: 'historical' | 'ndtp') => {
+    window.localStorage.setItem('dashboard-source', value)
+    setSource(value)
+  }
+  return <div className="dashboard-source-shell">
+    <div className="dashboard-source-switch" aria-label="Источник данных">
+      <span>Источник карты</span>
+      <button aria-pressed={source === 'historical'} className={source === 'historical' ? 'dashboard-source-switch__active' : ''} onClick={() => changeSource('historical')} type="button">Январь · реальные проезды</button>
+      <button aria-pressed={source === 'ndtp'} className={source === 'ndtp' ? 'dashboard-source-switch__active' : ''} onClick={() => changeSource('ndtp')} type="button">NDTP · входящий поток</button>
+    </div>
+    <div className="dashboard-source-content">{source === 'historical' ? <HistoricalFleetDashboard /> : <LiveDashboard />}</div>
+  </div>
 }
