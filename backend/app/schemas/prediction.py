@@ -52,3 +52,14 @@ class PredictionResponse(BaseModel):
     )
 
     model_version: str
+
+
+class StoredPrediction(BaseModel):
+    tr_id: int
+    unit_id: int
+    prediction_time: datetime
+    target_stop_id: int
+    target_time: datetime
+    current_delay_s: float
+    predicted_delay_s: float
+    model_version: str

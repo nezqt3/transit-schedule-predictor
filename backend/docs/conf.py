@@ -27,6 +27,10 @@ templates_path = ["_templates"]
 
 exclude_patterns = []
 
+# sphinx_autodoc_typehints не может разрешить отложенные аннотации
+# sqlalchemy/pydantic (SQLCoreOperations, JsonValue) — на вывод не влияет.
+suppress_warnings = ["sphinx_autodoc_typehints.forward_reference"]
+
 html_theme = "sphinx_rtd_theme"
 
 autodoc_default_options = {

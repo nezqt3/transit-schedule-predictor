@@ -2,13 +2,40 @@
 
 from __future__ import annotations
 
+from collections import OrderedDict
 from datetime import datetime, timezone
+from threading import RLock
 
 import httpx
 from fastapi import HTTPException
 
+from app.schemas.prediction import StoredPrediction
 from app.services.ml_client import request_prediction
 from app.services.telemetry import TelemetryService
+
+
+class PredictionStore:
+    """Keep the latest successful ML result for each vehicle in memory."""
+
+    def __init__(self, max_vehicles: int = 500) -> None:
+        self._latest: OrderedDict[int, StoredPrediction] = OrderedDict()
+        self._lock = RLock()
+        self._max_vehicles = max_vehicles
+
+    def record(self, prediction: StoredPrediction) -> None:
+        with self._lock:
+            self._latest.pop(prediction.tr_id, None)
+            self._latest[prediction.tr_id] = prediction
+            if len(self._latest) > self._max_vehicles:
+                self._latest.popitem(last=False)
+
+    def list_latest(self) -> list[StoredPrediction]:
+        with self._lock:
+            return list(self._latest.values())
+
+    def get_latest(self, tr_id: int) -> StoredPrediction | None:
+        with self._lock:
+            return self._latest.get(tr_id)
 
 
 async def predict_delay(

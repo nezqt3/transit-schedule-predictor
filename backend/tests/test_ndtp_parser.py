@@ -27,7 +27,7 @@ def test_parse_realtime_nav():
         timestamp=1725000000,
         latitude=55.7551234,
         longitude=37.6173210,
-        speed_avg=23.4,
+        speed_avg=23,
         course=90,
     )
     frame = parser.build_realtime(unit_id=1166336, nav_payload=payload)
@@ -39,7 +39,7 @@ def test_parse_realtime_nav():
     assert nav.latitude == pytest.approx(55.7551234, abs=1e-7)
     assert nav.longitude == pytest.approx(37.6173210, abs=1e-7)
     assert nav.coordinates_valid
-    assert nav.speed_avg == pytest.approx(23.4)
+    assert nav.speed_avg == pytest.approx(23)
     assert nav.course == 90
 
 
@@ -94,3 +94,32 @@ def test_can10_fields():
     assert decoded.engine_temp_c == 87
     assert decoded.odometer_km == 4120
     assert decoded.engine_hours == pytest.approx(1.25)
+
+
+def test_emulator_realtime_cells_follow_published_layout():
+    assert parser.CELL_SIZES[parser.CELL_NAV00] == 26
+    assert parser.CELL_SIZES[parser.CELL_INT_SENSOR02] == 26
+    assert parser.CELL_SIZES[parser.CELL_CAN10] == 37
+
+    body = parser.build_nph(parser.SERVICE_NAVDATA, parser.NPH_TYPE_REALTIME)
+    body += bytes([parser.CELL_NAV00, 0]) + parser.build_nav00_payload(
+        timestamp=1725000000, latitude=55.7551234,
+        longitude=37.6173210, speed_avg=23,
+    )
+    body += bytes([parser.CELL_USI08, 0]) + struct.pack("<BHHB", 0, 100, 50, 20)
+    body += bytes([parser.CELL_TERMO16, 0]) + struct.pack("<Ii", 0, 22)
+    body += bytes([parser.CELL_INT_SENSOR02, 0]) + struct.pack(
+        parser._CELL_STRUCTS[parser.CELL_INT_SENSOR02],
+        0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 1000, 15, 1, 0, 0,
+    )
+    body += bytes([parser.CELL_CAN10, 0]) + struct.pack(
+        parser._CELL_STRUCTS[parser.CELL_CAN10],
+        0, 125, 412000, 0, 0, 1800, 87, 42,
+        0, 0, 0, 0, 0, 0x10000,
+    )
+    frame = parser.build_npl(len(body), 1166336, body) + body
+
+    _, packet = parser.parse_packet(frame)
+    assert packet.cells[parser.CELL_NAV00].latitude == pytest.approx(55.7551234)
+    assert packet.cells[parser.CELL_NAV00].longitude == pytest.approx(37.6173210)
+    assert packet.cells[f"{parser.CELL_CAN10}:0"].alarm_flags == 0x10000

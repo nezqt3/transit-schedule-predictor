@@ -9,6 +9,8 @@ from app.core.config import settings
 from app.ndtp.server import NdtServer
 from app.repositories.auth import AuthRepository
 from app.services.auth import AuthService
+from app.services.prediction import PredictionStore
+from app.services.replay import ReplayDataset
 from app.services.runtime_lookup import RuntimeLookup
 from app.services.telemetry import TelemetryService
 
@@ -18,10 +20,20 @@ async def lifespan(app: FastAPI):
     # startup
     telemetry = TelemetryService()
     app.state.telemetry = telemetry
+    app.state.predictions = PredictionStore()
     app.state.runtime_lookup = RuntimeLookup(
         settings.runtime_schedule_path,
         settings.runtime_traffic_path,
     )
+    try:
+        app.state.replay = ReplayDataset(
+            settings.replay_schedule_path,
+            settings.replay_traffic_path,
+            settings.replay_labels_path,
+        )
+    except (OSError, ValueError):
+        logging.getLogger(__name__).exception("historical replay unavailable")
+        app.state.replay = None
     app.state.ml_client = httpx.AsyncClient(
         timeout=settings.ml_request_timeout_s,
         trust_env=False,

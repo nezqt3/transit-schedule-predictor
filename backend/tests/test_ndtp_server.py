@@ -17,7 +17,7 @@ async def _send_frames(server: NdtServer) -> None:
                 timestamp=1725000000,
                 latitude=55.76,
                 longitude=37.62,
-                speed_avg=15.5,
+                speed_avg=16,
             ),
         )
     )
@@ -44,6 +44,6 @@ def test_server_emits_telemetry_event():
         assert event.unit_id == 777
         assert event.nav is not None
         assert event.nav.latitude == 55.76
-        assert event.nav.speed_avg == 15.5
+        assert event.nav.speed_avg == 16
 
     asyncio.run(run())
