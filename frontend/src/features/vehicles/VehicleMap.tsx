@@ -3,13 +3,14 @@ import L, { type LatLngTuple, type Map as LeafletMap } from 'leaflet'
 import { useCallback, useEffect, useRef } from 'react'
 import 'leaflet/dist/leaflet.css'
 
-import { hasValidPosition, speedKmh } from '@/lib/telemetry/readEvent'
+import { eventTimeMs, hasValidPosition, speedKmh } from '@/lib/telemetry/readEvent'
 import { statusLabel, vehicleStatus } from '@/lib/telemetry/vehicleStatus'
 import type { TelemetryEvent } from '@/types/api'
 import { markerIcon } from './markerIcon'
 
 type VehicleMapProps = {
   events: readonly TelemetryEvent[]
+  selectedHistory: readonly TelemetryEvent[]
   selectedUnitId: number | null
   onSelect: (unitId: number) => void
 }
@@ -23,7 +24,7 @@ function coordinates(event: TelemetryEvent): LatLngTuple | null {
   return [latitude, longitude]
 }
 
-export function VehicleMap({ events, selectedUnitId, onSelect }: VehicleMapProps) {
+export function VehicleMap({ events, selectedHistory, selectedUnitId, onSelect }: VehicleMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<LeafletMap | null>(null)
   const layerRef = useRef<L.LayerGroup | null>(null)
@@ -59,6 +60,27 @@ export function VehicleMap({ events, selectedUnitId, onSelect }: VehicleMapProps
     if (!map || !layer) return
     layer.clearLayers()
     const now = Date.now()
+    const trace = selectedHistory
+      .filter((event) => event.unit_id === selectedUnitId)
+      .map((event) => ({ point: coordinates(event), time: eventTimeMs(event) }))
+      .filter((sample): sample is { point: LatLngTuple; time: number } => sample.point !== null)
+      .sort((a, b) => a.time - b.time)
+    let segment: LatLngTuple[] = []
+    let previous: (typeof trace)[number] | null = null
+    const drawSegment = () => {
+      if (segment.length > 1) L.polyline(segment, { color: '#1766ce', weight: 4, opacity: 0.85 })
+        .bindTooltip('GPS-след принятых NDTP-пакетов').addTo(layer)
+    }
+    for (const sample of trace) {
+      if (previous && (sample.time - previous.time > 3 * 60_000 ||
+        L.latLng(previous.point).distanceTo(L.latLng(sample.point)) > 5_000)) {
+        drawSegment()
+        segment = []
+      }
+      segment.push(sample.point)
+      previous = sample
+    }
+    drawSegment()
     const points: LatLngTuple[] = []
     for (const event of events) {
       const point = coordinates(event)
@@ -85,7 +107,7 @@ export function VehicleMap({ events, selectedUnitId, onSelect }: VehicleMapProps
       if (points.length === 1) map.setView(points[0]!, 13)
       else map.fitBounds(L.latLngBounds(points), { padding: [60, 60], maxZoom: 13 })
     }
-  }, [events, selectedUnitId, onSelect])
+  }, [events, selectedHistory, selectedUnitId, onSelect])
 
   useEffect(() => {
     if (selectedUnitId === centeredUnitRef.current) return

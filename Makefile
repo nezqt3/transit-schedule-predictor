@@ -1,4 +1,4 @@
-.PHONY: up down build logs test features train submit run-online \
+.PHONY: up down build logs test features train submit run-online up-ndtp \
 	up-dataset-replay replay-start logs-dataset-replay lint format preprocessing docs \
 	fe-install fe-dev fe-build fe-check fe-preview fe-clean \
 	up-frontend up-frontend-dev logs-frontend
@@ -30,6 +30,10 @@ submit:
 
 run-online:
 	docker compose up --build ml backend
+
+up-ndtp:
+	docker compose up -d --build backend frontend
+	python scripts/start_official_emulator.py
 
 up-dataset-replay:
 	docker compose --profile replay up -d --build backend dataset-replay
