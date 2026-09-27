@@ -476,7 +476,7 @@ def make_stops_lookup(*schedule_frames: pd.DataFrame) -> pd.DataFrame:
 
 # This compact feature contract is shared by the offline builder and the
 # real-time inference service. Existing experimental build_features remains
-# available for the notebooks and comparison runs.
+# available for comparison runs.
 POINT_FEATURE_COLUMNS = [
     "cur_dev_s", "dist_to_target_m", "time_to_target_plan_s",
     "required_speed_kmh", "speed_last_kmh", "speed_mean_1m",

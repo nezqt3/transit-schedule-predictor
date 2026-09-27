@@ -35,11 +35,22 @@ make up
 Результаты приёмки приведены в
 [`ПРОТОКОЛ-приёмки.md`](docs/ПРОТОКОЛ-приёмки.md).
 
+<table>
+  <tr>
+    <td align="center"><strong>Прогноз и активный инцидент</strong></td>
+    <td align="center"><strong>Принятая NDTP-телеметрия</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/1.jpg" alt="Дашборд с прогнозом и инцидентом"></td>
+    <td><img src="docs/2.jpg" alt="Детальная телеметрия терминала"></td>
+  </tr>
+</table>
+
 ## Конкурсный результат
 
 Выбранный кандидат — LightGBM plan, `lightgbm-plan-2026-09-26`. Локальная MAE
 на 353 размеченных test-точках: **58,6033 с** против **93,3598 с** у baseline
-`cur_dev_s`. 
+`cur_dev_s`.
 Файл `data/submissions/final_submission.csv` имеет 151 строку и формат
 `sample_id;prediction`. Проверка: `python scripts/verify_submission.py`.
 Паритет офлайн-прогноза и ML API: `python scripts/verify_model_parity.py`.
@@ -52,7 +63,7 @@ make up
 | `ml/` | Общие признаки офлайн/сервис, LightGBM, калибровка вероятности |
 | `frontend/` | Карта, список транспорта, риск и карточка инцидента |
 | `emulator/` | Историческая NDTP-подача и интеграция с эмулятором организаторов |
-| `docs/` | [ТЗ](docs/ТЗ-доработки-системы.md), [эксперименты](docs/ML-эксперименты.md), [NDTP](docs/Телеметрия-и-карты.md), [OpenAPI](docs/public/api.html) и [Sphinx](docs/public/pydoc/index.html) |
+| `docs/` | [ТЗ](docs/ТЗ-доработки-системы.md), [эксперименты](docs/ML-эксперименты.md), [NDTP](emulator/README.md), [OpenAPI](docs/public/api.html) и [Sphinx](docs/public/pydoc/index.html) |
 
 Прогнозы и история инцидентов сохраняются в PostgreSQL и восстанавливаются после
 перезапуска backend. При временной недоступности БД сервис продолжает работать в

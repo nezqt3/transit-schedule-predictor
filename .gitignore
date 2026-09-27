@@ -54,7 +54,12 @@ ml/artifacts/*
 data/processed/*_features.parquet
 data/processed/benchmark/
 data/processed/replay_speed_comparison.json
-data/submissions/submission.csv
+data/processed/exp_*.json
+data/processed/route_replay_*.png
+data/submissions/*
+!data/submissions/final_submission.csv
+!data/submissions/lightgbm_plan_submission.csv
+!data/submissions/sample_submission.csv
 
 # Emulator archives
 ndtp-telemetry-emulator.tar
