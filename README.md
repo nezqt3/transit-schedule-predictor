@@ -37,12 +37,14 @@ make up
 
 <table>
   <tr>
-    <td align="center"><strong>Прогноз и активный инцидент</strong></td>
-    <td align="center"><strong>Принятая NDTP-телеметрия</strong></td>
+    <td align="center" width="33%"><strong>Прогноз и активный инцидент</strong></td>
+    <td align="center" width="33%"><strong>Принятая NDTP-телеметрия</strong></td>
+    <td align="center" width="33%"><strong>Исторический рейс и прогноз</strong></td>
   </tr>
   <tr>
-    <td><img src="docs/1.jpg" alt="Дашборд с прогнозом и инцидентом"></td>
-    <td><img src="docs/2.jpg" alt="Детальная телеметрия терминала"></td>
+    <td><img src="docs/1.jpg" width="100%" alt="Дашборд с прогнозом и инцидентом"></td>
+    <td><img src="docs/2.jpg" width="100%" alt="Детальная телеметрия терминала"></td>
+    <td><img src="docs/3.jpg" width="100%" alt="Исторический рейс на карте с прогнозом опоздания"></td>
   </tr>
 </table>
 
