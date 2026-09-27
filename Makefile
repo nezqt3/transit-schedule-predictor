@@ -26,13 +26,16 @@ test:
 	cd ml && python -m pytest
 
 features:
-	cd ml && python -m src.offline.dataset_builder --split all
+	python scripts/preprocess_data.py
 
 train:
-	cd ml && python -m src.offline.train
+	python scripts/preprocess_data.py
+	python scripts/exp_lightgbm_plan.py --release
+	python scripts/train_risk_calibration.py
+	python scripts/freeze_release.py
 
 submit:
-	cd ml && python -m src.offline.predict_submission
+	python scripts/verify_submission.py
 
 run-online:
 	docker compose up --build ml backend
@@ -57,7 +60,7 @@ format:
 	cd backend && ruff format .
 
 preprocessing:
-	cd ml && python -m src.offline.dataset_builder --split train
+	python scripts/preprocess_data.py
 
 # Собирает публичные документы в docs/public/ (коммитится в Git):
 # PyDoc (Sphinx) + статичный OpenAPI-файл и самодостаточный Swagger UI.
