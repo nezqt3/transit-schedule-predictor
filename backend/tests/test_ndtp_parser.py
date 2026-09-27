@@ -6,6 +6,7 @@ import pytest
 
 from app.ndtp import parser
 from app.ndtp.parser import NdtParseError
+from app.ndtp.server import NdtServer
 
 
 def test_crc16_modbus_reference():
@@ -140,3 +141,47 @@ def test_official_optional_cells_do_not_discard_navigation():
     _, packet = parser.parse_packet(frame)
     assert packet.cells[parser.CELL_NAV00].latitude == pytest.approx(55.7551234)
     assert f"{parser.CELL_CAN10}:0" in packet.cells
+
+
+def test_dispatch_telemetry_cells_reach_normalized_event():
+    nav = bytearray(parser.build_nav00_payload(1725000000, 55.75, 37.61))
+    nav[12] |= 0x16  # тревога, SOS, питание от внутреннего АКБ
+    body = parser.build_nph(parser.SERVICE_NAVDATA, parser.NPH_TYPE_REALTIME)
+    body += bytes((parser.CELL_NAV00, 0)) + nav
+    body += bytes((parser.CELL_INT_SENSOR02, 0)) + struct.pack(
+        parser._CELL_STRUCTS[parser.CELL_INT_SENSOR02],
+        0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 1000, 18, 2, 0, 0,
+    )
+    body += bytes((parser.CELL_USI08, 0)) + struct.pack("<BHHB", 0, 245, 91, 20)
+    body += bytes((parser.CELL_TERMO16, 0)) + struct.pack("<Ii", 0, 24)
+    body += bytes((parser.CELL_CROWN03, 0)) + struct.pack(
+        "<IH8B", 1000, 3, 1, 2, 3, 4, 5, 6, 7, 8,
+    )
+    body += bytes((parser.CELL_IRMA04, 0)) + struct.pack(
+        "<IH8BB", 2000, 4, 10, 11, 12, 13, 14, 15, 16, 17, 0x15,
+    )
+    body += bytes((parser.CELL_CAN10, 0)) + struct.pack(
+        parser._CELL_STRUCTS[parser.CELL_CAN10],
+        0, 125, 412050, 0, 0x8000 | 47, 1800, 87, 42,
+        0, 0, 0, 0, 0, 0x100,
+    )
+    frame = parser.build_npl(len(body), 777, body) + body
+
+    _, packet = parser.parse_packet(frame)
+    event = NdtServer._to_event(packet)
+
+    assert event is not None and event.nav is not None and event.can is not None
+    assert event.nav.sos_flag and event.nav.alert_flag
+    assert event.nav.internal_battery_power and event.nav.pdop == 2
+    assert event.can.fuel_level_value == 47
+    assert event.can.fuel_level_unit == "percent"
+    assert event.can.odometer_km == 4120.5
+    assert event.internal_sensor.gsm_csq == 18
+    assert event.fuel_sensors[0].level_l == 91
+    assert event.temperature_sensors[0].temperature_c == 24
+    crown, irma = event.passenger_sensors
+    assert crown.boardings == (1, 2, 3, 4)
+    assert crown.alightings == (5, 6, 7, 8)
+    assert irma.boardings == (10, 11, 12, 13)
+    assert irma.doors_present == (True, False, True, False)
+    assert irma.doors_closed == (True, False, False, False)

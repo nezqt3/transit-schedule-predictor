@@ -4,13 +4,13 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties, type Poi
 import { fleetStatusIcons } from '@/features/vehicles/markerIcon'
 import { WhatIfPanel } from '@/features/what-if/WhatIfPanel'
 import { statusLabel, type VehicleStatus } from '@/lib/telemetry/vehicleStatus'
+import { formatDelay } from '@/lib/format/time'
 import { useDashboardStore } from '@/store/dashboard'
 import { useReplayFleet, useReplayOutcomes } from './api'
 import { displaySpeedKmh, fleetSnapshot, janClock, replayBounds } from './fleetClock'
 import { HistoricalFleetMap } from './HistoricalFleetMap'
 import { HistoricalVehicleDetails } from './HistoricalVehicleDetails'
 
-const signed = (value: number) => `${value > 0 ? '+' : ''}${value.toFixed(0)} с`
 type FleetFilter = 'all' | 'attention' | VehicleStatus
 
 const filterOptions: { value: FleetFilter; label: string }[] = [
@@ -59,7 +59,8 @@ export function HistoricalFleetDashboard() {
   useEffect(() => {
     if (!visible.length && selectedId !== null) { selectVehicle(null); return }
     if (visible.length && !visible.some((item) => item.vehicle.tr_id === selectedId)) {
-      selectVehicle((visible.find((item) => item.late) ?? visible[0]!).vehicle.tr_id)
+      selectVehicle((visible.find((item) => item.late) ?? visible.find((item) => item.forecast)
+        ?? visible.find((item) => item.point) ?? visible[0]!).vehicle.tr_id)
     }
   }, [selectedId, visible, selectVehicle])
 
@@ -107,7 +108,7 @@ export function HistoricalFleetDashboard() {
           return <button aria-current={vehicle.tr_id === selectedId ? 'true' : undefined} className={`historical-vehicle${vehicle.tr_id === selectedId ? ' historical-vehicle--selected' : ''}`} key={vehicle.tr_id} onClick={() => selectVehicle(vehicle.tr_id)} type="button">
             <span aria-hidden className={`fleet-row__icon fleet-row__icon--${status}`}><Icon size={19} strokeWidth={2.5} /></span>
             <span className="historical-vehicle__text"><strong>ТС {vehicle.tr_id} {late && <span className="historical-vehicle__late" title="Прогноз опоздания">!</span>}</strong><small>{statusLabel[status]}{run ? ` · рейс ${run.run_id}` : ''}</small></span>
-            <span className="historical-vehicle__value">{forecast ? signed(forecast.predicted_delay_s) : speed === null ? '—' : `${speed.toFixed(0)} км/ч`}</span>
+            <span className="historical-vehicle__value">{forecast ? formatDelay(forecast.predicted_delay_s) : speed === null ? '—' : `${speed.toFixed(0)} км/ч`}</span>
           </button>
         })}
         {!filtered.length && <p className="fleet-list__message">{visible.length ? 'По выбранному фильтру транспорта нет.' : 'Ожидаем транспорт на линии.'}</p>}

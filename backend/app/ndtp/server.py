@@ -9,7 +9,15 @@ from collections.abc import Awaitable, Callable
 
 from app.ndtp import parser
 from app.ndtp.parser import HandshakeRequest, NdtParseError, RealtimePacket
-from app.ndtp.schemas import CanData, NavData, TelemetryEvent
+from app.ndtp.schemas import (
+    CanData,
+    FuelSensorData,
+    InternalSensorData,
+    NavData,
+    PassengerSensorData,
+    TelemetryEvent,
+    TemperatureSensorData,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -146,9 +154,11 @@ class NdtServer:
                 track_m=nav.track_m,
                 altitude_m=nav.altitude_m,
                 satellites=nav.satellites,
+                pdop=nav.pdop,
                 battery_voltage_mv=nav.battery_voltage_mv,
                 alert_flag=nav.alert,
                 sos_flag=nav.sos,
+                internal_battery_power=nav.internal_battery_power,
             )
 
         can = packet.cells.get(f"{parser.CELL_CAN10}:0")
@@ -160,8 +170,48 @@ class NdtServer:
                 odometer_km=can.odometer_km,
                 engine_hours=can.engine_hours,
                 alarm_flags=can.alarm_flags,
+                module_available=can.module_available,
+                fuel_level_value=can.fuel_level_value,
+                fuel_level_unit=can.fuel_level_unit,
             )
 
-        if event.nav is None and event.can is None:
+        for key, cell in packet.cells.items():
+            if not isinstance(key, str):
+                continue
+            cell_type, number_text = key.split(":", maxsplit=1)
+            number = int(number_text)
+            if cell_type == str(parser.CELL_INT_SENSOR02) and number == 0:
+                event.internal_sensor = InternalSensorData(
+                    gsm_csq=cell.csq,
+                    gprs_state=cell.gprs_state,
+                )
+            elif cell_type == str(parser.CELL_USI08):
+                event.fuel_sensors.append(FuelSensorData(
+                    sensor_number=number,
+                    status=cell.det_status,
+                    level_l=cell.level_l,
+                    level_mm=cell.level_mm,
+                    temperature=cell.temperature,
+                ))
+            elif cell_type == str(parser.CELL_TERMO16):
+                event.temperature_sensors.append(TemperatureSensorData(
+                    sensor_number=number,
+                    status=cell.status,
+                    temperature_c=cell.temperature_c,
+                ))
+            elif cell_type in (str(parser.CELL_CROWN03), str(parser.CELL_IRMA04)):
+                event.passenger_sensors.append(PassengerSensorData(
+                    sensor_type="crown" if cell_type == str(parser.CELL_CROWN03) else "irma",
+                    sensor_number=number,
+                    zone=cell.zone,
+                    boardings=cell.boardings,
+                    alightings=cell.alightings,
+                    doors_present=cell.doors_present,
+                    doors_closed=cell.doors_closed,
+                ))
+
+        if (event.nav is None and event.can is None and event.internal_sensor is None
+                and not event.fuel_sensors and not event.temperature_sensors
+                and not event.passenger_sensors):
             return None
         return event

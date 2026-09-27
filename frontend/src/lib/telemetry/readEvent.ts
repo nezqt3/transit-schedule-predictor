@@ -9,7 +9,8 @@ export function eventTimeMs(event: TelemetryEvent): number {
 }
 
 export function speedKmh(event: TelemetryEvent): number | null {
-  return event.can?.speed_kmh ?? event.nav?.speed_avg ?? null
+  return (event.can?.module_available === false ? null : event.can?.speed_kmh)
+    ?? event.nav?.speed_avg ?? null
 }
 
 export function hasValidPosition(event: TelemetryEvent): boolean {

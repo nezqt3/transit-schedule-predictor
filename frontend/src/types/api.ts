@@ -11,9 +11,11 @@ export type NavData = {
   track_m: number | null
   altitude_m: number | null
   satellites: number | null
+  pdop: number | null
   battery_voltage_mv: number | null
   alert_flag: boolean
   sos_flag: boolean
+  internal_battery_power: boolean
 }
 
 export type CanData = {
@@ -23,6 +25,38 @@ export type CanData = {
   odometer_km: number | null
   engine_hours: number | null
   alarm_flags: number
+  module_available: boolean
+  fuel_level_value: number | null
+  fuel_level_unit: 'liters' | 'percent' | null
+}
+
+export type InternalSensorData = {
+  gsm_csq: number
+  gprs_state: number
+}
+
+export type FuelSensorData = {
+  sensor_number: number
+  status: number
+  level_l: number
+  level_mm: number
+  temperature: number
+}
+
+export type TemperatureSensorData = {
+  sensor_number: number
+  status: number
+  temperature_c: number
+}
+
+export type PassengerSensorData = {
+  sensor_type: 'crown' | 'irma'
+  sensor_number: number
+  zone: number
+  boardings: [number, number, number, number]
+  alightings: [number, number, number, number]
+  doors_present: [boolean, boolean, boolean, boolean] | null
+  doors_closed: [boolean, boolean, boolean, boolean] | null
 }
 
 export type TelemetryEvent = {
@@ -30,6 +64,10 @@ export type TelemetryEvent = {
   received_at: string
   nav: NavData | null
   can: CanData | null
+  internal_sensor: InternalSensorData | null
+  fuel_sensors: FuelSensorData[]
+  temperature_sensors: TemperatureSensorData[]
+  passenger_sensors: PassengerSensorData[]
 }
 
 export type TelemetryStreamMessage =
@@ -64,6 +102,7 @@ export type StoredPrediction = {
   input_received_at?: string | null
   target_stop_id: number
   target_time: string
+  target_stop_address?: string | null
   current_delay_s: number
   predicted_delay_s: number
   model_version: string

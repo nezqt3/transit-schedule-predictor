@@ -66,6 +66,7 @@ class StoredPrediction(BaseModel):
     input_received_at: datetime | None = None
     target_stop_id: int
     target_time: datetime
+    target_stop_address: str | None = None
     current_delay_s: float
     predicted_delay_s: float
     model_version: str

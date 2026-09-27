@@ -2,13 +2,14 @@ import { AlertTriangle, ArrowRight, BusFront, ChevronLeft, ChevronRight, Clock3,
 import { useEffect, useMemo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 
 import { useVehicleHistory } from '@/features/vehicles/api'
+import { NdtpTelemetryDetails, NdtpTelemetryHighlights } from '@/features/vehicles/NdtpTelemetryDetails'
 import { useIncidents, usePredictionStatuses, usePredictions } from '@/features/predictions/api'
 import { VehicleMap } from '@/features/vehicles/VehicleMap'
 import { fleetStatusIcons } from '@/features/vehicles/markerIcon'
 import { useVehicleFeed } from '@/features/vehicles/hooks'
-import { formatAge, formatClock, formatDateTime } from '@/lib/format/time'
+import { formatAge, formatDelay, formatShortClock } from '@/lib/format/time'
 import { eventTimeMs, hasValidPosition, isStale, speedKmh } from '@/lib/telemetry/readEvent'
-import { hasAlarm, needsAttention, statusLabel, vehicleStatus, type VehicleStatus } from '@/lib/telemetry/vehicleStatus'
+import { hasAlarm, needsAttention, statusLabel, telemetryAlerts, vehicleStatus, type VehicleStatus } from '@/lib/telemetry/vehicleStatus'
 import { useTelemetryStore } from '@/store/telemetry'
 import { HistoricalFleetDashboard } from '@/features/replay/HistoricalFleetDashboard'
 import { WhatIfPanel } from '@/features/what-if/WhatIfPanel'
@@ -56,6 +57,7 @@ function FleetRow({ event, prediction, selected, onSelect }: {
   const status = vehicleStatus(event)
   const Icon = fleetStatusIcons[status]
   const speed = speedKmh(event)
+  const alert = telemetryAlerts(event)[0]
   return (
     <button
       aria-current={selected ? 'true' : undefined}
@@ -65,7 +67,7 @@ function FleetRow({ event, prediction, selected, onSelect }: {
     >
       <span aria-hidden className={`fleet-row__icon fleet-row__icon--${status}`}><Icon size={19} strokeWidth={2.5} /></span>
       <span className="fleet-row__main">
-        <strong>#{event.unit_id}</strong>
+        <strong>#{event.unit_id} {alert && <span className="ndtp-row-alert">{alert}</span>}</strong>
         <small>{statusLabel[status]} · {formatAge(eventTimeMs(event))} назад</small>
       </span>
       {forecastRisk(prediction) && <span className={`forecast-risk forecast-risk--${forecastRisk(prediction)}`}>{forecastRisk(prediction) === 'high' ? 'Высокий риск' : forecastRisk(prediction) === 'medium' ? 'Риск' : 'Норма'}</span>}
@@ -97,40 +99,32 @@ export function VehicleDetails({ event, prediction, incident, predictionStatus }
   const status = vehicleStatus(event)
   const speed = speedKmh(event)
   const risk = forecastRisk(prediction)
+  const trId = prediction?.tr_id ?? predictionStatus?.tr_id
+  const source = prediction?.source === 'demo' ? 'Демо · эмулятор' : prediction?.source === 'replay' ? 'Архив NDTP' : prediction?.source === 'manual' ? 'Ручной расчёт' : 'Поток NDTP'
+  const stop = prediction?.source === 'demo' ? `Демо · остановка #${prediction.target_stop_id}`
+    : prediction?.target_stop_address || (prediction ? `Остановка #${prediction.target_stop_id}` : '')
   return (
-    <section aria-label={`Данные терминала ${event.unit_id}`} className="vehicle-details">
+    <section aria-label={`Данные транспорта ${trId ?? event.unit_id}`} className="vehicle-details">
       <div className="vehicle-details__top">
-        <div><span className="eyebrow">Выбранный терминал</span><h2>#{event.unit_id}</h2></div>
+        <div><span className="eyebrow">{source} · терминал #{event.unit_id}</span><h2>{trId ? `Трамвай #${trId}` : `Терминал #${event.unit_id}`}</h2></div>
         <span className={`state-pill state-pill--${status}`}>{statusLabel[status]}</span>
       </div>
-      <div className="historical-priority">
-        <div className={`historical-priority__forecast${risk === 'high' ? ' historical-priority__forecast--late' : ''}`}>
-          <span>Прогноз через 10–15 мин · {prediction?.source === 'demo' ? 'синтетический план эмулятора' : prediction?.source === 'replay' ? 'исторический NDTP' : prediction?.source === 'manual' ? 'ручной расчёт' : 'живой NDTP'}</span>
-          <strong>{prediction ? `${prediction.predicted_delay_s > 0 ? '+' : ''}${prediction.predicted_delay_s.toFixed(0)} с` : 'Нет прогноза'}</strong>
-          <small>{prediction ? `План ${formatClock(prediction.target_time)} МСК · ожидаем ${formatClock(prediction.predicted_arrival ?? Date.parse(prediction.target_time) + prediction.predicted_delay_s * 1000)} МСК` : statusText[predictionStatus?.code ?? ''] ?? 'Ожидаем расписание и телеметрию'}</small>
-        </div>
+      <div className={`vehicle-forecast${risk === 'high' ? ' vehicle-forecast--high' : ''}`}>
+        <div className="vehicle-forecast__heading"><span>Через 10–15 минут</span>{prediction && <span className={`vehicle-forecast__risk vehicle-forecast__risk--${risk ?? 'stale'}`}>{prediction.freshness === 'stale' ? 'Устарел' : risk === 'high' ? 'Высокий риск' : risk === 'medium' ? 'Средний риск' : 'Низкий риск'}</span>}</div>
+        <strong className="vehicle-forecast__value">{prediction ? formatDelay(prediction.predicted_delay_s) : 'Нет прогноза'}</strong>
+        {prediction ? <>
+          <span className="vehicle-forecast__stop">{stop}</span>
+          <div className="vehicle-forecast__times"><div><span>План</span><strong>{formatShortClock(prediction.target_time)}</strong></div><span aria-hidden>→</span><div><span>Ожидаем</span><strong>{formatShortClock(Date.parse(prediction.target_time) + Math.round(prediction.predicted_delay_s) * 1000)}</strong></div></div>
+        </> : <span className="vehicle-forecast__reason">{statusText[predictionStatus?.code ?? ''] ?? 'Ожидаем расписание и телеметрию'}</span>}
       </div>
-      {prediction && <div className="vehicle-details__facts">
-        <div><span>Риск опоздания</span><strong className={`risk-text risk-text--${risk ?? 'low'}`}>{prediction.freshness === 'stale' ? 'Прогноз устарел' : risk === 'high' ? 'Высокий' : risk === 'medium' ? 'Средний' : 'Низкий'}</strong></div>
-        <div><span>Вероятность ≥120 с</span><strong>{prediction.p_late == null ? 'Не рассчитана' : `${(prediction.p_late * 100).toFixed(0)} %`}</strong></div>
-        <div><span>Текущее отклонение</span><strong>{prediction.current_delay_s.toFixed(0)} с · {prediction.current_delay_source === 'demo_anchor' ? 'демо-допущение' : prediction.current_delay_source === 'point_input' ? 'входная точка' : 'остановка'}</strong></div>
-        <div><span>Время прогноза</span><strong>{formatClock(prediction.produced_at ?? prediction.prediction_time)} МСК</strong></div>
+      {prediction && <div className="vehicle-metrics">
+        <div><span>Сейчас</span><strong>{formatDelay(prediction.current_delay_s)}</strong><small>{prediction.current_delay_source === 'demo_anchor' ? 'Демо-значение' : prediction.current_delay_source === 'point_input' ? 'Точка NDTP' : 'По остановке'}</small></div>
+        <div><span>Риск ≥ 2 мин</span><strong>{prediction.p_late == null ? '—' : `${(prediction.p_late * 100).toFixed(0)} %`}</strong><small>{prediction.p_late == null ? 'Нет оценки' : `Прогноз ${formatShortClock(prediction.produced_at ?? prediction.prediction_time)}`}</small></div>
       </div>}
-      {incident && <div className={`incident-card incident-card--${incident.risk}`}>
-        <strong>{incident.risk === 'high' ? 'Высокий риск' : 'Средний риск'} · участок {incident.segment}</strong>
-        <small>Рейс #{incident.tr_id} · терминал #{incident.unit_id} · остановка #{incident.target_stop_id}</small>
-        <small>План {formatDateTime(incident.target_time)} МСК · ожидаем {formatDateTime(Date.parse(incident.target_time) + incident.predicted_delay_s * 1000)} МСК</small>
-        <small>Отклонение {incident.predicted_delay_s.toFixed(0)} с ({(incident.predicted_delay_s / 60).toFixed(1)} мин){incident.p_late == null ? '' : ` · вероятность ≥120 с: ${(incident.p_late * 100).toFixed(0)} %`}</small>
-        <span>{incident.cause}</span>
-        <small>{incident.evidence}</small>
-        <p>{incident.recommendation}</p>
-      </div>}
-      <div className="vehicle-details__facts">
-        <div><span>Состояние</span><strong>{statusLabel[status]}</strong></div>
-        <div><span>Скорость</span><strong>{speed === null ? '—' : `${speed.toFixed(1)} км/ч`}</strong></div>
-        <div><span>Последнее обновление</span><strong>{formatClock(event.received_at)}</strong></div>
-      </div>
-      {isStale(event) && <p className="vehicle-details__note"><Clock3 size={15} /> Координаты устарели; положение на карте может быть неточным.</p>}
+      <NdtpTelemetryHighlights event={event} speed={speed} />
+      {incident && <div className={`vehicle-action vehicle-action--${incident.risk}`}><span>Диспетчеру · {incident.cause}</span><strong>{incident.recommendation}</strong></div>}
+      {isStale(event) && <div className="vehicle-details__note"><Clock3 size={15} /> Координаты устарели</div>}
+      <details className="vehicle-diagnostics"><summary>Данные NDTP · {formatShortClock(event.received_at)}</summary><NdtpTelemetryDetails event={event} /></details>
     </section>
   )
 }
