@@ -18,7 +18,6 @@ from exp_simple_target_mode import ITERATIONS, load_features  # noqa: E402
 from src.features_simple import CAT_FEATURES, FEATURE_COLUMNS  # noqa: E402
 from src.models.ensemble import CatBoostTorchEnsemble  # noqa: E402
 from src.plan_features import PLAN_FEATURE_COLUMNS, build_plan_features  # noqa: E402
-from src.models.torch_model import TorchTabularRegressor  # noqa: E402
 
 DATA = ROOT / "data" / "processed"
 ALL_FEATURES = FEATURE_COLUMNS + PLAN_FEATURE_COLUMNS
@@ -75,6 +74,8 @@ def ordered_submission(points: pd.DataFrame, prediction: np.ndarray, filename: s
 
 
 def main() -> None:
+    from src.models.torch_model import TorchTabularRegressor
+
     train, _, train_features = load_part("train")
     test, test_base, test_features = load_part("test")
     times = pd.to_datetime(train["T"], format="mixed")

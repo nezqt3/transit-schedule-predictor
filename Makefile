@@ -3,6 +3,8 @@
 	fe-install fe-dev fe-build fe-check fe-preview fe-clean \
 	up-frontend up-frontend-dev logs-frontend
 
+NDTP_EMULATOR_ARCHIVE ?= emulator/ndtp-telemetry-emulator.tar
+
 up:
 	docker compose up -d
 
@@ -33,7 +35,7 @@ run-online:
 
 up-ndtp:
 	docker compose -f docker-compose.yml -f docker-compose.official-demo.yml up -d --build ml backend frontend
-	python scripts/start_official_emulator.py
+	python scripts/start_official_emulator.py --archive "$(NDTP_EMULATOR_ARCHIVE)"
 
 up-dataset-replay:
 	docker compose -f docker-compose.yml -f docker-compose.replay.yml --profile replay up -d --build ml backend frontend dataset-replay

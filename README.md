@@ -4,30 +4,70 @@ NDTP-пакет поступает в backend по TCP. Backend сопостав
 выбирает первую плановую остановку в интервале **(T + 10 минут, T + 15 минут]**,
 запрашивает ML-прогноз отклонения в секундах и отправляет событие диспетчеру.
 
-## Запуск
+## Запуск с нуля
 
-Нужны Docker Compose, файлы `data/raw/validate/{traffic.csv,schedule_plan.csv}`
-и артефакты из `ml/artifacts/`, перечисленные в
-[`release_manifest.json`](ml/artifacts/release_manifest.json). При старте ML
-проверяет их SHA-256 и не подменяет выбранную модель на baseline.
+Нужны Git и Docker Compose. Выполняйте команды из корня проекта.
+
+1. Проверьте наличие входных файлов:
+
+```bash
+test -f data/raw/validate/traffic.csv
+test -f data/raw/validate/schedule_plan.csv
+test -f ml/artifacts/release_manifest.json
+```
+
+2. Создайте локальную конфигурацию и запустите сервисы:
 
 ```bash
 cp .env.example .env
-docker compose up --build
+docker compose up -d --build
 ```
 
-Дашборд: <http://localhost:8080>. Swagger: <http://localhost:8000/docs>.
-Для локальной демонстрации учётная запись `dispatcher` / `transport`;
-перед внешним размещением измените пароль и `AUTH_JWT_SECRET`.
+3. Проверьте запуск:
 
-Базовый стек ждёт TCP-телеметрию на `localhost:9201`. Для подачи исторических
-NDTP-пакетов через тот же backend и ML используйте `make up-dataset-replay`.
-Для этого диагностического режима дополнительно нужен `data/raw/validate/points.csv`.
-Для эмулятора организаторов нужен отдельно предоставленный Docker-архив;
-команда запуска — `make up-ndtp`. Его план помечен как синтетический и не
-доказывает качество на реальном маршруте. Полная инструкция и ограничения:
-[`ЗАПУСК.md`](ЗАПУСК.md).
-Результаты сквозной приёмки и нагрузки — в
+```bash
+docker compose ps
+curl http://localhost:8000/api/v1/health
+curl http://localhost:8001/health
+```
+
+4. Откройте дашборд: <http://localhost:8080>. Вход: `dispatcher` / `transport`.
+Swagger: <http://localhost:8000/docs>.
+
+5. Выберите источник NDTP-телеметрии:
+
+| Команда | Источник | Назначение |
+|---|---|---|
+| `make up-ndtp` | Официальный Docker-эмулятор | Проверка настоящего NDTP TCP-протокола на синтетических координатах |
+| `make up-dataset-replay` | CSV из `data/raw/` | Воспроизведение исторических рейсов и прогнозов на дашборде |
+
+Для `make up-ndtp` положите переданный организаторами файл строго по пути:
+
+```text
+emulator/ndtp-telemetry-emulator.tar
+```
+
+Затем запустите нужный режим:
+
+```bash
+make up-ndtp             # официальный эмулятор
+make up-dataset-replay
+```
+
+Если архив находится в другом месте:
+
+```bash
+make up-ndtp NDTP_EMULATOR_ARCHIVE=/полный/путь/ndtp-telemetry-emulator.tar
+```
+
+Полезные команды:
+
+```bash
+docker compose logs -f   # посмотреть логи
+docker compose down      # остановить проект
+```
+
+Подробные режимы запуска описаны в [`ЗАПУСК.md`](ЗАПУСК.md), результаты приёмки — в
 [`ПРОТОКОЛ-приёмки.md`](docs/ПРОТОКОЛ-приёмки.md).
 
 ## Конкурсный результат
@@ -51,7 +91,14 @@ NDTP-пакетов через тот же backend и ML используйте 
 | `emulator/` | Историческая NDTP-подача и интеграция с эмулятором организаторов |
 | `docs/` | [ТЗ](docs/ТЗ-доработки-системы.md), [эксперименты](docs/ML-эксперименты.md), [NDTP](docs/Телеметрия-и-карты.md), [OpenAPI](docs/public/api.html) и [Sphinx](docs/public/pydoc/index.html) |
 
-Прогнозы и инциденты находятся в памяти backend и теряются при перезапуске;
-PostgreSQL используется для авторизации. Исторический табличный экран является
-ретроспективной диагностикой; факты будущих остановок до их логического времени
+Прогнозы и история инцидентов сохраняются в PostgreSQL и восстанавливаются после
+перезапуска backend. При временной недоступности БД сервис продолжает работать в
+памяти. Map matching использует HMM/Viterbi и направленный граф маршрута; по
+умолчанию граф строится из плана. Для точной дорожной геометрии положите GeoJSON
+в `data/raw/road_network.geojson` (LineString с `properties.tr_id`) и задайте в
+`.env`: `RUNTIME_ROUTE_GRAPH_PATH=/app/data/raw/road_network.geojson`.
+
+What-if учитывает загрузку дорог, пассажиров и вместимость резерва, пересадку,
+остаток рейса и оборот ТС перед следующим рейсом. Исторический табличный экран
+остаётся ретроспективной диагностикой; будущие факты до их логического времени
 не выдаются.

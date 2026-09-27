@@ -16,7 +16,6 @@ sys.path.insert(0, str(ROOT / "ml"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from exp_plan_routes import ALL_FEATURES, load_part, ordered_submission  # noqa: E402
-from src.models.torch_model import TorchTabularRegressor  # noqa: E402
 
 
 def model_input(features: pd.DataFrame, categories: list[str]) -> pd.DataFrame:
@@ -89,6 +88,8 @@ def main() -> None:
                                     "final_submission.csv")
         test_blend_mae = None
     else:
+        from src.models.torch_model import TorchTabularRegressor
+
         torch = TorchTabularRegressor.load(artifacts / "torch_tabular.pt")
         test_blend = 0.58 * test_pred + 0.42 * torch.predict(test_base)
         validate_blend = 0.58 * validate_pred + 0.42 * torch.predict(validate_base)

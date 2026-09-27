@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     runtime_schedule_path: str = "data/raw/validate/schedule_plan.csv"
     runtime_traffic_path: str = "data/raw/validate/traffic.csv"
     runtime_points_path: str | None = None
+    runtime_route_graph_path: str | None = None
     source_timezone: str = "Europe/Moscow"
     prediction_interval_s: float = 30.0
     risk_medium_delay_s: float = 60.0

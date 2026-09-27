@@ -82,6 +82,13 @@ class StoredPrediction(BaseModel):
     risk: str = "low"
     risk_source: str = "threshold"
     freshness: str = "fresh"
+    matched_segment_index: int | None = None
+    matched_progress_m: float | None = None
+    matched_lat: float | None = None
+    matched_lon: float | None = None
+    map_match_distance_m: float | None = None
+    map_match_confidence: float | None = None
+    map_match_graph_source: str | None = None
 
 
 class PredictionStatus(BaseModel):

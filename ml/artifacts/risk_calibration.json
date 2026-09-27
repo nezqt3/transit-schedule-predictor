@@ -2,13 +2,13 @@
   "event": "target_delay_s >= 120",
   "version": "risk-late-120-2026-09-27",
   "source_model_version": "lightgbm-plan-2026-09-26",
-  "source_model_artifact_sha256": "23a9665d6dc305171383d18d31358b3a422e13a8a3cf689c92ea824e4794b432",
-  "coefficient": 0.017618627837027966,
-  "intercept": -2.414475842636775,
+  "source_model_artifact_sha256": "b013b94b2304a13e46df411fc4738e3306142d1963157f86cfcd04a5e1dec747",
+  "coefficient": 0.017793329718851385,
+  "intercept": -2.4073759400823356,
   "train_oof_rows": 2885,
-  "train_oof_brier": 0.1188417367001812,
+  "train_oof_brier": 0.11826622162049275,
   "test_rows": 353,
-  "test_brier": 0.10102723629828729,
+  "test_brier": 0.10055935000626458,
   "test_constant_prevalence_brier": 0.18471743403218358,
   "test_bins": [
     {
@@ -16,27 +16,27 @@
         0.0,
         0.2
       ],
-      "n": 217,
-      "mean_probability": 0.08912689138209907,
-      "observed_fraction": 0.03225806451612903
+      "n": 215,
+      "mean_probability": 0.08884793461297359,
+      "observed_fraction": 0.03255813953488372
     },
     {
       "range": [
         0.2,
         0.4
       ],
-      "n": 80,
-      "mean_probability": 0.28327337198739183,
-      "observed_fraction": 0.4
+      "n": 81,
+      "mean_probability": 0.2841665772536768,
+      "observed_fraction": 0.38271604938271603
     },
     {
       "range": [
         0.4,
         0.6
       ],
-      "n": 20,
-      "mean_probability": 0.4896986949724619,
-      "observed_fraction": 0.7
+      "n": 21,
+      "mean_probability": 0.4927004414396289,
+      "observed_fraction": 0.7142857142857143
     },
     {
       "range": [
@@ -44,7 +44,7 @@
         0.8
       ],
       "n": 11,
-      "mean_probability": 0.6802098113311977,
+      "mean_probability": 0.6883800360471493,
       "observed_fraction": 0.8181818181818182
     },
     {
@@ -53,7 +53,7 @@
         1.0
       ],
       "n": 25,
-      "mean_probability": 0.908307549486302,
+      "mean_probability": 0.9123118964333579,
       "observed_fraction": 0.96
     }
   ]

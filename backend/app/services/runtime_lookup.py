@@ -11,6 +11,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from app.ndtp.schemas import TelemetryEvent
+from app.services.map_matching import RouteGraphRegistry
 
 logger = logging.getLogger(__name__)
 POINT = re.compile(r"POINT\s*\(\s*([-+\d.eE]+)\s+([-+\d.eE]+)\s*\)")
@@ -23,7 +24,8 @@ class RuntimeLookup:
                  source_timezone: str = "Europe/Moscow",
                  points_path: str | None = None,
                  demo_units: str = "",
-                 demo_initial_delay_s: float = 180) -> None:
+                 demo_initial_delay_s: float = 180,
+                 route_graph_path: str | None = None) -> None:
         self.stops: dict[int, dict] = {}
         self.plans: dict[int, list[dict]] = defaultdict(list)
         self.units: dict[int, int] = {}
@@ -95,6 +97,7 @@ class RuntimeLookup:
                     })
             for hints in self.point_hints.values():
                 hints.sort(key=lambda point: point["T"])
+        self.route_graphs = RouteGraphRegistry(self.plans, route_graph_path)
         logger.info("runtime lookups: %d stops, %d mapped vehicles",
                     len(self.stops), len(self.vehicles_by_unit))
 
@@ -149,6 +152,7 @@ class RuntimeLookup:
             }
             self.stops[stop["target_stop_id"]] = stop
             self.plans[tr_id].append(stop)
+        self.route_graphs.rebuild(tr_id, self.plans[tr_id])
         logger.warning("synthetic demo plan created for unit_id=%s tr_id=%s",
                        event.unit_id, tr_id)
         return tr_id

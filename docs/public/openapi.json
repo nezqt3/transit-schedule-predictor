@@ -23,7 +23,6 @@
                 "type": "null"
               }
             ],
-            "format": "password",
             "title": "Client Secret"
           },
           "grant_type": {
@@ -39,7 +38,6 @@
             "title": "Grant Type"
           },
           "password": {
-            "format": "password",
             "title": "Password",
             "type": "string"
           },
@@ -1364,6 +1362,83 @@
             ],
             "title": "Last Confirmed Stop Id"
           },
+          "map_match_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Map Match Confidence"
+          },
+          "map_match_distance_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Map Match Distance M"
+          },
+          "map_match_graph_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Map Match Graph Source"
+          },
+          "matched_lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched Lat"
+          },
+          "matched_lon": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched Lon"
+          },
+          "matched_progress_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched Progress M"
+          },
+          "matched_segment_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched Segment Index"
+          },
           "model": {
             "anyOf": [
               {
@@ -1561,13 +1636,6 @@
       },
       "ValidationError": {
         "properties": {
-          "ctx": {
-            "title": "Context",
-            "type": "object"
-          },
-          "input": {
-            "title": "Input"
-          },
           "loc": {
             "items": {
               "anyOf": [
@@ -1609,6 +1677,22 @@
             "title": "Before Delay S",
             "type": "number"
           },
+          "downstream_delay_reduction_s": {
+            "title": "Downstream Delay Reduction S",
+            "type": "number"
+          },
+          "overflow_passengers": {
+            "title": "Overflow Passengers",
+            "type": "integer"
+          },
+          "passenger_count": {
+            "title": "Passenger Count",
+            "type": "integer"
+          },
+          "passenger_delay_reduction_minutes": {
+            "title": "Passenger Delay Reduction Minutes",
+            "type": "number"
+          },
           "reduction_s": {
             "title": "Reduction S",
             "type": "number"
@@ -1616,6 +1700,10 @@
           "reserve_vehicle": {
             "title": "Reserve Vehicle",
             "type": "integer"
+          },
+          "rotation_feasible": {
+            "title": "Rotation Feasible",
+            "type": "boolean"
           },
           "run_id": {
             "anyOf": [
@@ -1627,6 +1715,10 @@
               }
             ],
             "title": "Run Id"
+          },
+          "served_passengers": {
+            "title": "Served Passengers",
+            "type": "integer"
           },
           "target_stop_id": {
             "anyOf": [
@@ -1642,6 +1734,10 @@
           "tr_id": {
             "title": "Tr Id",
             "type": "integer"
+          },
+          "traffic_adjusted_delay_s": {
+            "title": "Traffic Adjusted Delay S",
+            "type": "number"
           }
         },
         "required": [
@@ -1651,13 +1747,24 @@
           "target_stop_id",
           "before_delay_s",
           "after_delay_s",
-          "reduction_s"
+          "reduction_s",
+          "passenger_count",
+          "served_passengers",
+          "overflow_passengers",
+          "passenger_delay_reduction_minutes",
+          "downstream_delay_reduction_s",
+          "traffic_adjusted_delay_s",
+          "rotation_feasible"
         ],
         "title": "WhatIfAssignment",
         "type": "object"
       },
       "WhatIfMetrics": {
         "properties": {
+          "affected_passengers": {
+            "title": "Affected Passengers",
+            "type": "integer"
+          },
           "average_delay_s": {
             "title": "Average Delay S",
             "type": "number"
@@ -1670,16 +1777,32 @@
             "title": "Maximum Delay S",
             "type": "number"
           },
+          "missed_next_runs": {
+            "title": "Missed Next Runs",
+            "type": "integer"
+          },
           "on_time_runs": {
             "title": "On Time Runs",
             "type": "integer"
+          },
+          "passenger_delay_minutes": {
+            "title": "Passenger Delay Minutes",
+            "type": "number"
+          },
+          "rotation_delay_s": {
+            "title": "Rotation Delay S",
+            "type": "number"
           }
         },
         "required": [
           "average_delay_s",
           "maximum_delay_s",
           "late_runs",
-          "on_time_runs"
+          "on_time_runs",
+          "passenger_delay_minutes",
+          "affected_passengers",
+          "missed_next_runs",
+          "rotation_delay_s"
         ],
         "title": "WhatIfMetrics",
         "type": "object"
@@ -1707,6 +1830,27 @@
             "minimum": 1.0,
             "title": "Late Threshold S",
             "type": "integer"
+          },
+          "passenger_transfer_minutes": {
+            "default": 0,
+            "maximum": 30.0,
+            "minimum": 0.0,
+            "title": "Passenger Transfer Minutes",
+            "type": "number"
+          },
+          "reserve_capacity": {
+            "default": 100,
+            "maximum": 500.0,
+            "minimum": 1.0,
+            "title": "Reserve Capacity",
+            "type": "integer"
+          },
+          "traffic_multiplier": {
+            "default": 1.0,
+            "maximum": 3.0,
+            "minimum": 0.5,
+            "title": "Traffic Multiplier",
+            "type": "number"
           },
           "vehicles": {
             "items": {
@@ -1746,6 +1890,14 @@
           "total_delay_reduction_s": {
             "title": "Total Delay Reduction S",
             "type": "number"
+          },
+          "total_downstream_delay_reduction_s": {
+            "title": "Total Downstream Delay Reduction S",
+            "type": "number"
+          },
+          "total_passenger_delay_reduction_minutes": {
+            "title": "Total Passenger Delay Reduction Minutes",
+            "type": "number"
           }
         },
         "required": [
@@ -1753,18 +1905,97 @@
           "scenario",
           "assignments",
           "total_delay_reduction_s",
+          "total_passenger_delay_reduction_minutes",
+          "total_downstream_delay_reduction_s",
           "methodology"
         ],
         "title": "WhatIfResponse",
         "type": "object"
       },
+      "WhatIfRotationRun": {
+        "description": "A subsequent run assigned to the same physical vehicle.",
+        "properties": {
+          "departure_minutes": {
+            "maximum": 1440.0,
+            "minimum": 0.0,
+            "title": "Departure Minutes",
+            "type": "number"
+          },
+          "duration_minutes": {
+            "maximum": 720.0,
+            "minimum": 0.0,
+            "title": "Duration Minutes",
+            "type": "number"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "turnaround_minutes": {
+            "anyOf": [
+              {
+                "maximum": 180.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnaround Minutes"
+          }
+        },
+        "required": [
+          "run_id",
+          "departure_minutes",
+          "duration_minutes"
+        ],
+        "title": "WhatIfRotationRun",
+        "type": "object"
+      },
       "WhatIfVehicle": {
         "description": "One active run and its current delay forecast.",
         "properties": {
+          "next_run_departure_minutes": {
+            "anyOf": [
+              {
+                "maximum": 720.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Run Departure Minutes"
+          },
+          "passenger_count": {
+            "default": 0,
+            "description": "Passengers on the run",
+            "maximum": 500.0,
+            "minimum": 0.0,
+            "title": "Passenger Count",
+            "type": "integer"
+          },
           "predicted_delay_s": {
             "description": "Forecast schedule deviation in seconds",
             "title": "Predicted Delay S",
             "type": "number"
+          },
+          "remaining_trip_minutes": {
+            "default": 0,
+            "maximum": 360.0,
+            "minimum": 0.0,
+            "title": "Remaining Trip Minutes",
+            "type": "number"
+          },
+          "rotation_runs": {
+            "items": {
+              "$ref": "#/components/schemas/WhatIfRotationRun"
+            },
+            "maxItems": 20,
+            "title": "Rotation Runs",
+            "type": "array"
           },
           "run_id": {
             "anyOf": [
@@ -1793,6 +2024,20 @@
           "tr_id": {
             "description": "Vehicle identifier",
             "title": "Tr Id",
+            "type": "integer"
+          },
+          "turnaround_minutes": {
+            "default": 0,
+            "maximum": 180.0,
+            "minimum": 0.0,
+            "title": "Turnaround Minutes",
+            "type": "number"
+          },
+          "vehicle_capacity": {
+            "default": 100,
+            "maximum": 500.0,
+            "minimum": 1.0,
+            "title": "Vehicle Capacity",
             "type": "integer"
           }
         },
