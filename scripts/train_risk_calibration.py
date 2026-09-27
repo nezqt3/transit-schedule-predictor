@@ -74,7 +74,7 @@ def main() -> None:
         "version": "risk-late-120-2026-09-27",
         "source_model_version": manifest["model_version"],
         "source_model_artifact_sha256": hashlib.sha256(
-            (artifacts / "lightgbm_plan_direct.txt").read_bytes()
+            (artifacts / "lightgbm_plan_direct.txt").read_bytes().replace(b"\r\n", b"\n")
         ).hexdigest(),
         "coefficient": float(calibrator.coef_[0, 0]),
         "intercept": float(calibrator.intercept_[0]),

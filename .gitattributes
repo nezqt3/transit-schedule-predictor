@@ -1,0 +1,4 @@
+ml/artifacts/lightgbm_plan_metadata.json text eol=lf
+ml/artifacts/lightgbm_plan_direct.txt text eol=lf
+ml/artifacts/lightgbm_plan_residual.txt text eol=lf
+ml/artifacts/risk_calibration.json text eol=lf

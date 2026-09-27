@@ -14,8 +14,11 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from verify_submission import read  # noqa: E402
 
 
-def sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+def sha256(path: Path, *, normalize_text: bool = False) -> str:
+    data = path.read_bytes()
+    if normalize_text:
+        data = data.replace(b"\r\n", b"\n")
+    return hashlib.sha256(data).hexdigest()
 
 
 def main() -> None:
@@ -33,7 +36,7 @@ def main() -> None:
         "numpy": version("numpy"),
     }
     manifest["sha256"] = {
-        name: sha256(artifacts / name)
+        name: sha256(artifacts / name, normalize_text=True)
         for name in ("lightgbm_plan_metadata.json", "lightgbm_plan_direct.txt",
                      "lightgbm_plan_residual.txt", "risk_calibration.json")
     }
