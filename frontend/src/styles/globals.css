@@ -264,6 +264,14 @@ a { color: var(--accent); }
 .historical-overview { display: flex; gap: 23px; align-items: center; min-height: 48px; padding: 0 18px; border-bottom: 1px solid var(--border); background: #f8fbff; color: #526d91; font-size: 12px; }
 .historical-overview strong { margin-right: 4px; color: var(--text); font-size: 15px; font-variant-numeric: tabular-nums; }
 .historical-overview__what-if { margin-left: auto; }
+.historical-playback { display: flex; flex: none; align-items: center; gap: 7px; min-height: 50px; padding: 7px 14px; border-bottom: 1px solid var(--border); background: #f1f6fd; }
+.historical-playback button { display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 5px; min-width: 34px; height: 34px; padding: 0 8px; border: 1px solid #bfd0e5; border-radius: 6px; background: white; color: #245687; font-size: 11px; font-weight: 750; }
+.historical-playback button:hover { border-color: #8eadd2; background: #f8fbff; }
+.historical-playback button.historical-playback__primary { min-width: 100px; color: white; border-color: var(--accent); background: var(--accent); }
+.historical-playback__clock { min-width: 48px; margin-left: 4px; color: #173f71; font-size: 16px; font-variant-numeric: tabular-nums; }
+.historical-playback > input { flex: 1; min-width: 90px; accent-color: var(--accent); }
+.historical-playback label { display: inline-flex; flex: none; align-items: center; gap: 6px; color: #547092; font-size: 11px; font-weight: 700; }
+.historical-playback select { min-height: 32px; padding: 0 5px; border: 1px solid #bfd0e5; border-radius: 5px; background: white; color: #173f71; font-weight: 700; }
 .historical-map-wrap { position: relative; flex: 1; min-height: 200px; background: #e7eef6; }
 .historical-map { position: absolute; inset: 0; }
 .historical-map-legend { position: absolute; z-index: 500; bottom: 12px; left: 12px; display: flex; flex-wrap: wrap; gap: 9px; max-width: calc(100% - 24px); padding: 7px 9px; border: 1px solid #dce6f2; border-radius: 5px; background: #ffffffed; color: #4b688b; font-size: 11px; }
@@ -363,6 +371,8 @@ a { color: var(--accent); }
   .historical-fleet-list { max-height: 220px; min-height: 100px; }
   .historical-details-panel { order: 1; }
   .historical-details { min-height: 220px; max-height: 400px; }
+  .historical-playback { flex-wrap: wrap; }
+  .historical-playback > input { order: 2; flex-basis: 100%; }
   .historical-table-layout { height: auto; }
   .historical-table-details { max-height: none; }
 }

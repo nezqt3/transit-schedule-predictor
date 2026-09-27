@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef } from 'react'
 
-import { REPLAY_ANCHOR_KEY, useDashboardStore } from '@/store/dashboard'
+import { useDashboardStore } from '@/store/dashboard'
 import { predictReplayPoint, useReplayFleet } from './api'
-import { janMs } from './fleetClock'
+import { janMs, replayBounds } from './fleetClock'
 
-const TICK_MS = 1000
+const TICK_MS = 250
 const MAX_CONCURRENT_PREDICTIONS = 6
 
 /** Keep the January clock and forecasts running while navigating between map and table. */
@@ -12,11 +12,14 @@ export function ReplaySession() {
   const { data: fleet } = useReplayFleet()
   const timeMs = useDashboardStore((state) => state.replayTimeMs)
   const revision = useDashboardStore((state) => state.replayRevision)
+  const playing = useDashboardStore((state) => state.replayPlaying)
+  const speed = useDashboardStore((state) => state.replaySpeed)
   const predictions = useDashboardStore((state) => state.replayPredictions)
   const failures = useDashboardStore((state) => state.replayFailures)
   const requested = useRef(new Set([...Object.keys(predictions), ...Object.keys(failures)]))
   const inFlight = useRef(0)
   const generation = useRef(revision)
+  const lastTick = useRef(Date.now())
 
   const points = useMemo(() => fleet?.vehicles.flatMap((vehicle) => vehicle.points)
     .sort((a, b) => janMs(b.T) - janMs(a.T)) ?? [], [fleet])
@@ -29,37 +32,24 @@ export function ReplaySession() {
 
   useEffect(() => {
     if (!fleet) return
-    const firstVerifiedRunMs = Math.min(...fleet.vehicles.flatMap((vehicle) =>
-      vehicle.runs.filter((run) => run.valid).map((run) => janMs(run.start_at))))
-    const startMs = Number.isFinite(firstVerifiedRunMs)
-      ? Math.max(janMs(fleet.start_at), firstVerifiedRunMs)
-      : janMs(fleet.start_at)
-    const endMs = janMs(fleet.end_at)
+    const { startMs, endMs } = replayBounds(fleet)
     if (!(endMs > startMs)) return
-    const durationMs = endMs - startMs
-    const now = Date.now()
-    const stored = Number(window.localStorage.getItem(REPLAY_ANCHOR_KEY))
-    let anchorMs = Number.isFinite(stored) && stored > 0 && stored <= now
-      ? stored : now
-    if (now - anchorMs >= durationMs) anchorMs += Math.floor((now - anchorMs) / durationMs) * durationMs
-    window.localStorage.setItem(REPLAY_ANCHOR_KEY, String(anchorMs))
-
-    let completed = false
+    const state = useDashboardStore.getState()
+    if (state.replayTimeMs === null) state.setReplayTime(startMs)
+    lastTick.current = Date.now()
     const tick = () => {
-      if (completed) return
-      const elapsed = Math.max(0, Date.now() - anchorMs)
-      const state = useDashboardStore.getState()
-      if (elapsed >= durationMs) {
-        completed = true
-        state.resetReplay()
-      } else {
-        state.setReplayTime(startMs + elapsed)
-      }
+      const now = Date.now()
+      const elapsed = Math.max(0, now - lastTick.current)
+      lastTick.current = now
+      const current = useDashboardStore.getState()
+      if (!current.replayPlaying || current.replayTimeMs === null) return
+      const next = Math.min(endMs, current.replayTimeMs + elapsed * current.replaySpeed)
+      current.setReplayTime(next)
+      if (next >= endMs) current.setReplayPlaying(false)
     }
-    tick()
     const timer = window.setInterval(tick, TICK_MS)
     return () => window.clearInterval(timer)
-  }, [fleet, revision])
+  }, [fleet, revision, playing, speed])
 
   useEffect(() => {
     if (!fleet || timeMs === null) return
