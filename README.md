@@ -29,6 +29,7 @@ emulator/ndtp-telemetry-emulator.tar
 ```
 
 ```bash
+cp .env.example .env   # если ещё не создан
 make up
 ```
 
@@ -52,8 +53,8 @@ make up
 на 353 размеченных test-точках: **58,6033 с** против **93,3598 с** у baseline
 `cur_dev_s`.
 Файл `data/submissions/final_submission.csv` имеет 151 строку и формат
-`sample_id;prediction`. Проверка: `python scripts/verify_submission.py`.
-Паритет офлайн-прогноза и ML API: `python scripts/verify_model_parity.py`.
+`sample_id;prediction`. Проверка: `python3 scripts/verify_submission.py`.
+Паритет офлайн-прогноза и ML API: `python3 scripts/verify_model_parity.py`.
 
 ## Состав
 

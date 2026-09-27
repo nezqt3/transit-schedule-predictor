@@ -4,38 +4,45 @@
 	up-frontend up-frontend-dev logs-frontend
 
 NDTP_EMULATOR_ARCHIVE ?= emulator/ndtp-telemetry-emulator.tar
+PYTHON_DETECTED := $(shell for candidate in python3 python python3.15 python3.14 python3.13 python3.12; do \
+	if command -v "$$candidate" >/dev/null 2>&1 && \
+		"$$candidate" -c 'import sys; sys.exit(sys.version_info < (3, 12))' >/dev/null 2>&1; then \
+		command -v "$$candidate"; break; \
+	fi; \
+done)
+PYTHON ?= $(or $(PYTHON_DETECTED),$(error Python 3.12+ not found in PATH; install it or set PYTHON=/path/to/python))
 
 up:
-	python scripts/start_official_emulator.py --prepare-image --archive "$(NDTP_EMULATOR_ARCHIVE)"
+	"$(PYTHON)" scripts/start_official_emulator.py --prepare-image --archive "$(NDTP_EMULATOR_ARCHIVE)"
 	docker compose --profile replay stop dataset-replay
 	docker compose -f docker-compose.yml -f docker-compose.official-demo.yml up -d --build --wait
-	python scripts/start_official_emulator.py --archive "$(NDTP_EMULATOR_ARCHIVE)"
+	"$(PYTHON)" scripts/start_official_emulator.py --archive "$(NDTP_EMULATOR_ARCHIVE)"
 
 build:
 	docker compose build
 
 down:
-	python scripts/start_official_emulator.py --stop
+	"$(PYTHON)" scripts/start_official_emulator.py --stop
 	docker compose --profile replay down
 
 logs:
 	docker compose logs -f
 
 test:
-	cd backend && python -m pytest
-	cd ml && python -m pytest
+	cd backend && "$(PYTHON)" -m pytest
+	cd ml && "$(PYTHON)" -m pytest
 
 features:
-	python scripts/preprocess_data.py
+	"$(PYTHON)" scripts/preprocess_data.py
 
 train:
-	python scripts/preprocess_data.py
-	python scripts/exp_lightgbm_plan.py --release
-	python scripts/train_risk_calibration.py
-	python scripts/freeze_release.py
+	"$(PYTHON)" scripts/preprocess_data.py
+	"$(PYTHON)" scripts/exp_lightgbm_plan.py --release
+	"$(PYTHON)" scripts/train_risk_calibration.py
+	"$(PYTHON)" scripts/freeze_release.py
 
 submit:
-	python scripts/verify_submission.py
+	"$(PYTHON)" scripts/verify_submission.py
 
 run-online:
 	docker compose up --build ml backend
@@ -43,12 +50,12 @@ run-online:
 up-ndtp: up
 
 up-dataset-replay:
-	python scripts/start_official_emulator.py --stop
+	"$(PYTHON)" scripts/start_official_emulator.py --stop
 	docker compose -f docker-compose.yml -f docker-compose.replay.yml --profile replay up -d --build ml backend frontend dataset-replay
-	python scripts/start_dataset_replay.py
+	"$(PYTHON)" scripts/start_dataset_replay.py
 
 replay-start:
-	python scripts/start_dataset_replay.py
+	"$(PYTHON)" scripts/start_dataset_replay.py
 
 logs-dataset-replay:
 	docker compose --profile replay logs -f dataset-replay
@@ -60,14 +67,14 @@ format:
 	cd backend && ruff format .
 
 preprocessing:
-	python scripts/preprocess_data.py
+	"$(PYTHON)" scripts/preprocess_data.py
 
 # Собирает публичные документы в docs/public/ (коммитится в Git):
 # PyDoc (Sphinx) + статичный OpenAPI-файл и самодостаточный Swagger UI.
 docs:
-	cd backend && python -m sphinx -W --keep-going -b html docs ../docs/public/pydoc
-	python scripts/export_openapi.py
-	python -c "from pathlib import Path; Path('docs/public/.nojekyll').touch()"
+	cd backend && "$(PYTHON)" -m sphinx -W --keep-going -b html docs ../docs/public/pydoc
+	"$(PYTHON)" scripts/export_openapi.py
+	"$(PYTHON)" -c "from pathlib import Path; Path('docs/public/.nojekyll').touch()"
 
 
 # --- frontend: локально (pnpm) ---
