@@ -17,6 +17,7 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).resolve().parents[1]
 IMAGE = "ndtp-telemetry-emulator:1.0"
 CONTAINER = "ndtp-emu"
+DEFAULT_ARCHIVE = ROOT / "emulator" / "ndtp-telemetry-emulator.tar"
 
 
 def docker(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -25,13 +26,14 @@ def docker(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
     )
 
 
-def ensure_image() -> None:
+def ensure_image(archive: Path) -> None:
     if docker("image", "inspect", IMAGE, check=False).returncode == 0:
         return
-    candidates = [ROOT / "ndtp-telemetry-emulator.tar", ROOT / "emulator" / "ndtp-telemetry-emulator.tar"]
-    archive = next((path for path in candidates if path.is_file()), None)
-    if archive is None:
-        raise RuntimeError("NDTP image missing: place ndtp-telemetry-emulator.tar in the repo root or emulator/")
+    if not archive.is_file():
+        raise RuntimeError(
+            "NDTP image missing: place the supplied archive at "
+            f"{archive} or pass --archive /path/to/ndtp-telemetry-emulator.tar"
+        )
     result = docker("load", "-i", str(archive))
     print(result.stdout.strip())
 
@@ -185,6 +187,12 @@ def wait_for_incidents(unit_ids: set[int], backend_url: str, token: str) -> None
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--archive",
+        type=Path,
+        default=DEFAULT_ARCHIVE,
+        help="path to the supplied ndtp-telemetry-emulator.tar Docker image",
+    )
     parser.add_argument("--config", type=Path, default=ROOT / "emulator" / "official-demo-config.json")
     parser.add_argument("--api-port", type=int, default=int(os.getenv("EMU_API_PORT", "18080")))
     parser.add_argument("--target-host", default=os.getenv("TARGET_HOST"))
@@ -212,7 +220,8 @@ def main() -> None:
     config["targetHost"] = args.target_host
     config["targetPort"] = args.target_port
 
-    ensure_image()
+    archive = args.archive if args.archive.is_absolute() else ROOT / args.archive
+    ensure_image(archive)
     ensure_container(args.api_port)
     if args.target_host is None:
         args.target_host = connect_to_compose_backend() or "host.docker.internal"

@@ -48,6 +48,7 @@ services:
       RUNTIME_SCHEDULE_PATH: /app/runtime_data/schedule_plan.csv
       RUNTIME_TRAFFIC_PATH: /app/runtime_data/traffic.csv
       RUNTIME_POINTS_PATH: ""
+      RUNTIME_ROUTE_GRAPH_PATH: ${RUNTIME_ROUTE_GRAPH_PATH:-}
       SOURCE_TIMEZONE: ${SOURCE_TIMEZONE:-Europe/Moscow}
       PREDICTION_INTERVAL_S: ${PREDICTION_INTERVAL_S:-30}
       RISK_MEDIUM_DELAY_S: ${RISK_MEDIUM_DELAY_S:-60}
@@ -75,6 +76,7 @@ services:
     volumes:
       - ./data/raw/validate/schedule_plan.csv:/app/runtime_data/schedule_plan.csv:ro
       - ./data/raw/validate/traffic.csv:/app/runtime_data/traffic.csv:ro
+      - ./data/raw:/app/data/raw:ro
     depends_on:
       postgres:
         condition: service_started

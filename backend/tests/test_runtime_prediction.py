@@ -199,6 +199,8 @@ def test_ndtp_event_creates_prediction_and_incident(tmp_path):
             assert result is not None and result.predicted_delay_s == 150
             assert result.current_delay_source == "point_input"
             assert result.source == "replay"
+            assert result.map_match_graph_source == "schedule"
+            assert result.map_match_distance_m == 0
             assert len(incidents.list_all()) == 1
             assert sent[0]["cur_dev_s"] == 130
             assert all(point["event_time"] <= sent[0]["T"] for point in sent[0]["telemetry"])

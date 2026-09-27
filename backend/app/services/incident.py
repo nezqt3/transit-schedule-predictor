@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
+from collections.abc import Awaitable, Callable, Iterable
 from datetime import datetime, timezone
 from threading import RLock
 from uuid import uuid4
@@ -9,11 +12,15 @@ from uuid import uuid4
 from app.schemas.incident import Incident
 from app.schemas.prediction import StoredPrediction
 
+logger = logging.getLogger(__name__)
+
 
 class IncidentStore:
     def __init__(self, medium_delay_s: float = 60, high_delay_s: float = 120,
                  medium_probability: float = 0.25,
-                 high_probability: float = 0.60) -> None:
+                 high_probability: float = 0.60, *,
+                 initial: Iterable[Incident] = (),
+                 persist: Callable[[Incident], Awaitable[None]] | None = None) -> None:
         self._items: dict[str, Incident] = {}
         self._active: dict[tuple[int, int], str] = {}
         self._lock = RLock()
@@ -21,6 +28,31 @@ class IncidentStore:
         self.high_delay_s = high_delay_s
         self.medium_probability = medium_probability
         self.high_probability = high_probability
+        self._persist = persist
+        self._persistence_tasks: set[asyncio.Task] = set()
+        for item in initial:
+            self._items[item.incident_id] = item
+            if item.status == "active":
+                self._active[(item.tr_id, item.target_stop_id)] = item.incident_id
+
+    def _schedule_persistence(self, item: Incident) -> None:
+        if self._persist is None:
+            return
+        try:
+            task = asyncio.get_running_loop().create_task(self._persist(item))
+        except RuntimeError:
+            return
+        self._persistence_tasks.add(task)
+        task.add_done_callback(self._persistence_done)
+
+    def _persistence_done(self, task: asyncio.Task) -> None:
+        self._persistence_tasks.discard(task)
+        if not task.cancelled() and task.exception() is not None:
+            logger.error("incident persistence failed: %s", task.exception())
+
+    async def flush(self) -> None:
+        if self._persistence_tasks:
+            await asyncio.gather(*tuple(self._persistence_tasks), return_exceptions=True)
 
     def risk(self, predicted_delay_s: float, p_late: float | None = None) -> str:
         if p_late is not None:
@@ -49,6 +81,7 @@ class IncidentStore:
                 resolved = existing.model_copy(update={"status": "resolved", "updated_at": now})
                 self._items[existing.incident_id] = resolved
                 self._active.pop(key, None)
+                self._schedule_persistence(resolved)
                 return resolved
 
             if speed_kmh is not None and speed_kmh < 3:
@@ -93,6 +126,7 @@ class IncidentStore:
             )
             self._items[item.incident_id] = item
             self._active[key] = item.incident_id
+            self._schedule_persistence(item)
             return item
 
     def list_all(self) -> list[Incident]:
@@ -112,6 +146,8 @@ class IncidentStore:
                 self._items[incident_id] = item
                 self._active.pop(key)
                 resolved.append(item)
+        for item in resolved:
+            self._schedule_persistence(item)
         return resolved
 
     def get(self, incident_id: str) -> Incident | None:

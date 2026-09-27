@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
 from collections import OrderedDict
+from collections.abc import Awaitable, Callable, Iterable
 from datetime import datetime, timedelta, timezone
 from threading import RLock
 from zoneinfo import ZoneInfo
@@ -10,19 +13,46 @@ from zoneinfo import ZoneInfo
 import httpx
 from fastapi import HTTPException
 
-from app.schemas.prediction import StoredPrediction
 from app.core.config import settings
+from app.schemas.prediction import StoredPrediction
 from app.services.ml_client import request_prediction
 from app.services.telemetry import TelemetryService
+
+logger = logging.getLogger(__name__)
 
 
 class PredictionStore:
     """Keep the latest successful ML result for each vehicle in memory."""
 
-    def __init__(self, max_vehicles: int = 500) -> None:
+    def __init__(self, max_vehicles: int = 500, *,
+                 initial: Iterable[StoredPrediction] = (),
+                 persist: Callable[[StoredPrediction], Awaitable[None]] | None = None) -> None:
         self._latest: OrderedDict[int, StoredPrediction] = OrderedDict()
         self._lock = RLock()
         self._max_vehicles = max_vehicles
+        self._persist = persist
+        self._persistence_tasks: set[asyncio.Task] = set()
+        for prediction in sorted(initial, key=lambda item: item.prediction_time):
+            self._latest[prediction.tr_id] = prediction
+
+    def _schedule_persistence(self, prediction: StoredPrediction) -> None:
+        if self._persist is None:
+            return
+        try:
+            task = asyncio.get_running_loop().create_task(self._persist(prediction))
+        except RuntimeError:
+            return
+        self._persistence_tasks.add(task)
+        task.add_done_callback(self._persistence_done)
+
+    def _persistence_done(self, task: asyncio.Task) -> None:
+        self._persistence_tasks.discard(task)
+        if not task.cancelled() and task.exception() is not None:
+            logger.error("prediction persistence failed: %s", task.exception())
+
+    async def flush(self) -> None:
+        if self._persistence_tasks:
+            await asyncio.gather(*tuple(self._persistence_tasks), return_exceptions=True)
 
     def record(self, prediction: StoredPrediction) -> bool:
         with self._lock:
@@ -33,7 +63,8 @@ class PredictionStore:
             self._latest[prediction.tr_id] = prediction
             if len(self._latest) > self._max_vehicles:
                 self._latest.popitem(last=False)
-            return True
+        self._schedule_persistence(prediction)
+        return True
 
     def list_latest(self) -> list[StoredPrediction]:
         with self._lock:
@@ -51,7 +82,8 @@ class PredictionStore:
                 return None
             stale = prediction.model_copy(update={"freshness": "stale"})
             self._latest[tr_id] = stale
-            return stale
+        self._schedule_persistence(stale)
+        return stale
 
     @staticmethod
     def _with_freshness(prediction: StoredPrediction) -> StoredPrediction:

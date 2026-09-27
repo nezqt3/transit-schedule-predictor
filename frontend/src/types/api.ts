@@ -114,6 +114,19 @@ export type WhatIfVehicle = {
   predicted_delay_s: number
   run_id?: string | null
   target_stop_id?: number | null
+  passenger_count?: number
+  vehicle_capacity?: number
+  remaining_trip_minutes?: number
+  next_run_departure_minutes?: number | null
+  turnaround_minutes?: number
+  rotation_runs?: WhatIfRotationRun[]
+}
+
+export type WhatIfRotationRun = {
+  run_id: string
+  departure_minutes: number
+  duration_minutes: number
+  turnaround_minutes?: number | null
 }
 
 export type WhatIfRequest = {
@@ -121,6 +134,9 @@ export type WhatIfRequest = {
   additional_vehicles: number
   dispatch_lead_minutes: number
   late_threshold_s: number
+  traffic_multiplier: number
+  reserve_capacity: number
+  passenger_transfer_minutes: number
 }
 
 export type WhatIfMetrics = {
@@ -128,6 +144,10 @@ export type WhatIfMetrics = {
   maximum_delay_s: number
   late_runs: number
   on_time_runs: number
+  passenger_delay_minutes: number
+  affected_passengers: number
+  missed_next_runs: number
+  rotation_delay_s: number
 }
 
 export type WhatIfAssignment = {
@@ -138,6 +158,13 @@ export type WhatIfAssignment = {
   before_delay_s: number
   after_delay_s: number
   reduction_s: number
+  passenger_count: number
+  served_passengers: number
+  overflow_passengers: number
+  passenger_delay_reduction_minutes: number
+  downstream_delay_reduction_s: number
+  traffic_adjusted_delay_s: number
+  rotation_feasible: boolean
 }
 
 export type WhatIfResponse = {
@@ -145,6 +172,8 @@ export type WhatIfResponse = {
   scenario: WhatIfMetrics
   assignments: WhatIfAssignment[]
   total_delay_reduction_s: number
+  total_passenger_delay_reduction_minutes: number
+  total_downstream_delay_reduction_s: number
   methodology: string
 }
 

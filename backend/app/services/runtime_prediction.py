@@ -14,27 +14,12 @@ from fastapi import HTTPException
 from app.ndtp.schemas import TelemetryEvent
 from app.schemas.prediction import PredictionStatus, StoredPrediction
 from app.services.incident import IncidentStore
+from app.services.map_matching import HmmMapMatcher, MapMatchResult
 from app.services.prediction import PredictionStore, predict_delay
 from app.services.runtime_lookup import RuntimeLookup
 from app.services.telemetry import TelemetryService
 
 logger = logging.getLogger(__name__)
-
-
-def _distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    a1, a2 = math.radians(lat1), math.radians(lat2)
-    da, do = a2 - a1, math.radians(lon2 - lon1)
-    h = math.sin(da / 2) ** 2 + math.cos(a1) * math.cos(a2) * math.sin(do / 2) ** 2
-    return 12_742_000 * math.atan2(math.sqrt(h), math.sqrt(1 - h))
-
-
-def _bearing(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    latitude1, latitude2 = math.radians(lat1), math.radians(lat2)
-    longitude_delta = math.radians(lon2 - lon1)
-    east = math.sin(longitude_delta) * math.cos(latitude2)
-    north = (math.cos(latitude1) * math.sin(latitude2)
-             - math.sin(latitude1) * math.cos(latitude2) * math.cos(longitude_delta))
-    return math.degrees(math.atan2(east, north)) % 360
 
 
 class RuntimePrediction:
@@ -55,6 +40,7 @@ class RuntimePrediction:
         self._last_started: dict[int, datetime] = {}
         self._retry_after_wall: dict[int, datetime] = {}
         self._last_confirmed: dict[int, tuple[int, datetime]] = {}
+        self.map_matcher = HmmMapMatcher(lookup.route_graphs)
         self._statuses: dict[int, PredictionStatus] = {}
         self.requests_started = 0
         self.requests_succeeded = 0
@@ -116,6 +102,7 @@ class RuntimePrediction:
         demo_delay = self.lookup.demo_current_delay(tr_id, t) if demo else None
         current = (self._confirmed_delay(tr_id, event.unit_id, t, historical)
                    if hint is None and demo_delay is None else None)
+        map_match = self._match_current(tr_id, event.unit_id, t, historical)
         if hint is None and demo_delay is None and current is None:
             self._status(event.unit_id, tr_id, "insufficient_data")
             return
@@ -134,7 +121,7 @@ class RuntimePrediction:
         self.requests_started += 1
         self._tasks[event.unit_id] = asyncio.create_task(
             self._predict(event, tr_id, t, target, delay_s, previous_stop_id,
-                          confirmed_at, delay_source, historical, demo),
+                          confirmed_at, delay_source, historical, demo, map_match),
             name=f"ndtp-predict-{event.unit_id}",
         )
         self.peak_active_tasks = max(
@@ -144,57 +131,55 @@ class RuntimePrediction:
 
     def _confirmed_delay(self, tr_id: int, unit_id: int, t: datetime,
                          historical: bool) -> tuple[float, int, datetime] | None:
-        points = [event for event in self.telemetry.get_recent(unit_id)
-                  if event.nav is not None and event.nav.coordinates_valid
-                  and event.event_time <= t
-                  and (historical or event.received_at <= t)]
+        points = self._causal_points(unit_id, t, historical)
         plan = self.lookup.plans.get(tr_id, ())
+        graph = self.lookup.route_graphs.graphs.get(tr_id)
+        matches = self.map_matcher.match_sequence(tr_id, points)
+        if graph is None or not matches:
+            return None
         last_confirmed = self._last_confirmed.get(unit_id)
         for index in range(len(plan) - 1, -1, -1):
             stop = plan[index]
             planned = stop["target_time_begin"]
             if planned > t or (last_confirmed and index < last_confirmed[0]):
                 continue
-            nearby = [event for event in points
-                      if -120 <= (event.event_time - planned).total_seconds() <= 8 * 60
-                      and _distance_m(event.nav.latitude, event.nav.longitude,
-                                      stop["stop_lat"], stop["stop_lon"]) <= 120]
+            stop_chainage = graph.stop_chainages[index]
+            nearby = [match for match in matches
+                      if -120 <= (match.event.event_time - planned).total_seconds() <= 8 * 60
+                      and abs(match.chainage_m - stop_chainage) <= 120
+                      and match.distance_m <= 120 and match.confidence >= 0.08]
             if len(nearby) < 2:
                 continue
-            nearby.sort(key=lambda item: item.event_time)
-            if not any(item.nav.speed_avg is not None and
-                       0 <= item.nav.speed_avg <= 15 for item in nearby):
+            nearby.sort(key=lambda item: item.event.event_time)
+            if not any(item.event.nav.speed_avg is not None and
+                       0 <= item.event.nav.speed_avg <= 15 for item in nearby):
                 continue
-            if index and _distance_m(
-                plan[index - 1]["stop_lat"], plan[index - 1]["stop_lon"],
-                stop["stop_lat"], stop["stop_lon"],
-            ) > 150:
-                expected = _bearing(
-                    plan[index - 1]["stop_lat"], plan[index - 1]["stop_lon"],
-                    stop["stop_lat"], stop["stop_lon"],
-                )
-                moving_headings = [item.nav.course for item in nearby
-                                   if item.nav.course is not None
-                                   and item.nav.speed_avg is not None
-                                   and item.nav.speed_avg >= 3]
-                if moving_headings and all(
-                    abs((course - expected + 180) % 360 - 180) > 90
-                    for course in moving_headings
-                ):
-                    continue
             for first, second in zip(nearby, nearby[1:]):
-                gap = (second.event_time - first.event_time).total_seconds()
+                gap = (second.event.event_time - first.event.event_time).total_seconds()
                 if 0 < gap <= 120:
-                    confirmed_at = first.event_time
+                    confirmed_at = first.event.event_time
                     self._last_confirmed[unit_id] = (index, confirmed_at)
                     return ((confirmed_at - planned).total_seconds(),
                             stop["target_stop_id"], confirmed_at)
         return None
 
+    def _causal_points(self, unit_id: int, t: datetime,
+                       historical: bool) -> list[TelemetryEvent]:
+        return [event for event in self.telemetry.get_recent(unit_id)
+                if event.nav is not None and event.nav.coordinates_valid
+                and event.event_time <= t and (historical or event.received_at <= t)]
+
+    def _match_current(self, tr_id: int, unit_id: int, t: datetime,
+                       historical: bool) -> MapMatchResult | None:
+        return self.map_matcher.match(
+            tr_id, self._causal_points(unit_id, t, historical),
+        )
+
     async def _predict(self, event: TelemetryEvent, tr_id: int, t: datetime,
                        target: dict, delay_s: float, previous_stop_id: int | None,
                        confirmed_at: datetime | None, delay_source: str,
-                       historical: bool, demo: bool) -> None:
+                       historical: bool, demo: bool,
+                       map_match: MapMatchResult | None) -> None:
         try:
             queued_at = asyncio.get_running_loop().time()
             async with self._ml_semaphore:
@@ -239,6 +224,13 @@ class RuntimePrediction:
                 risk=self.incidents.risk(predicted_delay, p_late),
                 risk_source=("calibrated_probability" if p_late is not None
                              else "threshold"),
+                matched_segment_index=(map_match.segment_index if map_match else None),
+                matched_progress_m=(round(map_match.chainage_m, 1) if map_match else None),
+                matched_lat=(map_match.latitude if map_match else None),
+                matched_lon=(map_match.longitude if map_match else None),
+                map_match_distance_m=(round(map_match.distance_m, 1) if map_match else None),
+                map_match_confidence=(map_match.confidence if map_match else None),
+                map_match_graph_source=(map_match.graph_source if map_match else None),
             )
             if not self.predictions.record(prediction):
                 return

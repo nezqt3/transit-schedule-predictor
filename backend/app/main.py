@@ -9,6 +9,7 @@ from app.api.router import api_router
 from app.core.config import settings
 from app.ndtp.server import NdtServer
 from app.repositories.auth import AuthRepository
+from app.repositories.runtime_state import RuntimeStateRepository
 from app.services.auth import AuthService
 from app.services.incident import IncidentStore
 from app.services.prediction import PredictionStore
@@ -23,10 +24,34 @@ async def lifespan(app: FastAPI):
     # startup
     telemetry = TelemetryService()
     app.state.telemetry = telemetry
-    app.state.predictions = PredictionStore()
+    state_repository = RuntimeStateRepository(
+        settings.database_url,
+        settings.auth_database_connect_timeout_s,
+    )
+    restored_predictions = []
+    restored_incidents = []
+    try:
+        await state_repository.initialize()
+        restored_predictions = await state_repository.load_predictions()
+        restored_incidents = await state_repository.load_incidents()
+        logging.getLogger(__name__).info(
+            "Restored %d predictions and %d incidents",
+            len(restored_predictions), len(restored_incidents),
+        )
+    except Exception:
+        logging.getLogger(__name__).exception(
+            "Runtime database is unavailable; using in-memory state until it recovers"
+        )
+    app.state.runtime_state_repository = state_repository
+    app.state.predictions = PredictionStore(
+        initial=restored_predictions,
+        persist=state_repository.save_prediction,
+    )
     app.state.incidents = IncidentStore(
         settings.risk_medium_delay_s, settings.risk_high_delay_s,
         settings.risk_medium_probability, settings.risk_high_probability,
+        initial=restored_incidents,
+        persist=state_repository.save_incident,
     )
     app.state.runtime_lookup = RuntimeLookup(
         settings.runtime_schedule_path,
@@ -35,6 +60,7 @@ async def lifespan(app: FastAPI):
         settings.runtime_points_path,
         settings.demo_units,
         settings.demo_initial_delay_s,
+        settings.runtime_route_graph_path,
     )
     try:
         app.state.replay = ReplayDataset(
@@ -125,11 +151,14 @@ async def lifespan(app: FastAPI):
     # shutdown
     await ndtp_server.stop()
     await app.state.runtime_prediction.stop()
+    await app.state.predictions.flush()
+    await app.state.incidents.flush()
     await app.state.ml_client.aclose()
     if auth_retry_task is not None:
         auth_retry_task.cancel()
         await asyncio.gather(auth_retry_task, return_exceptions=True)
     await auth_repository.close()
+    await state_repository.close()
 
 
 app = FastAPI(
