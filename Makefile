@@ -4,12 +4,19 @@
 	up-frontend up-frontend-dev logs-frontend
 
 NDTP_EMULATOR_ARCHIVE ?= emulator/ndtp-telemetry-emulator.tar
+ifeq ($(OS),Windows_NT)
+PYTHON_DETECTED := $(shell python -c "import sys; sys.exit(sys.version_info < (3, 12))" >NUL 2>&1 && echo python)
+ifeq ($(PYTHON_DETECTED),)
+PYTHON_DETECTED := $(shell python3 -c "import sys; sys.exit(sys.version_info < (3, 12))" >NUL 2>&1 && echo python3)
+endif
+else
 PYTHON_DETECTED := $(shell for candidate in python3 python python3.15 python3.14 python3.13 python3.12; do \
 	if command -v "$$candidate" >/dev/null 2>&1 && \
 		"$$candidate" -c 'import sys; sys.exit(sys.version_info < (3, 12))' >/dev/null 2>&1; then \
 		command -v "$$candidate"; break; \
 	fi; \
 done)
+endif
 PYTHON ?= $(or $(PYTHON_DETECTED),$(error Python 3.12+ not found in PATH; install it or set PYTHON=/path/to/python))
 
 up:
