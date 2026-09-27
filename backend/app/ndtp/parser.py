@@ -22,6 +22,8 @@ NAV_SATELLITES_WITH_ALTITUDE = 63
 
 CELL_NAV00 = 0
 CELL_INT_SENSOR02 = 2
+CELL_CROWN03 = 3
+CELL_IRMA04 = 4
 CELL_USI08 = 8
 CELL_CAN10 = 10
 CELL_TERMO16 = 16
@@ -33,6 +35,10 @@ _CELL_STRUCTS: dict[int, str] = {
     # an_in0..3, di_in, di_out, di0..3_counter, odometer, csq, gprs_state,
     # accel_energy, ext_volt
     CELL_INT_SENSOR02: "<HHHHBBHHHHIBBBb",
+    # odometer, zone, four boarding and four alighting counters
+    CELL_CROWN03: "<IH8B",
+    # same counters as Crown, followed by eight one-bit door flags
+    CELL_IRMA04: "<IH8BB",
     CELL_USI08: "<BHHB",
     # sec_flag_status, all_time_engine, all_track, all_fuel_consum,
     # fuel_level, speed_turn_engine, t_engine, speed, pressure_axis(5), flag_alarm
@@ -49,7 +55,7 @@ CELL_SIZES: dict[int, int] = {
 # Размеры проверены по отправленным им пакетам. Без них один датчик дверей,
 # пассажиропотока и т. п. приводил к потере всего навигационного пакета.
 SKIPPABLE_CELL_SIZES: dict[int, int] = {
-    3: 14, 4: 15, 5: 6, 6: 9, 7: 1, 9: 40,
+    5: 6, 6: 9, 7: 1, 9: 40,
     12: 5, 13: 13, 14: 15, 15: 50, 17: 46,
     18: 50, 19: 40, 20: 8, 21: 180, 22: 24,
     23: 16, 100: 44,
@@ -94,6 +100,7 @@ class Nav00:
     coordinates_valid: bool
     alert: bool
     sos: bool
+    internal_battery_power: bool
     battery_voltage_mv: int | None
     speed_avg: float | None
     speed_max: float | None
@@ -101,7 +108,7 @@ class Nav00:
     track_m: int
     altitude_m: int | None
     satellites: int | None
-    pdop: int
+    pdop: int | None
 
 
 @dataclass(frozen=True)
@@ -116,6 +123,16 @@ class IntSensor02:
 
 
 @dataclass(frozen=True)
+class PassengerCell:
+    odometer: int
+    zone: int
+    boardings: tuple[int, int, int, int]
+    alightings: tuple[int, int, int, int]
+    doors_present: tuple[bool, bool, bool, bool] | None = None
+    doors_closed: tuple[bool, bool, bool, bool] | None = None
+
+
+@dataclass(frozen=True)
 class Usi08:
     det_status: int
     level_mm: int
@@ -125,12 +142,15 @@ class Usi08:
 
 @dataclass(frozen=True)
 class Can10:
+    module_available: bool
     speed_kmh: float
     engine_rpm: int
     engine_temp_c: int
-    odometer_km: int
+    odometer_km: float
     engine_hours: float
     alarm_flags: int
+    fuel_level_value: int
+    fuel_level_unit: str
 
 
 @dataclass(frozen=True)
@@ -258,6 +278,7 @@ def decode_cell(cell_type: int, payload: bytes) -> object | None:
             coordinates_valid=valid,
             alert=bool(extra_dop & 0x02),
             sos=bool(extra_dop & 0x04),
+            internal_battery_power=bool(extra_dop & 0x10),
             battery_voltage_mv=None if bat_voltage == 255 else bat_voltage * 20,
             speed_avg=None if speed_avg == 65535 else float(speed_avg),
             speed_max=None if speed_max == 65535 else float(speed_max),
@@ -265,7 +286,7 @@ def decode_cell(cell_type: int, payload: bytes) -> object | None:
             track_m=track,
             altitude_m=None if altitude == 65535 else altitude,
             satellites=None if nsat == 255 else nsat,
-            pdop=_pdop,
+            pdop=None if _pdop == 255 else _pdop,
         )
     if cell_type == CELL_INT_SENSOR02:
         return IntSensor02(
@@ -277,6 +298,19 @@ def decode_cell(cell_type: int, payload: bytes) -> object | None:
             csq=values[11],
             gprs_state=values[12],
         )
+    if cell_type in (CELL_CROWN03, CELL_IRMA04):
+        odometer, zone, *counts = values
+        door_flags = counts.pop() if cell_type == CELL_IRMA04 else None
+        return PassengerCell(
+            odometer=odometer,
+            zone=zone,
+            boardings=tuple(counts[:4]),
+            alightings=tuple(counts[4:]),
+            doors_present=(tuple(bool(door_flags & (1 << index)) for index in range(4))
+                           if door_flags is not None else None),
+            doors_closed=(tuple(bool(door_flags & (1 << (index + 4))) for index in range(4))
+                          if door_flags is not None else None),
+        )
     if cell_type == CELL_USI08:
         det_status, level_mm, level_l, temperature = values
         return Usi08(
@@ -287,17 +321,20 @@ def decode_cell(cell_type: int, payload: bytes) -> object | None:
         )
     if cell_type == CELL_CAN10:
         (
-            _sec_flag, all_time_engine, all_track, _all_fuel,
-            _fuel_level, rpm, t_engine, speed,
+            sec_flag, all_time_engine, all_track, _all_fuel,
+            fuel_level, rpm, t_engine, speed,
             _p1, _p2, _p3, _p4, _p5, flag_alarm,
         ) = values
         return Can10(
+            module_available=sec_flag != 0xFFFFFFFF,
             speed_kmh=speed,
             engine_rpm=rpm,
             engine_temp_c=t_engine,
-            odometer_km=all_track // 100,
+            odometer_km=all_track / 100,
             engine_hours=all_time_engine / 100,
             alarm_flags=flag_alarm,
+            fuel_level_value=fuel_level & 0x7FFF,
+            fuel_level_unit="percent" if fuel_level & 0x8000 else "liters",
         )
     if cell_type == CELL_TERMO16:
         status, temp = values

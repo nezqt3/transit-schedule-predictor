@@ -10,6 +10,18 @@ export function formatClock(value: string | number): string {
   })
 }
 
+export function formatShortClock(value: string | number): string {
+  return formatClock(value).slice(0, 5)
+}
+
+export function formatDelay(seconds: number): string {
+  const rounded = Math.round(Math.abs(seconds))
+  const sign = rounded === 0 ? '' : seconds > 0 ? '+' : '−'
+  const minutes = Math.floor(rounded / 60)
+  const rest = rounded % 60
+  return minutes ? `${sign}${minutes} мин${rest ? ` ${rest} с` : ''}` : `${sign}${rest} с`
+}
+
 export function formatDateTime(value: string | number): string {
   return new Date(value).toLocaleString('ru-RU', {
     timeZone: 'Europe/Moscow',

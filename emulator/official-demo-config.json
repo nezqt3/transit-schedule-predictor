@@ -6,7 +6,27 @@
       "unitId": 1166336,
       "intervalMs": 3000,
       "autoGenerate": true,
-      "cells": []
+      "cells": [
+        { "type": "G6CellNav00", "fields": {} },
+        { "type": "G6CellUsi08", "fields": {} },
+        { "type": "G6CellTermo16", "fields": {} },
+        { "type": "G6CellIntSensor02", "fields": {} },
+        { "type": "G6CellCan10", "fields": {} },
+        {
+          "type": "G6CellIrma04",
+          "fields": {
+            "zone": 1,
+            "irma_door_in1": 12,
+            "irma_door_in2": 8,
+            "irma_door_out1": 5,
+            "irma_door_out2": 3,
+            "irma_present_door1": true,
+            "irma_present_door2": true,
+            "irma_closed_door1": false,
+            "irma_closed_door2": true
+          }
+        }
+      ]
     },
     {
       "unitId": 1166789,

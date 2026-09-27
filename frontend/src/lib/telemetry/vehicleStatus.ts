@@ -4,8 +4,16 @@ import { hasValidPosition, isStale, speedKmh } from './readEvent'
 
 export type VehicleStatus = 'alarm' | 'no-position' | 'stale' | 'moving' | 'stopped' | 'unknown'
 
+export function telemetryAlerts(event: TelemetryEvent): string[] {
+  const alerts: string[] = []
+  if (event.nav?.sos_flag) alerts.push('SOS')
+  if (event.nav?.alert_flag) alerts.push('Тревога терминала')
+  if (event.can?.module_available !== false && event.can?.alarm_flags) alerts.push('Сигнал CAN')
+  return alerts
+}
+
 export function hasAlarm(event: TelemetryEvent): boolean {
-  return Boolean(event.nav?.sos_flag || event.nav?.alert_flag || event.can?.alarm_flags)
+  return telemetryAlerts(event).length > 0
 }
 
 export function vehicleStatus(event: TelemetryEvent, now = Date.now()): VehicleStatus {

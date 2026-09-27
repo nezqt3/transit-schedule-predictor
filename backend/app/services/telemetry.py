@@ -35,12 +35,18 @@ class TelemetryService:
             previous = self._latest.get(event.unit_id)
             if previous is not None and previous.nav is not None and event.nav is None:
                 merged = previous.model_copy(update={
-                    "can": event.can, "received_at": event.received_at,
+                    "can": event.can or previous.can,
+                    "internal_sensor": event.internal_sensor or previous.internal_sensor,
+                    "fuel_sensors": event.fuel_sensors or previous.fuel_sensors,
+                    "temperature_sensors": event.temperature_sensors or previous.temperature_sensors,
+                    "passenger_sensors": event.passenger_sensors or previous.passenger_sensors,
+                    "received_at": event.received_at,
                 })
                 self._latest[event.unit_id] = merged
                 self.publish("vehicle_update", merged.model_dump(mode="json"))
                 return False
-            if previous is not None and event.event_time <= previous.event_time:
+            if (previous is not None and event.event_time <= previous.event_time
+                    and (previous.nav is not None or event.nav is None)):
                 self.ignored_packets += 1
                 return False
             self._latest.pop(event.unit_id, None)

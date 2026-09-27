@@ -210,6 +210,7 @@ class RuntimePrediction:
                 input_received_at=event.received_at,
                 target_stop_id=target["target_stop_id"],
                 target_time=target["target_time_begin"],
+                target_stop_address=target.get("address"),
                 current_delay_s=delay_s, predicted_delay_s=predicted_delay,
                 model=result["model"], model_version=result["model_version"],
                 model_artifact_sha256=result.get("model_artifact_sha256"),

@@ -78,6 +78,12 @@ a { color: var(--accent); }
 .fleet-row__speed { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .fleet-row__speed small { font-size: 11px; font-weight: 500; color: var(--text-muted); }
 .fleet-row__arrow { flex: none; color: #54749f; }
+.ndtp-row-alert { flex: none; padding: 3px 6px; border-radius: 4px; background: #ffe2e7; color: #a71930; font-size: 10px; font-weight: 800; white-space: nowrap; }
+.ndtp-highlights { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; margin: 8px 0 10px; }
+.ndtp-highlights > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 6px 8px; border-radius: 5px; background: #f0f5fb; }
+.ndtp-highlights span { color: #617b9a; font-size: 10px; }
+.ndtp-highlights strong { overflow: hidden; color: #244d80; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.ndtp-highlights strong.ndtp-highlights__alert { color: #b22339; }
 .forecast-risk { flex: none; padding: 3px 5px; border-radius: 4px; font-size: 10px; font-weight: 800; }
 .forecast-risk--low { color: #08734e; background: #dff7e9; }
 .forecast-risk--medium { color: #935800; background: #fff0c8; }
@@ -90,8 +96,39 @@ a { color: var(--accent); }
 .vehicle-details--empty { display: flex; flex-direction: column; gap: 6px; color: var(--text-muted); }
 .vehicle-details--empty strong { font-size: 17px; color: var(--text); }
 .vehicle-details__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.vehicle-details__top > div { min-width: 0; }
+.vehicle-details__top .eyebrow { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .eyebrow { color: #5875a0; font-size: 10px; font-weight: 750; text-transform: uppercase; letter-spacing: .08em; }
 .vehicle-details h2 { font-size: 23px; line-height: 1.1; margin: 2px 0 0; letter-spacing: -.04em; }
+.vehicle-forecast { display: grid; gap: 8px; margin-top: 15px; padding: 16px; border: 1px solid #bcd5f4; border-radius: 10px; background: #edf6ff; }
+.vehicle-forecast--high { border-color: #efb5bd; background: #fff0f2; }
+.vehicle-forecast__heading { display: flex; align-items: center; justify-content: space-between; gap: 7px; color: #486a92; font-size: 11px; font-weight: 700; }
+.vehicle-forecast__risk { flex: none; padding: 3px 6px; border-radius: 4px; background: #ddf3e7; color: #08734e; font-size: 10px; }
+.vehicle-forecast__risk--medium { color: #935800; background: #fff0c8; }
+.vehicle-forecast__risk--high { color: #b22339; background: #ffe1e5; }
+.vehicle-forecast__risk--stale { color: #61738a; background: #e8edf3; }
+.vehicle-forecast__value { color: #1259b5; font-size: 34px; line-height: 1; letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
+.vehicle-forecast--high .vehicle-forecast__value { color: #bc263a; }
+.vehicle-forecast__stop { color: #183b67; font-size: 14px; font-weight: 750; line-height: 1.25; overflow-wrap: anywhere; }
+.vehicle-forecast__reason { color: #506c8f; font-size: 12px; }
+.vehicle-forecast__times { display: flex; align-items: end; gap: 12px; padding-top: 10px; border-top: 1px solid #cadbed; }
+.vehicle-forecast__times > div { display: grid; gap: 1px; }
+.vehicle-forecast__times span { color: #637d9c; font-size: 11px; }
+.vehicle-forecast__times strong { color: #123b6b; font-size: 21px; line-height: 1; font-variant-numeric: tabular-nums; }
+.vehicle-forecast__times > span { padding-bottom: 1px; font-size: 19px; }
+.vehicle-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 9px 0; }
+.vehicle-metrics > div { display: grid; align-content: start; gap: 3px; min-width: 0; padding: 10px; border: 1px solid #dce6f2; border-radius: 7px; background: #f8fbff; }
+.vehicle-metrics span { color: #587498; font-size: 11px; font-weight: 650; }
+.vehicle-metrics strong { font-size: 20px; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vehicle-metrics small { color: #607a99; font-size: 10px; line-height: 1.25; }
+.vehicle-action { display: grid; gap: 5px; margin: 11px 0; padding: 10px 12px; border-left: 4px solid #ca8a04; border-radius: 5px; background: #fff8e9; }
+.vehicle-action--high { border-color: #c52b3e; background: #fff1f2; }
+.vehicle-action span { color: #876315; font-size: 11px; font-weight: 750; }
+.vehicle-action--high span { color: #ad263a; }
+.vehicle-action strong { font-size: 13px; line-height: 1.3; }
+.vehicle-diagnostics { margin-top: 12px; padding-top: 9px; border-top: 1px solid #dce5f0; }
+.vehicle-diagnostics summary { cursor: pointer; color: #315f94; font-size: 11px; font-weight: 750; }
+.vehicle-diagnostics .ndtp-details { margin-top: 10px; }
 .state-pill { display: inline-flex; align-items: center; border-radius: 5px; padding: 5px 8px; font-size: 11px; font-weight: 750; white-space: nowrap; background: #eef2f7; color: #53667e; }
 .state-pill--moving { color: #0756c6; background: #e9f2ff; }
 .state-pill--stopped { color: #007a54; background: #dcf6e9; }
@@ -105,6 +142,19 @@ a { color: var(--accent); }
 .vehicle-details__section-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
 .vehicle-details__section-head strong { font-size: 13px; }
 .vehicle-details__section-head small { color: var(--text-muted); }
+.ndtp-details { display: grid; gap: 12px; margin-top: 16px; }
+.ndtp-details__section { padding: 11px 12px; border: 1px solid #dce6f1; border-radius: 7px; background: #fafcff; }
+.ndtp-details__section h3 { margin: 0 0 7px; color: #244d80; font-size: 13px; }
+.ndtp-details__alerts { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 7px; }
+.ndtp-details__alert, .ndtp-details__ok { padding: 3px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+.ndtp-details__alert { background: #ffe8eb; color: #ae2338; }
+.ndtp-details__ok { background: #e1f5eb; color: #08734e; }
+.ndtp-details__hint { margin: 7px 0 0; color: #617b9a; font-size: 11px; line-height: 1.4; }
+.ndtp-passengers { margin-top: 9px; }
+.ndtp-passengers > strong { display: block; margin-bottom: 5px; font-size: 11px; }
+.ndtp-passengers table { width: 100%; border-collapse: collapse; font-size: 11px; font-variant-numeric: tabular-nums; }
+.ndtp-passengers th, .ndtp-passengers td { padding: 4px; border-bottom: 1px solid #e1e9f3; text-align: left; }
+.ndtp-passengers th { color: #617b9a; font-weight: 650; }
 .incident-card { display: grid; gap: 5px; margin: 12px 0; padding: 12px; border: 1px solid #ead49d; border-left: 4px solid #ca8a04; border-radius: 7px; background: #fffaf0; font-size: 12px; }
 .incident-card--high { border-color: #efb6be; border-left-color: #c52b3e; background: #fff2f3; }
 .incident-card strong { font-size: 13px; }
@@ -231,6 +281,12 @@ a { color: var(--accent); }
 .historical-details { flex: 1; min-height: 0; overflow-y: auto; padding: 13px 20px 18px; }
 .historical-details h2 { margin: 2px 0 0; font-size: 21px; }
 .historical-details p { margin: 0 0 9px; color: #607b9c; font-size: 12px; }
+.historical-details .vehicle-details__top { margin-bottom: 0; }
+.vehicle-route { display: grid; gap: 2px; min-width: 0; padding: 8px 0 0; }
+.vehicle-route span { color: #587498; font-size: 10px; font-weight: 750; text-transform: uppercase; letter-spacing: .06em; }
+.vehicle-route strong { color: #284d79; font-size: 12px; line-height: 1.3; overflow-wrap: anywhere; }
+.vehicle-live-line { display: flex; justify-content: space-between; gap: 8px; padding: 8px 1px; border-bottom: 1px solid #dce5f0; color: #587498; font-size: 11px; }
+.vehicle-live-line strong { color: #244d80; }
 .historical-priority { display: grid; gap: 8px; margin: 14px 0; }
 .historical-priority__forecast { display: grid; gap: 3px; padding: 13px 14px; border: 1px solid #bcd5f4; border-radius: 8px; background: #eef6ff; }
 .historical-priority__forecast--late { border-color: #efb5bd; background: #fff1f2; }
@@ -249,6 +305,7 @@ a { color: var(--accent); }
 .historical-stops > strong { display: block; margin-bottom: 5px; font-size: 12px; }
 .historical-stops > div { display: flex; align-items: center; gap: 6px; padding: 3px 0; color: #4d6b8d; font-size: 11px; }
 .historical-stops > div span:nth-child(3) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.historical-stops > div span:nth-child(2) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .historical-all-stops { margin-top: 9px; border-top: 1px solid #dce5f0; padding-top: 8px; font-size: 11px; }
 .historical-all-stops summary { cursor: pointer; color: #245687; font-weight: 700; }
 .historical-all-stops > div { max-height: 200px; overflow-y: auto; padding: 5px 0; }
@@ -256,6 +313,7 @@ a { color: var(--accent); }
 .historical-all-stops > div > div span:nth-child(2) { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .historical-results { margin-top: 10px; border-top: 1px solid #dce5f0; padding-top: 8px; }
 .historical-results > strong { display: block; margin-bottom: 5px; font-size: 12px; }
+.historical-results summary { cursor: pointer; margin-bottom: 4px; color: #245687; font-size: 11px; font-weight: 700; }
 .historical-results > div { display: flex; gap: 7px; padding: 3px 0; font-size: 11px; font-variant-numeric: tabular-nums; color: #5a7595; }
 .historical-results > div b { margin-left: auto; color: var(--text); }
 .historical-results > div span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
