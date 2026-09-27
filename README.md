@@ -6,7 +6,9 @@ NDTP-пакет поступает в backend по TCP. Backend сопостав
 
 ## Запуск с нуля
 
-Нужны Git и Docker Compose. Выполняйте команды из корня проекта.
+Нужны Git, Python и Docker Compose. Выполняйте команды из корня проекта.
+Для `make up` также нужен образ `ndtp-telemetry-emulator:1.0`: заранее загрузите
+его в Docker или положите архив в `emulator/ndtp-telemetry-emulator.tar`.
 
 1. Проверьте наличие входных файлов:
 
@@ -34,14 +36,15 @@ curl http://localhost:8001/health
 4. Откройте дашборд: <http://localhost:8080>. Вход: `dispatcher` / `transport`.
 Swagger: <http://localhost:8000/docs>.
 
-5. Выберите источник NDTP-телеметрии:
+5. `make up` запускает официальный NDTP-эмулятор с пятью транспортными
+   средствами и проверяет появление телеметрии, прогнозов и инцидентов.
+   Для воспроизведения исторических рейсов вместо него используйте:
 
 | Команда | Источник | Назначение |
 |---|---|---|
-| `make up-ndtp` | Официальный Docker-эмулятор | Проверка настоящего NDTP TCP-протокола на синтетических координатах |
 | `make up-dataset-replay` | CSV из `data/raw/` | Воспроизведение исторических рейсов и прогнозов на дашборде |
 
-Для `make up-ndtp` положите переданный организаторами файл строго по пути:
+Если образ ещё не загружен в Docker, положите переданный организаторами файл по пути:
 
 ```text
 emulator/ndtp-telemetry-emulator.tar
@@ -50,14 +53,14 @@ emulator/ndtp-telemetry-emulator.tar
 Затем запустите нужный режим:
 
 ```bash
-make up-ndtp             # официальный эмулятор
+make up                  # официальный эмулятор, пять транспортных средств
 make up-dataset-replay
 ```
 
 Если архив находится в другом месте:
 
 ```bash
-make up-ndtp NDTP_EMULATOR_ARCHIVE=/полный/путь/ndtp-telemetry-emulator.tar
+make up NDTP_EMULATOR_ARCHIVE=/полный/путь/ndtp-telemetry-emulator.tar
 ```
 
 Полезные команды:

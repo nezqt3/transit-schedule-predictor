@@ -6,13 +6,17 @@
 NDTP_EMULATOR_ARCHIVE ?= emulator/ndtp-telemetry-emulator.tar
 
 up:
-	docker compose up -d --build --wait
+	python scripts/start_official_emulator.py --prepare-image --archive "$(NDTP_EMULATOR_ARCHIVE)"
+	docker compose --profile replay stop dataset-replay
+	docker compose -f docker-compose.yml -f docker-compose.official-demo.yml up -d --build --wait
+	python scripts/start_official_emulator.py --archive "$(NDTP_EMULATOR_ARCHIVE)"
 
 build:
 	docker compose build
 
 down:
-	docker compose down
+	python scripts/start_official_emulator.py --stop
+	docker compose --profile replay down
 
 logs:
 	docker compose logs -f
@@ -33,11 +37,10 @@ submit:
 run-online:
 	docker compose up --build ml backend
 
-up-ndtp:
-	docker compose -f docker-compose.yml -f docker-compose.official-demo.yml up -d --build ml backend frontend
-	python scripts/start_official_emulator.py --archive "$(NDTP_EMULATOR_ARCHIVE)"
+up-ndtp: up
 
 up-dataset-replay:
+	python scripts/start_official_emulator.py --stop
 	docker compose -f docker-compose.yml -f docker-compose.replay.yml --profile replay up -d --build ml backend frontend dataset-replay
 	python scripts/start_dataset_replay.py
 

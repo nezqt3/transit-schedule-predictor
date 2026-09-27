@@ -58,6 +58,18 @@ def ensure_container(api_port: int) -> None:
     print(f"Started {CONTAINER}: {result.stdout.strip()[:12]}")
 
 
+def stop_container() -> None:
+    inspected = docker("inspect", CONTAINER, check=False)
+    if inspected.returncode != 0:
+        return
+    info = json.loads(inspected.stdout)[0]
+    if info["Config"]["Image"] != IMAGE:
+        raise RuntimeError(f"existing {CONTAINER} uses a different image; inspect it before stopping")
+    if info["State"]["Running"]:
+        docker("stop", CONTAINER)
+        print(f"Stopped {CONTAINER}")
+
+
 def connect_to_compose_backend() -> str | None:
     """Attach the emulator to Backend's Compose network and return its DNS name."""
     backend = docker("compose", "ps", "-q", "backend", check=False).stdout.strip()
@@ -193,6 +205,8 @@ def main() -> None:
         default=DEFAULT_ARCHIVE,
         help="path to the supplied ndtp-telemetry-emulator.tar Docker image",
     )
+    parser.add_argument("--prepare-image", action="store_true")
+    parser.add_argument("--stop", action="store_true")
     parser.add_argument("--config", type=Path, default=ROOT / "emulator" / "official-demo-config.json")
     parser.add_argument("--api-port", type=int, default=int(os.getenv("EMU_API_PORT", "18080")))
     parser.add_argument("--target-host", default=os.getenv("TARGET_HOST"))
@@ -213,6 +227,15 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    if args.stop:
+        stop_container()
+        return
+
+    archive = args.archive if args.archive.is_absolute() else ROOT / args.archive
+    ensure_image(archive)
+    if args.prepare_image:
+        return
+
     config = json.loads(args.config.read_text(encoding="utf-8"))
     unit_ids = {unit["unitId"] for unit in config["units"]}
     if not unit_ids or len(unit_ids) != len(config["units"]):
@@ -220,8 +243,6 @@ def main() -> None:
     config["targetHost"] = args.target_host
     config["targetPort"] = args.target_port
 
-    archive = args.archive if args.archive.is_absolute() else ROOT / args.archive
-    ensure_image(archive)
     ensure_container(args.api_port)
     if args.target_host is None:
         args.target_host = connect_to_compose_backend() or "host.docker.internal"
