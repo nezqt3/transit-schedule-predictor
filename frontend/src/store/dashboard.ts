@@ -3,17 +3,20 @@ import { create } from 'zustand'
 import type { ReplayPrediction } from '@/types/replay'
 
 export type DashboardSource = 'ndtp' | 'historical'
-export const REPLAY_ANCHOR_KEY = 'january-replay-anchor-ms'
 
 type DashboardState = {
   source: DashboardSource
   replayTimeMs: number | null
   replayRevision: number
+  replayPlaying: boolean
+  replaySpeed: number
   selectedReplayId: number | null
   replayPredictions: Record<string, ReplayPrediction>
   replayFailures: Record<string, string>
   setSource: (source: DashboardSource) => void
   setReplayTime: (timeMs: number) => void
+  setReplayPlaying: (playing: boolean) => void
+  setReplaySpeed: (speed: number) => void
   resetReplay: () => void
   selectReplayVehicle: (trId: number | null) => void
   setReplayPrediction: (prediction: ReplayPrediction) => void
@@ -24,6 +27,8 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   source: window.localStorage.getItem('dashboard-source') === 'historical' ? 'historical' : 'ndtp',
   replayTimeMs: null,
   replayRevision: 0,
+  replayPlaying: true,
+  replaySpeed: 1,
   selectedReplayId: null,
   replayPredictions: {},
   replayFailures: {},
@@ -32,11 +37,13 @@ export const useDashboardStore = create<DashboardState>((set) => ({
     set((state) => source === state.source ? state : { source })
   },
   setReplayTime: (replayTimeMs) => set({ replayTimeMs }),
+  setReplayPlaying: (replayPlaying) => set({ replayPlaying }),
+  setReplaySpeed: (replaySpeed) => set({ replaySpeed }),
   resetReplay: () => {
-    window.localStorage.setItem(REPLAY_ANCHOR_KEY, String(Date.now()))
     set((state) => ({
       replayTimeMs: null,
       replayRevision: state.replayRevision + 1,
+      replayPlaying: true,
       selectedReplayId: null,
       replayPredictions: {},
       replayFailures: {},

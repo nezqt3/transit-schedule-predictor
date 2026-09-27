@@ -12,6 +12,17 @@ export function janClock(value: string | number): string {
   })
 }
 
+export function replayBounds(fleet: ReplayFleet): { startMs: number; endMs: number } {
+  const firstVerifiedRunMs = Math.min(...fleet.vehicles.flatMap((vehicle) =>
+    vehicle.runs.filter((run) => run.valid).map((run) => janMs(run.start_at))))
+  return {
+    startMs: Number.isFinite(firstVerifiedRunMs)
+      ? Math.max(janMs(fleet.start_at), firstVerifiedRunMs)
+      : janMs(fleet.start_at),
+    endMs: janMs(fleet.end_at),
+  }
+}
+
 export function stopLabel(vehicle: ReplayFleetVehicle, stopId: number): string {
   const stop = vehicle.stops.find((item) => item.stop_id === stopId)
   if (stop?.address) return stop.address

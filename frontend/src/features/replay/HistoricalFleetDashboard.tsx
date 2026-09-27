@@ -1,4 +1,4 @@
-import { AlertTriangle, BusFront, ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { AlertTriangle, BusFront, ChevronLeft, ChevronRight, Pause, Play, RotateCcw, Search, SkipBack, SkipForward } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 
 import { fleetStatusIcons } from '@/features/vehicles/markerIcon'
@@ -6,7 +6,7 @@ import { WhatIfPanel } from '@/features/what-if/WhatIfPanel'
 import { statusLabel, type VehicleStatus } from '@/lib/telemetry/vehicleStatus'
 import { useDashboardStore } from '@/store/dashboard'
 import { useReplayFleet, useReplayOutcomes } from './api'
-import { displaySpeedKmh, fleetSnapshot } from './fleetClock'
+import { displaySpeedKmh, fleetSnapshot, janClock, replayBounds } from './fleetClock'
 import { HistoricalFleetMap } from './HistoricalFleetMap'
 import { HistoricalVehicleDetails } from './HistoricalVehicleDetails'
 
@@ -25,6 +25,11 @@ const filterOptions: { value: FleetFilter; label: string }[] = [
 export function HistoricalFleetDashboard() {
   const { data: fleet, isPending, isError } = useReplayFleet()
   const timeMs = useDashboardStore((state) => state.replayTimeMs)
+  const playing = useDashboardStore((state) => state.replayPlaying)
+  const playbackSpeed = useDashboardStore((state) => state.replaySpeed)
+  const setReplayTime = useDashboardStore((state) => state.setReplayTime)
+  const setReplayPlaying = useDashboardStore((state) => state.setReplayPlaying)
+  const setReplaySpeed = useDashboardStore((state) => state.setReplaySpeed)
   const { data: outcomes = [] } = useReplayOutcomes(timeMs)
   const predictions = useDashboardStore((state) => state.replayPredictions)
   const selectedId = useDashboardStore((state) => state.selectedReplayId)
@@ -78,6 +83,14 @@ export function HistoricalFleetDashboard() {
   if (isPending) return <div className="historical-loading">Подключаем транспорт…</div>
   if (isError || !fleet) return <div className="historical-loading">Не удалось получить данные транспорта.</div>
 
+  const { startMs, endMs } = replayBounds(fleet)
+  const currentTimeMs = Math.min(endMs, Math.max(startMs, timeMs ?? startMs))
+  const seekBy = (deltaMs: number) => setReplayTime(Math.min(endMs, Math.max(startMs, currentTimeMs + deltaMs)))
+  const togglePlayback = () => {
+    if (!playing && currentTimeMs >= endMs) setReplayTime(startMs)
+    setReplayPlaying(!playing)
+  }
+
   return <div className={`historical-dashboard${detailsOpen ? '' : ' historical-dashboard--details-collapsed'}`} style={{ '--sidebar-width': `${sidebarWidth}px` } as CSSProperties}>
     <aside className="historical-sidebar">
       <div className="historical-sidebar__head">
@@ -113,6 +126,15 @@ export function HistoricalFleetDashboard() {
 
     <main className="historical-main">
       <div className="historical-overview"><span><strong>{visible.length}</strong> на карте</span><span><strong>{attentionCount}</strong> требуют внимания</span><button aria-pressed={whatIfOpen} className="historical-overview__what-if" onClick={() => setWhatIfOpen(!whatIfOpen)} type="button"><BusFront size={15} /> What-if</button></div>
+      <div className="historical-playback" aria-label="Управление январской записью">
+        <button aria-label="В начало записи" onClick={() => { setReplayPlaying(false); setReplayTime(startMs) }} title="В начало записи" type="button"><RotateCcw size={16} /></button>
+        <button aria-label="Назад на 10 минут" onClick={() => seekBy(-10 * 60_000)} title="Назад на 10 минут" type="button"><SkipBack size={17} /></button>
+        <button aria-label={playing ? 'Пауза' : 'Продолжить'} className="historical-playback__primary" onClick={togglePlayback} type="button">{playing ? <Pause size={17} /> : <Play size={17} />}{playing ? 'Пауза' : 'Продолжить'}</button>
+        <button aria-label="Вперёд на 10 минут" onClick={() => seekBy(10 * 60_000)} title="Вперёд на 10 минут" type="button"><SkipForward size={17} /></button>
+        <strong className="historical-playback__clock">{janClock(currentTimeMs)}</strong>
+        <input aria-label="Промотка январской записи" max={endMs} min={startMs} onChange={(event) => setReplayTime(Number(event.target.value))} onPointerDown={() => setReplayPlaying(false)} step={1000} type="range" value={currentTimeMs} />
+        <label>Скорость<select aria-label="Скорость воспроизведения" onChange={(event) => setReplaySpeed(Number(event.target.value))} value={playbackSpeed}><option value={1}>1×</option><option value={10}>10×</option><option value={60}>60×</option><option value={300}>300×</option><option value={600}>600×</option></select></label>
+      </div>
       <div className="historical-map-wrap">
         <HistoricalFleetMap onSelect={onMapSelect} selected={selected} timeMs={timeMs ?? 0} visible={filtered} />
         {whatIfOpen && <WhatIfPanel context={timeMs === null ? 'Исторический поток' : `6 января · ${new Date(timeMs).toLocaleTimeString('ru-RU', { timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit' })}`} onClose={() => setWhatIfOpen(false)} vehicles={whatIfVehicles} />}
