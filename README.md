@@ -20,7 +20,7 @@ test -f ml/artifacts/release_manifest.json
 
 ```bash
 cp .env.example .env
-docker compose up -d --build
+make up
 ```
 
 3. Проверьте запуск:

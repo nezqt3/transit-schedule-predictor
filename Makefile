@@ -6,7 +6,7 @@
 NDTP_EMULATOR_ARCHIVE ?= emulator/ndtp-telemetry-emulator.tar
 
 up:
-	docker compose up -d
+	docker compose up -d --build --wait
 
 build:
 	docker compose build

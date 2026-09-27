@@ -21,6 +21,15 @@ def _source_naive(value, source_timezone: ZoneInfo) -> pd.Timestamp:
             if timestamp.tzinfo else timestamp)
 
 
+def _release_input_sha256(path: Path) -> str:
+    data = path.read_bytes()
+    # Git may check text artifacts out with CRLF on Windows; the release
+    # manifest records their LF bytes. The schedule CSV has its own raw hash.
+    if path.suffix in {".json", ".txt"}:
+        data = data.replace(b"\r\n", b"\n")
+    return hashlib.sha256(data).hexdigest()
+
+
 class LightGBMPlanPredictor:
     """Direct and residual LightGBM pair trained on telemetry and stop plans."""
 
@@ -43,7 +52,7 @@ class LightGBMPlanPredictor:
             expected = manifest["sha256"].get(path.name)
             if not expected:
                 raise RuntimeError(f"LightGBM release checksum missing: {path.name}")
-            if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+            if _release_input_sha256(path) != expected:
                 raise RuntimeError(f"LightGBM runtime input checksum mismatch: {path}")
         self.metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
         self.metadata["model_version"] = manifest["model_version"]
